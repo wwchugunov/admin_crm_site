@@ -23,3 +23,7 @@
   header Strict-Transport-Security "max-age=31536000"
   reverse_proxy site-admin:4547
 }
+
+www.{$ORBIT_WEBSITE_DOMAIN} {
+  redir https://{$ORBIT_WEBSITE_DOMAIN}{uri} permanent
+}

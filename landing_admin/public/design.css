@@ -716,3 +716,7 @@ html[data-theme="dark"] .event-tag {
 
 .brand b { font-size: 19px; letter-spacing: -.6px; }
 .workspace strong:has([data-i18n="m703"]) { white-space: normal; line-height: 1.45; }
+
+#toast:popover-open {
+  transform: none; position:fixed; inset:18px 18px auto auto; margin:0; max-width:min(480px,calc(100vw - 36px)); z-index:2147483647; }
+#toast::backdrop { background:transparent; pointer-events:none; }

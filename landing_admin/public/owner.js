@@ -9,7 +9,7 @@ pages.versions=[OrbitI18n.t('updatesTitle'),OrbitI18n.t('updatesSubtitle')];
 pages.businesses=[OrbitI18n.t('m385'),OrbitI18n.t('m386')];
 Object.assign(events,{'password.changed':OrbitI18n.t('m387'),'business.created':OrbitI18n.t('m388'),'user.login':OrbitI18n.t('m389')});
 let data, page='website', search='', submitAction, timer,companyLogo;
-function toast(text, error=false) { $('#toast').textContent=error?OrbitI18n.message(text):text; $('#toast').className=error?'error':''; $('#toast').style.display='block'; clearTimeout(timer); timer=setTimeout(()=>$('#toast').style.display='none',8000); }
+function toast(text, error=false) { const host=$('#modal').open?$('#modal'):document.body;if($('#toast').parentElement!==host)host.append($('#toast')); $('#toast').textContent=error?OrbitI18n.message(text):text; $('#toast').className=error?'error':''; $('#toast').style.display='block'; $('#toast').hidePopover?.(); $('#toast').showPopover?.(); clearTimeout(timer); timer=setTimeout(()=>{$('#toast').hidePopover?.();$('#toast').style.display='none';},8000); }
 async function run(fn) { try { return await fn(); } catch(e) { toast(e.message,true); } }
 async function refresh() { data=await window.owner.call('owner:snapshot'); render(); }
 function noRows(message) { return `<div class="empty"><div class="empty-icon">♙</div><strong>${esc(message)}</strong><p>${OrbitI18n.t('m390')}</p></div>`; }
@@ -65,4 +65,5 @@ document.addEventListener('click',e=>{const n=e.target.closest('[data-page]');if
 document.addEventListener('input',e=>{if(e.target.id==='search'){const pos=e.target.selectionStart;search=e.target.value;render();$('#search').focus();$('#search').setSelectionRange(pos,pos);}});
 $('#close-modal').onclick=close;$('#cancel-modal').onclick=close;$('#modal').addEventListener('cancel',e=>{e.preventDefault();if(!$('#modal-submit').disabled)close();});
 $('#modal-form').onsubmit=async e=>{e.preventDefault();const form=new FormData(e.target),values=Object.fromEntries(form);for(const name of ['bot_visible','web_visible','website_enabled'])if($(`[name="${name}"]`))values[name]=form.has(name);for(const id of ['modal-submit','close-modal','cancel-modal'])$(`#${id}`).disabled=true;try{await submitAction(values);close();await refresh();}catch(err){toast(err.message,true);}finally{for(const id of ['modal-submit','close-modal','cancel-modal'])$(`#${id}`).disabled=false;}};
-run(refresh);setInterval(()=>{if(!$('#modal').open&&document.activeElement?.tagName!=='INPUT')run(refresh);},15000);
+function startAdmin(){run(refresh);setInterval(()=>{if(!$('#modal').open&&document.activeElement?.tagName!=='INPUT')run(refresh);},15000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startAdmin,{once:true});else startAdmin();

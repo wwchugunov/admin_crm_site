@@ -1,7 +1,7 @@
 name: orbit-admin
 services:
   orbit:
-    image: orbit-admin-server:1.3.0
+    image: orbit-admin-server:1.3.1
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -14,11 +14,12 @@ services:
     environment:
       ORBIT_OWNER_DATA: /data
       ORBIT_OWNER_HOST: 0.0.0.0
+      ORBIT_TRUST_PROXY: '1'
       PORT: '4545'
       ORBIT_RELEASES_DIR: /releases
     volumes:
       - orbit-data:/data
-      - ./releases:/releases
+      - ./releases:/releases:z
     expose: ['4545']
     stop_grace_period: 60s
     healthcheck:
@@ -36,7 +37,7 @@ services:
       ORBIT_DOMAIN: ${ORBIT_DOMAIN:?Set ORBIT_DOMAIN in deploy/.env}
     ports: ['80:80', '443:443', '443:443/udp']
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
       - caddy-data:/data
       - caddy-config:/config
     depends_on:

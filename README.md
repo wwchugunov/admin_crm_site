@@ -1,5 +1,9 @@
 # BIZ: сайт и управление платформой
 
+[Первый запуск lomviko.com](docs/PRODUCTION.md) · [Исправления и проверка 16 требований](docs/FIXES-2026-10-15.md) · [Лицензии зависимостей](docs/DEPENDENCIES.md)
+
+Проверка всего проекта: `npm run check`. Архив после коммита: `npm run prepare:deployment`.
+
 Репозиторий объединяет сайт, две браузерные админки и сервер CRM. Десктопное приложение находится отдельно: https://github.com/wwchugunov/CRM_BUES.
 
 ```text

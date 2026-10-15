@@ -3,6 +3,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const {isIP}=require('node:net');
 const { DatabaseSync } = require('node:sqlite');
 const {AdminAuth}=require('./admin-auth.cjs');
 const {PublicSite}=require('./public-site.cjs');
@@ -11,6 +12,7 @@ const {Registration}=require('./registration.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
 const {Releases,version:stableVersion}=require('./releases.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
+const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
 function fail(status, message) { const error = Error(message); error.status = status; throw error; }
@@ -58,11 +60,11 @@ class ProductStore {
     if (!row || row.expires < Date.now() || !['trial','active'].includes(row.stage) || (forActivation && row.used_at)) fail(401, OrbitI18n.t('m674')); return row;
   }
   snapshot() {
-    const users = this.db.prepare(`SELECT u.id,u.name,u.email,u.business,u.stage,u.created_at,u.expires,u.max_devices,u.account_id,(SELECT count(*) FROM devices d WHERE d.user_id=u.id AND d.revoked=0) active_devices,(SELECT max(last_seen) FROM devices d WHERE d.user_id=u.id) last_seen,(SELECT count(*) FROM events e WHERE e.user_id=u.id AND e.event='download.completed') downloads FROM users u ORDER BY created_at DESC`).all();
+    const users = this.db.prepare(`SELECT u.id,u.name,u.email,u.business,u.stage,u.created_at,u.expires,u.max_devices,u.account_id,(u.expires=?) perpetual,(SELECT count(*) FROM devices d WHERE d.user_id=u.id AND d.revoked=0) active_devices,(SELECT max(last_seen) FROM devices d WHERE d.user_id=u.id) last_seen,(SELECT count(*) FROM events e WHERE e.user_id=u.id AND e.event='download.completed') downloads FROM users u ORDER BY created_at DESC`).all(PERPETUAL_EXPIRY);
     return { users, businesses:this.db.prepare('SELECT b.*,u.name owner_name FROM businesses b JOIN users u ON u.id=b.account_id ORDER BY b.name').all(), devices: this.db.prepare('SELECT d.id,d.user_id,d.platform,d.version,d.activated_at,d.last_seen,d.revoked,u.name user_name,u.business FROM devices d JOIN users u ON u.id=d.user_id ORDER BY last_seen DESC').all(), events: this.db.prepare('SELECT e.*,u.name user_name,u.email FROM events e LEFT JOIN users u ON u.id=e.user_id ORDER BY at DESC LIMIT 500').all() };
   }
 }
-function createProductServer({ store, adminToken, privateKey, publicKey, releases = {}, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,releaseDirectory=path.join(store.directory,'releases'),mailTransportFactory,allowLocalMail=false }) {
+function createProductServer({ store, adminToken, privateKey, publicKey, releases = {}, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,releaseDirectory=path.join(store.directory,'releases'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
   const rates = new Map();
   const administrator=new AdminAuth({directory:store.directory,token:adminToken,db:store.db,local:allowLocalAdmin});
   const updates=new Releases(store,privateKey,releaseDirectory);
@@ -90,6 +92,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const server = http.createServer(async (req, res) => {
     const reply = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(JSON.stringify(value)); };
     try {
+      const forwarded=trustProxy&&typeof req.headers['x-forwarded-for']==='string'?req.headers['x-forwarded-for'].split(',').at(-1).trim():'';req.clientAddress=isIP(forwarded)?forwarded:req.socket.remoteAddress;
       const url = new URL(req.url, 'http://localhost'); const route = url.pathname;req.rawBody='';
       if(req.method==='PUT'&&route==='/admin/releases/file'){
         administrator.uploadSession(req);const size=Number(req.headers['content-length']);if(!Number.isSafeInteger(size)||size<1||size>512*1024*1024)fail(413,'Installer must be at most 512 MiB');const target=updates.file(url.searchParams.get('version'),url.searchParams.get('platform'),url.searchParams.get('arch'));if(fs.existsSync(target))fail(409,'Installer already exists; use a new version');const temporary=target+'.'+id()+'.partial',digest=crypto.createHash('sha256');let fd=fs.openSync(temporary,'wx',0o600),received=0;
@@ -131,7 +134,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if (req.method === 'POST' && route === '/admin/user') {
           const data = await body(req); const user = store.db.prepare('SELECT * FROM users WHERE id=?').get(string(data.id, 64)); if (!user) fail(404, OrbitI18n.t('m641'));
           const stages = ['lead', 'trial', 'active', 'blocked']; if (!stages.includes(data.stage)) fail(400, OrbitI18n.t('m544'));
-          const expires = Number(data.expires), seats = Number(data.max_devices);
+          const expires = accountExpiry(data), seats = Number(data.max_devices);
           if (!Number.isSafeInteger(expires) || expires <= 0 || !Number.isInteger(seats) || seats < 1 || seats > 100) fail(400, OrbitI18n.t('m679'));
           store.transaction(() => { store.db.prepare('UPDATE users SET stage=?,expires=?,max_devices=? WHERE id=?').run(data.stage, expires, seats, data.id); if(data.stage==='blocked')store.db.prepare('DELETE FROM sessions WHERE user_id=? OR user_id IN(SELECT id FROM users WHERE account_id=?)').run(data.id,data.id);store.event('user.updated', data.id, null, '', data.stage); }); return reply(200, { ok: true });
         }
@@ -139,7 +142,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if (req.method === 'GET' && route === '/admin/export') { const data = {}; for (const table of ['users', 'devices', 'events','businesses','memberships','releases','update_policies','device_builds','update_backups','site_content','site_history','site_leads','site_downloads','security_rejections','purchases']) data[table] = store.db.prepare(`SELECT * FROM ${table}`).all().map(row=>{const copy={...row};delete copy.password_hash;return copy;}); return reply(200, { format: 'orbit-owner', version: 1, exported_at: new Date().toISOString(), tables: data }); }
         fail(404, OrbitI18n.t('m652'));
       }
-      const address = req.socket.remoteAddress, now = Date.now(), rate = rates.get(address) || { count: 0, start: now };
+      const address = req.clientAddress, now = Date.now(), rate = rates.get(address) || { count: 0, start: now };
       if (now - rate.start > 60000) { rate.count = 0; rate.start = now; } rate.count++; rates.set(address, rate); if (rate.count > 120) fail(429, OrbitI18n.t('m681'));
       if(req.method==='GET'&&route==='/public/site')return reply(200,website.public());
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
@@ -162,6 +165,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if (!challenge || challenge.expires <= Date.now()) fail(401, OrbitI18n.t('m683'));
         const proof = Buffer.from(JSON.stringify({ challenge_id: challenge.id, nonce: challenge.nonce }));
         if (typeof data.signature !== 'string' || data.signature.length > 150 || !crypto.verify(null, proof, challenge.public_key, Buffer.from(data.signature, 'base64url'))) fail(401, OrbitI18n.t('m684'));
+        if(!['x64','arm64'].includes(data.arch||'x64'))fail(400,'Unsupported architecture');
         const platform = string(data.platform, 30), version = stableVersion(string(data.version, 30));
         const installation = hash(crypto.createPublicKey(challenge.public_key).export({ type: 'spki', format: 'der' }));
         const user = store.transaction(() => {
@@ -175,7 +179,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
           store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(), invitation.id); store.db.prepare('DELETE FROM challenges WHERE id=?').run(challenge.id);
           store.event('device.activated', user.id, installation, platform, version); return user;
         });
-        if(!['x64','arm64'].includes(data.arch||'x64'))fail(400,'Unsupported architecture');store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(installation,data.arch||'x64');return reply(200, { device_id: installation, business: user.business, license: accounts.licenseAccount(installation, user) });
+        store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(installation,data.arch||'x64');return reply(200, { device_id: installation, business: user.business, license: accounts.licenseAccount(installation, user) });
       }
       if (req.method === 'POST' && route === '/v1/heartbeat') {
         const data = await body(req), { device, user } = authenticatedDevice(data);stableVersion(data.version); const platform = string(data.platform, 30), version = stableVersion(string(data.version, 30));
@@ -224,7 +228,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   });
   server.shutdown = async () => {
     stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);
-    await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
   server.mail=mail;server.updates=updates;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
@@ -237,7 +241,7 @@ if (require.main === module) {
   const store = new ProductStore(path.join(directory, 'owner.sqlite'));
   const releases = { mac: path.resolve(process.env.ORBIT_MAC_RELEASE || 'dist/Orbit CRM-0.2.5.dmg'), win: path.resolve(process.env.ORBIT_WIN_RELEASE || 'dist/Orbit CRM Setup 0.2.5.exe') };
   const port = Number(process.env.PORT || 4545), host = process.env.ORBIT_OWNER_HOST || '127.0.0.1';
-  const server = createProductServer({ store, ...keys, releases,allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
+  const server = createProductServer({ store, ...keys, releases,allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
   let stopping = false;
   const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('Orbit shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);

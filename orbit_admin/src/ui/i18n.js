@@ -237,8 +237,8 @@
     "en": "Leave off if you have no website. The API works in server mode; publish services separately."
   },
   "m058": {
-    "uk": "Вітаємо в Orbit",
-    "en": "Welcome to Orbit"
+    "uk": "Вітаємо в BIZ",
+    "en": "Welcome to BIZ"
   },
   "m059": {
     "uk": "Компанію вже створив адміністратор? Увійдіть за логіном і паролем. Для власного бізнесу заповніть профіль нижче.",
@@ -1274,8 +1274,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "responds to getMe. A client should send /start to test booking."
   },
   "m315": {
-    "uk": "Підключення до видавця Orbit",
-    "en": "Connect to the Orbit publisher"
+    "uk": "Підключення до видавця BIZ",
+    "en": "Connect to the BIZ account"
   },
   "m316": {
     "uk": "Адреса сервера видавця",
@@ -1518,8 +1518,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Overview"
   },
   "m376": {
-    "uk": "Хто користується Orbit і як зростає продукт.",
-    "en": "Who uses Orbit and how your product grows."
+    "uk": "Хто користується BIZ і як зростає продукт.",
+    "en": "Who uses BIZ and how your product grows."
   },
   "m377": {
     "uk": "Користувачі",

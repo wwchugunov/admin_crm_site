@@ -1,6 +1,6 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const messages={
+  const messages={perpetualAccess:{uk:"Безстроковий доступ",en:"Perpetual access"},
 "fiveMinutes":{"uk": "5 хвилин", "en": "5 minutes"},"companyBots":{"uk": "Боти компаній", "en": "Company bots"},"botWaiting":{"uk": "Очікує запуску", "en": "Waiting for worker"},"botOnOwnServer":{"uk": "Власний сервер", "en": "Own server"},"botNotConnected":{"uk": "Не підключено", "en": "Not connected"},"trialStarted":{"uk": "Початок пробного періоду", "en": "Trial started"},"registrationRequested":{"uk": "Реєстрація", "en": "Registration"},"botExternalOnline":{"uk": "✓ Власний сервер", "en": "✓ Own server"},"botExternalWaiting":{"uk": "Очікує запуску на власному сервері", "en": "Waiting for your server"},
 "panelTitle": {"uk": "Адмін-панель сайту", "en": "Website admin panel"},
 "panelName": {"uk": "Сайт", "en": "Site admin"},
@@ -237,8 +237,8 @@
     "en": "Leave off if you have no website. The API works in server mode; publish services separately."
   },
   "m058": {
-    "uk": "Вітаємо в Orbit",
-    "en": "Welcome to Orbit"
+    "uk": "Вітаємо в BIZ",
+    "en": "Welcome to BIZ"
   },
   "m059": {
     "uk": "Компанію вже створив адміністратор? Увійдіть за логіном і паролем. Для власного бізнесу заповніть профіль нижче.",
@@ -1265,8 +1265,8 @@
     "en": "responds to getMe. A client should send /start to test booking."
   },
   "m315": {
-    "uk": "Підключення до видавця Orbit",
-    "en": "Connect to the Orbit publisher"
+    "uk": "Підключення до видавця BIZ",
+    "en": "Connect to the BIZ account"
   },
   "m316": {
     "uk": "Адреса сервера видавця",
@@ -1509,8 +1509,8 @@
     "en": "Overview"
   },
   "m376": {
-    "uk": "Хто користується Orbit і як зростає продукт.",
-    "en": "Who uses Orbit and how your product grows."
+    "uk": "Хто користується BIZ і як зростає продукт.",
+    "en": "Who uses BIZ and how your product grows."
   },
   "m377": {
     "uk": "Користувачі",

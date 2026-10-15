@@ -31,7 +31,7 @@ class Registration {
       if(!this.mail.configured())this.fail(503,'Підтвердження пошти ще не налаштовано / Email verification is not configured');
       const email=this.string(data.email,254).toLowerCase();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))this.fail(400,'Перевірте email / Invalid email');
-      this.limit(req.socket.remoteAddress,email);
+      this.limit((req.clientAddress || req.socket.remoteAddress),email);
       let key;try{key=crypto.createPublicKey(this.string(data.public_key,1000));}catch{this.fail(400,'Invalid device key');}
       if(key.asymmetricKeyType!=='ed25519')this.fail(400,'Invalid device key');
       const fields={email:data.email,name:data.name,business:data.business,password:data.password,public_key:data.public_key,timestamp:data.timestamp,request_id:data.request_id};
