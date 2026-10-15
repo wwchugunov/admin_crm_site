@@ -1,6 +1,6 @@
 {
   "name": "ch-landing-admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Private web administration of the CH landing via product API",
   "scripts": {

@@ -237,8 +237,8 @@
     "en": "Leave off if you have no website. The API works in server mode; publish services separately."
   },
   "m058": {
-    "uk": "Вітаємо в BIZ",
-    "en": "Welcome to BIZ"
+    "uk": "Вітаємо в LOMVIKO",
+    "en": "Welcome to LOMVIKO"
   },
   "m059": {
     "uk": "Компанію вже створив адміністратор? Увійдіть за логіном і паролем. Для власного бізнесу заповніть профіль нижче.",
@@ -1265,8 +1265,8 @@
     "en": "responds to getMe. A client should send /start to test booking."
   },
   "m315": {
-    "uk": "Підключення до видавця BIZ",
-    "en": "Connect to the BIZ account"
+    "uk": "Підключення до видавця LOMVIKO",
+    "en": "Connect to the LOMVIKO account"
   },
   "m316": {
     "uk": "Адреса сервера видавця",
@@ -1509,8 +1509,8 @@
     "en": "Overview"
   },
   "m376": {
-    "uk": "Хто користується BIZ і як зростає продукт.",
-    "en": "Who uses BIZ and how your product grows."
+    "uk": "Хто користується LOMVIKO і як зростає продукт.",
+    "en": "Who uses LOMVIKO and how your product grows."
   },
   "m377": {
     "uk": "Користувачі",
@@ -2077,8 +2077,8 @@
     "en": "Connect Google Drive first"
   },
   "m518": {
-    "uk": "BIZ · ключ відновлення копій Google Drive",
-    "en": "BIZ · Google Drive backup recovery key"
+    "uk": "LOMVIKO · ключ відновлення копій Google Drive",
+    "en": "LOMVIKO · Google Drive backup recovery key"
   },
   "m519": {
     "uk": "Зберігайте окремо від застосунку. Цей ключ є паролем для відновлення .orbit.",
@@ -2505,8 +2505,8 @@
     "en": "Google sign-in cancelled"
   },
   "m625": {
-    "uk": "Авторизацію отримано. Поверніться в BIZ.",
-    "en": "Authorization received. Return to BIZ."
+    "uk": "Авторизацію отримано. Поверніться в LOMVIKO.",
+    "en": "Authorization received. Return to LOMVIKO."
   },
   "m626": {
     "uk": "Не вдалося відкрити локальну адресу авторизації",
@@ -2557,8 +2557,8 @@
     "en": "Invalid platform"
   },
   "m638": {
-    "uk": "BIZ Admin · CRM власника",
-    "en": "BIZ Admin · owner CRM"
+    "uk": "LOMVIKO Admin · CRM власника",
+    "en": "LOMVIKO Admin · owner CRM"
   },
   "m639": {
     "uk": "Пароль: від 12 до 128 символів",
@@ -2789,8 +2789,8 @@
     "en": "Your data belongs to you."
   },
   "m696": {
-    "uk": "BIZ · рання версія",
-    "en": "BIZ · preview"
+    "uk": "LOMVIKO · рання версія",
+    "en": "LOMVIKO · preview"
   },
   "m697": {
     "uk": "ВАШ БІЗНЕС У ПОРЯДКУ",
@@ -2810,8 +2810,8 @@
   },
   "m701": {"uk": "АДМІН-ПАНЕЛЬ", "en": "ADMIN PANEL"},
   "m702": {
-    "uk": "О",
-    "en": "O"
+    "uk": "L",
+    "en": "L"
   },
   "m703": {"uk": "Адмін-панель застосунку", "en": "Application admin panel"},
   "m704": {"uk": "Компанії, доступ і ліцензії", "en": "Companies, access and licenses"},
@@ -2822,7 +2822,7 @@
   },
   "m707": {"uk": "Користувачі, компанії та ліцензії.", "en": "Users, companies and licenses."},
   "m708": {"uk": "Версії, пошта та безпека.", "en": "Versions, email and security."},
-  "m709": {"uk": "Адмін-панель застосунку · BIZ", "en": "Application admin panel · BIZ"},
+  "m709": {"uk": "Адмін-панель застосунку · LOMVIKO", "en": "Application admin panel · LOMVIKO"},
   "m710": {
     "uk": "● Сервер",
     "en": "● Server"

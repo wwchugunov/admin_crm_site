@@ -150,7 +150,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(await botWorkers.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
-      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'BIZ', public_key: publicKey, protocol: 2,updates:true,device_proof:true });
+      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true });
       if (req.method === 'POST' && route === '/v1/challenge') {
         const data = await body(req), invitation = store.findInvite(data.token, true);
         accounts.allowed(store.db.prepare('SELECT * FROM users WHERE id=?').get(invitation.user_id));if (invitation.user_expires <= Date.now()) fail(403, OrbitI18n.t('m682'));
@@ -187,13 +187,13 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if(data.arch&&['x64','arm64'].includes(data.arch))store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(device.id,data.arch);return reply(200, { license: accounts.licenseAccount(device.id, user), business: user.business,update:updates.sign(updates.status({...device,version:data.version},accounts.account(user))) });
       }
       const releaseMatch=/^\/(?:releases|public\/download)\/([0-9.]+)\/(mac|win)\/(x64|arm64)$/.exec(route);
-      if(req.method==='GET'&&releaseMatch){const publicDownload=route.startsWith('/public/');if(publicDownload)website.public();const[,v,p,a]=releaseMatch,row=updates.list().find(r=>r.version===v&&r.platform===p&&r.arch===a&&!r.withdrawn);if(!row)fail(404,'Release not found');const filename=updates.file(v,p,a),digest=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(filename))digest.update(chunk);if(digest.digest('hex')!==row.sha256)fail(409,'Installer integrity check failed');if(publicDownload)website.countDownload(row);res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':row.size,'Content-Disposition':`attachment; filename="Orbit-CRM-${v}.${p==='mac'?'dmg':'exe'}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});const stream=fs.createReadStream(filename);if(publicDownload)res.once('finish',()=>website.countDownload(row,true));res.on('close',()=>stream.destroy());stream.on('error',()=>res.destroy());stream.pipe(res);return;}
+      if(req.method==='GET'&&releaseMatch){const publicDownload=route.startsWith('/public/');if(publicDownload)website.public();const[,v,p,a]=releaseMatch,row=updates.list().find(r=>!r.withdrawn&&r.version===v&&r.platform===p&&r.arch===a);if(!row)fail(404,'Release not found');const filename=updates.file(v,p,a),digest=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(filename))digest.update(chunk);if(digest.digest('hex')!==row.sha256)fail(409,'Installer integrity check failed');if(publicDownload)website.countDownload(row);res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':row.size,'Content-Disposition':`attachment; filename="LOMVIKO-${v}.${p==='mac'?'dmg':'exe'}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});const stream=fs.createReadStream(filename);if(publicDownload)res.once('finish',()=>website.countDownload(row,true));res.on('close',()=>stream.destroy());stream.on('error',()=>res.destroy());stream.pipe(res);return;}
       if(req.method==='GET'&&route==='/v1/releases')return reply(200,updates.sign({releases:updates.list().filter(r=>!r.withdrawn)}));
       if (req.method === 'GET' && route === '/download') {
         const invitation = store.findInvite(url.searchParams.get('token')), platform = url.searchParams.get('platform');
         const published=updates.latest(platform,url.searchParams.get('arch')||'x64'),candidate=published?updates.file(published.version,published.platform,published.arch):releases[platform];if (!['mac', 'win'].includes(platform) || !candidate || !fs.existsSync(candidate)) fail(404, OrbitI18n.t('m688'));
         const filename = candidate, size = fs.statSync(filename).size; store.event('download.requested', invitation.user_id, null, platform);
-        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': size, 'Content-Disposition': `attachment; filename="${platform === 'mac' ? 'Orbit-CRM.dmg' : 'Orbit-CRM-Setup.exe'}"`, 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' });
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': size, 'Content-Disposition': `attachment; filename="${platform === 'mac' ? 'LOMVIKO.dmg' : 'LOMVIKO-Setup.exe'}"`, 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' });
         const stream = fs.createReadStream(filename);
         res.once('finish', () => store.event('download.completed', invitation.user_id, null, platform));
         res.once('close', () => { if (!res.writableFinished) store.event('download.interrupted', invitation.user_id, null, platform); stream.destroy(); });
@@ -216,7 +216,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         const user = business && store.db.prepare('SELECT * FROM users WHERE id=?').get(business.account_id);
         return user && user.stage !== 'blocked' && user.expires > Date.now() && !store.db.prepare('SELECT business_id FROM bot_workers WHERE business_id=?').get(businessId);
       });
-    }).catch(() => { console.error('Orbit bot worker cycle failed'); }).finally(() => { botWork = null; });
+    }).catch(() => { console.error('LOMVIKO bot worker cycle failed'); }).finally(() => { botWork = null; });
     return botWork;
   }
   const bots = setInterval(tickBots, 10000); bots.unref();
@@ -239,11 +239,11 @@ module.exports = { setup, ProductStore, createProductServer };
 if (require.main === module) {
   const directory = path.resolve(process.env.ORBIT_OWNER_DATA || path.join(process.cwd(), '.owner-data')); const keys = setup(directory);
   const store = new ProductStore(path.join(directory, 'owner.sqlite'));
-  const releases = { mac: path.resolve(process.env.ORBIT_MAC_RELEASE || 'dist/Orbit CRM-0.2.5.dmg'), win: path.resolve(process.env.ORBIT_WIN_RELEASE || 'dist/Orbit CRM Setup 0.2.5.exe') };
+  const releases = { mac: path.resolve(process.env.ORBIT_MAC_RELEASE || 'dist/LOMVIKO-0.2.5.dmg'), win: path.resolve(process.env.ORBIT_WIN_RELEASE || 'dist/LOMVIKO Setup 0.2.5.exe') };
   const port = Number(process.env.PORT || 4545), host = process.env.ORBIT_OWNER_HOST || '127.0.0.1';
   const server = createProductServer({ store, ...keys, releases,allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
   let stopping = false;
-  const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('Orbit shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
+  const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('LOMVIKO shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
-  server.listen(port, host, () => console.log(`Orbit product server: ${host}:${server.address().port}. Credentials remain in protected files under ${directory}.`));
+  server.listen(port, host, () => console.log(`LOMVIKO product server: ${host}:${server.address().port}. Credentials remain in protected files under ${directory}.`));
 }

@@ -151,7 +151,7 @@ class Drive {
       const token = await this.request('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ ...config, grant_type: 'refresh_token' }) });
       const encrypted = encryptBackup(exportedData||this.store.export(), password);
       const boundary = `orbit-${crypto.randomBytes(16).toString('hex')}`;
-      const metadata = { name: `Orbit-${new Date().toISOString().replace(/[:.]/g, '-')}.orbit`, description: 'Encrypted Orbit CRM backup. Restore in Orbit CRM.' };
+      const metadata = { name: `Orbit-${new Date().toISOString().replace(/[:.]/g, '-')}.orbit`, description: 'Encrypted LOMVIKO backup. Restore in LOMVIKO.' };
       const body = Buffer.concat([Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`), encrypted, Buffer.from(`\r\n--${boundary}--`)]);
       await this.request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body });
       this.store.set('drive_last', Date.now()); this.state = OrbitI18n.t('m339');

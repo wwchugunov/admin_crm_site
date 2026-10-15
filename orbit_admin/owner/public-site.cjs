@@ -9,8 +9,8 @@ function text(value, max, required = false) {
 }
 function defaults() {
   const content = { enabled: true, contactEmail: '', locales: {
-    uk: { eyebrow: 'CH CRM · macOS + Windows', title: 'Менше рутини. Більше часу для вашого бізнесу.', description: 'Записи, клієнти та фінанси в одному застосунку. Для салону краси, СТО та бізнесу, який працює за розкладом.', price: 'Почніть зі знайомства', priceNote: 'Залиште заявку: покажемо застосунок і підберемо умови для вашого бізнесу.', about: 'Один робочий простір для кількох бізнесів, команд і послуг.', privacy: 'Надаючи ім’я та email, ви погоджуєтеся на їх використання для відповіді на вашу заявку. Ми не створюємо обліковий запис автоматично. Щоб видалити заявку, зверніться за контактним email на цій сторінці.' },
-    en: { eyebrow: 'CH CRM · macOS + Windows', title: 'Less routine. More time for your business.', description: 'Appointments, customers and finances in one desktop app. For beauty salons, repair shops and businesses that run on a schedule.', price: 'Start with a conversation', priceNote: 'Request a demo: we will show you the app and discuss terms for your business.', about: 'One workspace for multiple businesses, teams and services.', privacy: 'By providing your name and email, you agree to their use to respond to your request. We do not automatically create an account. To delete your request, contact the email displayed on this page.' }
+    uk: { eyebrow: 'РОБОЧИЙ ПРОСТІР ДЛЯ ВАШОГО БІЗНЕСУ', title: 'Менше рутини. Більше часу для вашого бізнесу.', description: 'Записи, клієнти та фінанси в одному застосунку. Для салону краси, СТО та бізнесу, який працює за розкладом.', price: 'Почніть зі знайомства', priceNote: 'Залиште заявку: покажемо застосунок і підберемо умови для вашого бізнесу.', about: 'Один робочий простір для кількох бізнесів, команд і послуг.', privacy: 'Надаючи ім’я та email, ви погоджуєтеся на їх використання для відповіді на вашу заявку. Ми не створюємо обліковий запис автоматично. Щоб видалити заявку, зверніться за контактним email на цій сторінці.' },
+    en: { eyebrow: 'YOUR BUSINESS, IN ONE PLACE', title: 'Less routine. More time for your business.', description: 'Appointments, customers and finances in one desktop app. For beauty salons, repair shops and businesses that run on a schedule.', price: 'Start with a conversation', priceNote: 'Request a demo: we will show you the app and discuss terms for your business.', about: 'One workspace for multiple businesses, teams and services.', privacy: 'By providing your name and email, you agree to their use to respond to your request. We do not automatically create an account. To delete your request, contact the email displayed on this page.' }
   }, announcements: [] };
   for (const lang of LANGUAGES) { content.locales[lang].features=FEATURE_DEFAULTS[lang];content.locales[lang].faq=FAQ_DEFAULTS[lang]; }
   return content;
@@ -78,7 +78,7 @@ class PublicSite {
     for (const platform of ['mac', 'win']) for (const arch of ['x64', 'arm64']) {
       const r = this.updates.latest(platform, arch); if (r) releases.push({ version: r.version, platform, arch, sha256: r.sha256, size: r.size, notes: r.notes, publishedAt: r.published_at, path: `/public/download/${r.version}/${platform}/${arch}` });
     }
-    return { brand: 'CH CRM', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), releases, demoAvailable: !!content.contactEmail };
+    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), releases, demoAvailable: !!content.contactEmail };
   }
   lead(data) {
     if (!this.public().demoAvailable) fail('Demo requests are not configured yet', 503);
