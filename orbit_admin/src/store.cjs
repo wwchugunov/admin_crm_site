@@ -114,6 +114,75 @@ class Store {
       this.audit('appointment.created', id); return id;
     });
   }
+  // Moves a confirmed visit to another time and/or specialists. The duration and price stay as booked;
+  // reminders are re-armed for the new time.
+  reschedule(data) {
+    return this.transaction(() => {
+      const id = text(data.id),
+        a = this.db.prepare("SELECT * FROM appointments WHERE id=?").get(id);
+      if (!a || a.status !== "confirmed") throw Error(OrbitI18n.t("m545"));
+      const start = Number(data.start),
+        end = start + (a.end - a.start);
+      if (
+        !Number.isSafeInteger(start) ||
+        start < Date.now() - 60000 ||
+        start > Date.now() + 366 * 86400000
+      )
+        throw Error(OrbitI18n.t("m539"));
+      const current = this.db
+          .prepare(
+            "SELECT resource_id FROM appointment_resources WHERE appointment_id=?",
+          )
+          .all(id)
+          .map((r) => r.resource_id),
+        resources = data.resource_ids
+          ? [...new Set(data.resource_ids.map((v) => text(v)))]
+          : current;
+      if (!resources.length || resources.length !== current.length)
+        throw Error(OrbitI18n.t("m540"));
+      const busy = this.db.prepare(
+        "SELECT a.id FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE r.resource_id=? AND a.id<>? AND a.status='confirmed' AND a.start<? AND a.end>?",
+      );
+      for (const resource of resources)
+        if (
+          !this.db
+            .prepare("SELECT id FROM resources WHERE id=? AND archived=0")
+            .get(resource) ||
+          busy.get(resource, id, end, start)
+        )
+          throw Error(OrbitI18n.t("m541"));
+      const clientBusy = this.db.prepare(
+        "SELECT a.id FROM appointments a JOIN appointment_clients c ON c.appointment_id=a.id WHERE c.client_id=? AND a.id<>? AND a.status='confirmed' AND a.start<? AND a.end>?",
+      );
+      for (const { client_id } of this.db
+        .prepare(
+          "SELECT client_id FROM appointment_clients WHERE appointment_id=?",
+        )
+        .all(id))
+        if (clientBusy.get(client_id, id, end, start))
+          throw Error(OrbitI18n.t("m542"));
+      this.db
+        .prepare(
+          "UPDATE appointments SET start=?,end=?,resource_id=? WHERE id=?",
+        )
+        .run(start, end, resources[0], id);
+      this.db
+        .prepare("DELETE FROM appointment_resources WHERE appointment_id=?")
+        .run(id);
+      for (const r of resources)
+        this.db
+          .prepare("INSERT INTO appointment_resources VALUES(?,?)")
+          .run(id, r);
+      for (const table of ["reminders", "reminder_deliveries"])
+        this.db
+          .prepare(
+            `UPDATE ${table} SET status='pending',attempts=0,next_at=0 WHERE appointment_id=?`,
+          )
+          .run(id);
+      this.audit("appointment.rescheduled", id);
+      return id;
+    });
+  }
   status(id, status) {
     if (!['completed', 'cancelled', 'no_show'].includes(status)) throw Error(OrbitI18n.t('m544'));
     if (!this.db.prepare("UPDATE appointments SET status=? WHERE id=? AND status='confirmed'").run(status, text(id)).changes) throw Error(OrbitI18n.t('m545'));
