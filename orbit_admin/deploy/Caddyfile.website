@@ -1,0 +1,25 @@
+{$ORBIT_DOMAIN} {
+  encode zstd gzip
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options nosniff
+    Referrer-Policy no-referrer
+  }
+  reverse_proxy orbit:4545
+}
+{$ORBIT_WEBSITE_DOMAIN} {
+  encode zstd gzip
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy landing:4546
+}
+
+{$CH_APP_ADMIN_DOMAIN} {
+  encode zstd gzip
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy app-admin:4548
+}
+{$CH_SITE_ADMIN_DOMAIN} {
+  encode zstd gzip
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy site-admin:4547
+}

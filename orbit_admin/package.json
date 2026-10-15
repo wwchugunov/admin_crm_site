@@ -1,0 +1,19 @@
+{
+  "name": "biz-platform-api",
+  "version": "1.3.0",
+  "description": "BIZ API, company licensing and browser administration",
+  "main": "owner/server.cjs",
+  "private": true,
+  "scripts": {
+    "start": "node owner/server.cjs",
+    "server": "node owner/server.cjs",
+    "web": "node web/server.cjs",
+    "test": "node --test test/*.test.cjs"
+  },
+  "dependencies": {
+    "nodemailer": "10.1.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

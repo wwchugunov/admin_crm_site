@@ -1,0 +1,134 @@
+name: ch-platform
+
+x-service: &service
+  restart: unless-stopped
+  init: true
+  read_only: true
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  tmpfs: ["/tmp:size=768m,mode=1777"]
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  api:
+    <<: *service
+    image: ch-platform-api:local
+    build:
+      context: ./orbit_admin
+      dockerfile: deploy/Dockerfile
+    environment:
+      # Local mail links only; production deployment does not enable this flag.
+      CH_LOCAL_TEST_MODE: "1"
+      ORBIT_OWNER_DATA: /data
+      ORBIT_OWNER_HOST: 0.0.0.0
+      ORBIT_RELEASES_DIR: /releases
+      PORT: "4545"
+    ports: ["127.0.0.1:${CH_API_PORT:-4545}:4545"]
+    volumes:
+      - api-data:/data
+      - releases:/releases
+    stop_grace_period: 60s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:4545/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  website:
+    <<: *service
+    image: ch-platform-website:local
+    build:
+      context: ./ch_landing
+      dockerfile: deploy/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4546"
+      CH_API_URL: http://api:4545
+    ports: ["127.0.0.1:${CH_WEBSITE_PORT:-4546}:4546"]
+    depends_on:
+      api: { condition: service_healthy }
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:4546/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  site-admin:
+    <<: *service
+    image: ch-platform-site-admin:local
+    build:
+      context: ./landing_admin
+      dockerfile: deploy/Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4547"
+      CH_API_URL: http://api:4545
+      CH_PUBLIC_API_URL: http://127.0.0.1:${CH_API_PORT:-4545}
+      CH_ADMIN_ORIGIN: http://127.0.0.1:${CH_SITE_ADMIN_PORT:-4547}
+    ports: ["127.0.0.1:${CH_SITE_ADMIN_PORT:-4547}:4547"]
+    depends_on:
+      api: { condition: service_healthy }
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:4547/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  app-admin:
+    <<: *service
+    image: ch-platform-api:local
+    pull_policy: never
+    command: [node, web/server.cjs]
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4548"
+      CH_API_URL: http://api:4545
+      CH_PUBLIC_API_URL: http://127.0.0.1:${CH_API_PORT:-4545}
+      CH_ADMIN_ORIGIN: http://127.0.0.1:${CH_APP_ADMIN_PORT:-4548}
+    ports: ["127.0.0.1:${CH_APP_ADMIN_PORT:-4548}:4548"]
+    depends_on:
+      api: { condition: service_healthy }
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:4548/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  api-data:
+  releases:

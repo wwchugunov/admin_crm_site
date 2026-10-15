@@ -1,0 +1,10 @@
+.git
+.env
+node_modules
+docs
+test
+README.md
+.env*
+*.secret
+*.pem
+dist

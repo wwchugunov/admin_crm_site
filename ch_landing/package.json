@@ -1,0 +1,13 @@
+{
+  "name": "ch-landing",
+  "version": "1.1.1",
+  "private": true,
+  "description": "CH CRM marketing website and public API gateway",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node --test test/*.test.cjs"
+  }
+}

@@ -1,0 +1,1 @@
+connectionView=()=>`<section class="card"><h2>${OrbitI18n.t('m425')}</h2><p class="connection-url">${esc(data.endpoint)}</p><p>${OrbitI18n.language==='uk'?'З’єднання налаштоване на сервері адмінки.':'Connection is configured on the admin server.'}</p><button class="secondary" data-action="export">${OrbitI18n.t('m430')}</button></section>`;
