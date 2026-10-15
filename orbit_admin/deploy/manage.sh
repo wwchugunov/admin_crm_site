@@ -15,7 +15,7 @@ case "${1:-start}" in
     compose build
     trap 'rm -f .preflight-config.tmp' EXIT HUP INT TERM
     (umask 077; compose config --format json > .preflight-config.tmp)
-    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node lomviko-platform:1.3.2 tools/deployment-preflight.cjs < .preflight-config.tmp
+    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node lomviko-platform:1.3.3 tools/deployment-preflight.cjs < .preflight-config.tmp
     rm -f .preflight-config.tmp
     compose run --rm --no-deps release-init
     compose up -d --wait --wait-timeout 180
