@@ -83,7 +83,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
     if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
-    if (!Number.isSafeInteger(data.timestamp) || Math.abs(Date.now() - data.timestamp) > 300000 || typeof data.request_id !== 'string' || !/^[a-f0-9-]{36}$/.test(data.request_id)) fail(401, OrbitI18n.t('m676'));
+    if (!Number.isSafeInteger(data.timestamp) || Math.abs(Date.now() - data.timestamp) > 15*60000 || typeof data.request_id !== 'string' || !/^[a-f0-9-]{36}$/.test(data.request_id)) fail(401, OrbitI18n.t('m676'));
     const payload = JSON.stringify({ device_id: data.device_id, timestamp: data.timestamp, request_id: data.request_id, platform: data.platform, version: data.version,...(data.arch?{arch:data.arch}:{}) });
     if (typeof data.signature !== 'string' || data.signature.length > 150 || !crypto.verify(null, Buffer.from(payload), device.public_key, Buffer.from(data.signature, 'base64url'))) fail(401, OrbitI18n.t('m676'));
     if (store.db.prepare('SELECT id FROM requests WHERE id=?').get(data.request_id)) fail(409, OrbitI18n.t('m677'));

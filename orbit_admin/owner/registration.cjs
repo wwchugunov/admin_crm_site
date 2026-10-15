@@ -35,10 +35,17 @@ class Registration {
       let key;try{key=crypto.createPublicKey(this.string(data.public_key,1000));}catch{this.fail(400,'Invalid device key');}
       if(key.asymmetricKeyType!=='ed25519')this.fail(400,'Invalid device key');
       const fields={email:data.email,name:data.name,business:data.business,password:data.password,public_key:data.public_key,timestamp:data.timestamp,request_id:data.request_id};
-      if(!Number.isSafeInteger(data.timestamp)||Math.abs(Date.now()-data.timestamp)>300000||!/^[-a-f0-9]{36}$/.test(data.request_id||''))this.fail(401,'Registration request expired');
+      if(!Number.isSafeInteger(data.timestamp)||Math.abs(Date.now()-data.timestamp)>15*60000||!/^[-a-f0-9]{36}$/.test(data.request_id||''))this.fail(401,'Registration request expired');
       this.proof(data,key,fields);
       const device=hash(key.export({type:'spki',format:'der'}));
-      if(this.db.prepare('SELECT id FROM users WHERE email=?').get(email)||this.db.prepare('SELECT device FROM trial_consumptions WHERE device=? OR email_hash=?').get(device,hash(email))){passwordHash(data.password);reply(201,{registration_id:crypto.randomUUID(),expires:Date.now()+15*60000});return true;}
+      const existing=this.db.prepare('SELECT name FROM users WHERE email=?').get(email);
+      if(existing||this.db.prepare('SELECT device FROM trial_consumptions WHERE device=? OR email_hash=?').get(device,hash(email))){
+        passwordHash(data.password);
+        // The response stays identical so the API never reveals which emails exist; the owner of the address learns why no code arrives.
+        const kind=existing?'registration-exists':'registration-trial-used',name=existing?existing.name:(typeof data.name==='string'?data.name.trim().slice(0,120):'');
+        try{this.mail.enqueue(kind,email,data.language,{name},{dedupe:`${kind}:${hash(email)}:${Math.floor(Date.now()/3600000)}`,expires:Date.now()+3600000});}catch{}
+        reply(201,{registration_id:crypto.randomUUID(),expires:Date.now()+15*60000});return true;
+      }
       const name=this.string(data.name,120),business=this.string(data.business,120),encoded=passwordHash(data.password);
       const id=crypto.randomUUID(),code=String(crypto.randomInt(0,1000000)).padStart(6,'0');
       this.store.transaction(()=>{

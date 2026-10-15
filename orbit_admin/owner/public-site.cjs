@@ -44,7 +44,8 @@ class PublicSite {
       CREATE TABLE IF NOT EXISTS site_history(revision INTEGER PRIMARY KEY,content TEXT NOT NULL,at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS site_leads(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,business TEXT NOT NULL,message TEXT NOT NULL,language TEXT NOT NULL,stage TEXT NOT NULL,created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS site_downloads(day TEXT NOT NULL,version TEXT NOT NULL,platform TEXT NOT NULL,arch TEXT NOT NULL,requested INTEGER NOT NULL DEFAULT 0,completed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(day,version,platform,arch));
-      CREATE TABLE IF NOT EXISTS security_rejections(minute INTEGER NOT NULL,category TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,category,status));`);
+      CREATE TABLE IF NOT EXISTS security_rejections(minute INTEGER NOT NULL,category TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,category,status));
+      CREATE TABLE IF NOT EXISTS security_rejection_routes(minute INTEGER NOT NULL,route TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,route,status));`);
     const content = JSON.stringify(defaults()), now = Date.now();
     this.db.prepare('INSERT OR IGNORE INTO site_content VALUES(1,?,?,1,1,?,?)').run(content, content, now, now);
   }
@@ -104,9 +105,13 @@ class PublicSite {
   }
   reject(route, status) {
     const category = route.startsWith('/admin/') ? 'admin' : route.startsWith('/public/') ? 'website' : 'client';
-    this.db.prepare('INSERT INTO security_rejections VALUES(?,?,?,1) ON CONFLICT(minute,category,status) DO UPDATE SET count=count+1').run(Math.floor(Date.now()/60000)*60000, category, status);
+    const minute = Math.floor(Date.now()/60000)*60000;
+    this.db.prepare('INSERT INTO security_rejections VALUES(?,?,?,1) ON CONFLICT(minute,category,status) DO UPDATE SET count=count+1').run(minute, category, status);
+    // Paths only, with identifiers collapsed, so the log explains spikes without storing personal data.
+    const path = String(route).slice(0, 200).replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, ':id').replace(/\/[0-9a-f]{32,}/gi, '/:id').replace(/[^\w/.:-]/g, '_').slice(0, 120);
+    this.db.prepare('INSERT INTO security_rejection_routes VALUES(?,?,?,1) ON CONFLICT(minute,route,status) DO UPDATE SET count=count+1').run(minute, path, status);
   }
-  security() { return { rejections: this.db.prepare('SELECT * FROM security_rejections ORDER BY minute DESC LIMIT 300').all(), rejected24h: this.db.prepare('SELECT COALESCE(sum(count),0) n FROM security_rejections WHERE minute>?').get(Date.now()-86400000).n }; }
-  cleanup() { this.db.prepare('DELETE FROM security_rejections WHERE minute<?').run(Date.now()-30*86400000); }
+  security() { return { rejections: this.db.prepare('SELECT * FROM security_rejections ORDER BY minute DESC LIMIT 300').all(), rejected24h: this.db.prepare('SELECT COALESCE(sum(count),0) n FROM security_rejections WHERE minute>?').get(Date.now()-86400000).n, routes: this.db.prepare('SELECT route,status,sum(count) count,max(minute) last FROM security_rejection_routes WHERE minute>? GROUP BY route,status ORDER BY count DESC LIMIT 50').all(Date.now()-86400000) }; }
+  cleanup() { this.db.prepare('DELETE FROM security_rejections WHERE minute<?').run(Date.now()-30*86400000); this.db.prepare('DELETE FROM security_rejection_routes WHERE minute<?').run(Date.now()-30*86400000); }
 }
 module.exports = { PublicSite, defaults, validate };

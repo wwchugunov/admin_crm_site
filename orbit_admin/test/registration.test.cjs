@@ -11,3 +11,21 @@ test('Verified registration gives a full 14-day owner trial, a short signed leas
  const deviceNewEmail=start('second@example.test',request.pair);assert.equal((await f.call('/v1/register/start',deviceNewEmail.data)).status,201);assert.equal(f.store.db.prepare('SELECT count(*) n FROM users').get().n,1);
 });
 test('Registration rejects forged devices, replayed requests and guessed or expired codes',async t=>{const f=await fixture(t),request=start();assert.equal((await f.call('/v1/register/start',{...request.data,signature:'forged'})).status,401);const started=await f.call('/v1/register/start',request.data);assert.equal(started.status,201);assert.equal((await f.call('/v1/register/start',request.data)).status,409);const fields={registration_id:started.value.registration_id,code:'999999'};const impostor=crypto.generateKeyPairSync('ed25519');assert.equal((await f.call('/v1/register/confirm',{...fields,signature:crypto.sign(null,Buffer.from(JSON.stringify(fields)),impostor.privateKey).toString('base64url')})).status,401);for(let i=0;i<5;i++)assert.equal((await f.call('/v1/register/confirm',{...fields,signature:crypto.sign(null,Buffer.from(JSON.stringify(fields)),request.pair.privateKey).toString('base64url')})).status,401);assert.equal(f.store.db.prepare('SELECT count(*) n FROM users').get().n,0);});
+function startAt(email,timestamp,pair=crypto.generateKeyPairSync('ed25519')){const fields={email,name:'Anna',business:'Studio',password:'long-trial-password',public_key:pair.publicKey.export({type:'spki',format:'pem'}),timestamp,request_id:crypto.randomUUID()};return{pair,data:{...fields,signature:crypto.sign(null,Buffer.from(JSON.stringify(fields)),pair.privateKey).toString('base64url')}};}
+test('Registering an existing email or a used trial answers like a normal start and mails the owner why no code arrives',async t=>{
+ const f=await fixture(t),first=start('owner-again@example.test');assert.equal((await register(f,first)).result.status,201);
+ const before=f.sent.length,again=await f.call('/v1/register/start',start('OWNER-again@example.test').data);
+ assert.equal(again.status,201);assert(/^[a-f0-9-]{36}$/.test(again.value.registration_id),'response looks like a real registration');
+ await f.call('/v1/register/start',start('owner-again@example.test').data);await f.server.mail.tick();
+ const notices=f.sent.slice(before).filter(m=>m.to==='owner-again@example.test');
+ assert.equal(notices.length,1,'one notice per hour, no verification code');assert.match(notices[0].subject,/уже є обліковий запис/);assert(!/\b\d{6}\b/.test(notices[0].text));
+ const sameDevice=start('new-person@example.test',first.pair);assert.equal((await f.call('/v1/register/start',sameDevice.data)).status,201);await f.server.mail.tick();
+ const trial=f.sent.findLast(m=>m.to==='new-person@example.test');assert.match(trial.subject,/пробний період уже використано/);assert(!/\b\d{6}\b/.test(trial.text));
+ assert.equal(f.store.db.prepare('SELECT count(*) n FROM registration_pending').get().n,0);
+});
+test('Registration tolerates ten minutes of client clock drift but rejects stale requests',async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.call('/v1/register/start',startAt('ahead@example.test',Date.now()+10*60000).data)).status,201);
+ assert.equal((await f.call('/v1/register/start',startAt('behind@example.test',Date.now()-10*60000).data)).status,201);
+ const stale=await f.call('/v1/register/start',startAt('stale@example.test',Date.now()-20*60000).data);assert.equal(stale.status,401);assert.match(stale.value.error,/expired/);
+});
