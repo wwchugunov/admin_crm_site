@@ -2,6 +2,8 @@ const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),
 const {signRequest,signDigest}=require('./request-proof.cjs');
 const siteRoutes={ 'owner:site:save':'/admin/site/draft','owner:site:publish':'/admin/site/publish','owner:site:lead':'/admin/site/lead','owner:site:lead:delete':'/admin/site/lead/delete','owner:site:export':'/admin/site/export','owner:release:withdraw':'/admin/releases/withdraw'};
 const productRoutes={'owner:user:add':'/admin/users','owner:user:update':'/admin/user','owner:password':'/admin/password','owner:business:add':'/admin/business','owner:invite':'/admin/invite','owner:revoke':'/admin/revoke','owner:demo':'/admin/demo','owner:key:revoke':'/admin/invite/revoke','owner:policy':'/admin/policy','owner:export':'/admin/export','owner:mail:settings':'/admin/mail/settings','owner:mail:verify':'/admin/mail/verify','owner:mail:test':'/admin/mail/test','owner:mail:retry':'/admin/mail/retry','owner:mail:access':'/admin/mail/access','owner:purchase':'/admin/purchase'};
+// Panel sessions slide with activity (30 minutes idle) and end 12 hours after sign-in.
+const IDLE=30*60000,MAX=12*3600000;
 function problem(status,message){throw Object.assign(Error(message),{status});}
 function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path.join(__dirname,'public')}={}){
  const api=new URL(apiUrl||process.env.CH_API_URL||'http://127.0.0.1:4545');if(!['http:','https:'].includes(api.protocol)||api.username||api.password||api.pathname!=='/'||api.search||api.hash)throw Error('CH_API_URL must be an origin');
@@ -9,7 +11,7 @@ function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path
  const sessions=new Map(),routes={...siteRoutes,...(profile==='product'?productRoutes:{})};
  // Each admin manages only its own public documents: the website admin edits site files, the product admin edits the app policy.
  const documentKinds=profile==='product'?['app-privacy']:['site-privacy','site-offer','presentation'];const ownDocument=kind=>{if(!documentKinds.includes(kind))problem(403,'Document type unavailable in this admin');return kind;};let failures=0,resetAt=Date.now()+900000;
- const cookie=profile==='product'?'ch_product_admin':'ch_site_admin';const getSession=req=>{const value=(req.headers.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(cookie+'='))?.slice(cookie.length+1);const s=sessions.get(value);if(!s||s.expires<=Date.now()){sessions.delete(value);problem(401,'Sign in again with a new verification code');}return s;};
+ const cookie=profile==='product'?'ch_product_admin':'ch_site_admin';const getSession=req=>{const value=(req.headers.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(cookie+'='))?.slice(cookie.length+1);const s=sessions.get(value);if(!s||s.expires<=Date.now()){sessions.delete(value);problem(401,'Sign in again with a new verification code');}s.expires=Math.min(Date.now()+IDLE,s.started+MAX);return s;};
  async function upstream(s,route,body){const raw=body===undefined?'':JSON.stringify(body),method=body===undefined?'GET':'POST';const response=await fetch(api.origin+route,{method,headers:{Authorization:'Bearer '+s.token,...signRequest(method,route,raw,s.token,s.key),...(raw?{'Content-Type':'application/json'}:{})},...(raw?{body:raw}:{}),redirect:'error',signal:AbortSignal.timeout(60000)});const value=await response.json();if(!response.ok)problem(response.status,value.error||'API rejected the operation');return value;}
  async function json(req){let raw='';for await(const b of req){raw+=b;if(Buffer.byteLength(raw)>65536)problem(413,'Request too large');}try{return JSON.parse(raw);}catch{problem(400,'Invalid JSON');}}
  const server=http.createServer(async(req,res)=>{
@@ -24,8 +26,8 @@ function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path
      if(Date.now()>resetAt){failures=0;resetAt=Date.now()+900000;}if(failures>=5)problem(429,'Wait before trying again');failures++;
      const d=await json(req);if(typeof d.token!=='string'||d.token.length<32||d.token.length>300||!/^\d{6}$/.test(d.otp||''))problem(401,'Invalid credentials');
      const key=crypto.generateKeyPairSync('ed25519').privateKey,public_key=crypto.createPublicKey(key).export({type:'spki',format:'pem'}),auth=await upstream({token:d.token,key},'/admin/session',{token:d.token,otp:d.otp,public_key});
-     const id=crypto.randomBytes(32).toString('base64url');for(const[k,v]of sessions)if(v.expires<=Date.now())sessions.delete(k);if(sessions.size>=100)problem(429,'Too many sessions');sessions.set(id,{token:auth.session,key,expires:auth.expires});failures=0;
-     res.setHeader('Set-Cookie',`${cookie}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=900${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});
+     const id=crypto.randomBytes(32).toString('base64url');for(const[k,v]of sessions)if(v.expires<=Date.now())sessions.delete(k);if(sessions.size>=100)problem(429,'Too many sessions');sessions.set(id,{token:auth.session,key,expires:Date.now()+IDLE,started:Date.now()});failures=0;
+     res.setHeader('Set-Cookie',`${cookie}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});
     }
     const s=getSession(req);
     if(req.method==='POST'&&url.pathname==='/web/logout'){for(const[k,v]of sessions)if(v===s)sessions.delete(k);res.setHeader('Set-Cookie',`${cookie}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});}

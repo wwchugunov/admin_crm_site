@@ -539,17 +539,13 @@ html[data-theme="dark"] #web-login {
   padding-right: max(28px, calc((100vw - 380px) / 2));
 }
 #web-login::before {
-  content: "CH";
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  margin-bottom: 24px;
-  background: #755827;
-  color: #fff;
-  font-size: 22px;
-  font-weight: 700;
-  border-radius: 17px;
+  content: "LOMVIKO";
+  display: block;
+  margin-bottom: 28px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.42em;
 }
 #web-login h2 {
   font-size: 30px;
@@ -729,3 +725,5 @@ html[data-theme="dark"] .event-tag {
 .badge.doc-current{background:var(--accent-soft);color:var(--accent)}
 .badge.doc-archive{background:var(--hover);color:var(--muted)}
 .nav span[data-doc-nav]{font-size:12px;min-width:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0}
+#web-login .hint{margin-top:10px}

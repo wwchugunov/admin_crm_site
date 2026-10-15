@@ -9,6 +9,7 @@ async function fixture(t,profile){
  await new Promise(r=>api.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+await port(),admin=createAdminServer({origin,profile,apiUrl:'http://127.0.0.1:'+api.address().port});await new Promise(r=>admin.listen(Number(new URL(origin).port),'127.0.0.1',r));
  t.after(async()=>{await new Promise(r=>admin.close(r));await new Promise(r=>api.close(r));});
  const login=await fetch(origin+'/web/login',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({token:'t'.repeat(40),otp:'123456'})}),cookie=login.headers.get('set-cookie').split(';')[0];
+ if(!/Max-Age=43200/.test(login.headers.get('set-cookie')))throw Error('panel cookie should last a working day');
  const call=(channel,args)=>fetch(origin+'/web/call',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify({channel,args})});
  const upload=(kind,from=origin)=>fetch(origin+'/web/document?'+new URLSearchParams({kind,language:'uk',title:'Політика',filename:'policy.pdf',activate:'1'}),{method:'PUT',headers:{Origin:from,Cookie:cookie},body:Buffer.from('%PDF-1.7 test')});
  return{origin,cookie,calls,call,upload};
