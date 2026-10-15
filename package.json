@@ -6,7 +6,11 @@
     "check:licenses": "node tools/audit-licenses.cjs orbit_admin/package-lock.json ch_landing/package-lock.json landing_admin/package-lock.json",
     "test": "npm test --prefix orbit_admin && npm test --prefix ch_landing && npm test --prefix landing_admin",
     "check": "npm run check:repository && npm run check:licenses && npm test",
-    "prepare:deployment": "node tools/prepare-deployment.cjs"
+    "prepare:deployment": "node tools/prepare-deployment.cjs",
+    "presentation": "node marketing/presentation/build.cjs",
+    "legal": "node marketing/legal/build.cjs"
   },
-  "engines": {"node": ">=24"}
+  "engines": {
+    "node": ">=24"
+  }
 }

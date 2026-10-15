@@ -1,18 +1,356 @@
 <!doctype html>
-<html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="LOMVIKO — записи, клієнти та фінанси в застосунку для macOS і Windows."><meta name="theme-color" content="#23794f"><title>LOMVIKO — ваш бізнес у ритмі</title><link rel="icon" href="/assets/icon.png"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/motion.js" defer></script></head>
-<body><a class="skip" href="#main" data-t="skip">До вмісту</a>
-<header class="header"><a class="brand" href="#"><span class="monogram">L</span><span>LOMVIKO</span></a><nav aria-label="Navigation"><a href="#features" data-t="navFeatures">Можливості</a><a href="#business" data-t="navBusiness">Для кого</a><a href="#news" data-t="navNews">Оновлення</a></nav><div class="header-actions"><select id="language" aria-label="Language"><option value="uk">UA</option><option value="en">EN</option></select><button id="theme" class="theme" aria-label="Theme">◐</button><a class="button small" href="#downloads" data-t="download">Завантажити</a></div></header>
-<main id="main"><section id="access-section" class="wrap section access-section" hidden><form id="access-form" class="demo-form"><p class="eyebrow">LOMVIKO</p><h2 id="access-title">Встановіть пароль</h2><p id="access-help"></p><label id="access-label" for="access-password">Новий пароль</label><input id="access-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><label id="access-confirm-label" for="access-confirm">Повторіть пароль</label><input id="access-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><button class="button" id="access-submit" type="submit">Зберегти пароль</button><p id="access-status" role="status"></p></form></section>
-<section class="hero wrap"><div class="hero-copy"><h1 id="hero-title">Менше рутини.<br>Більше часу для вашого бізнесу.</h1><p class="lead" id="hero-description">Записи, клієнти та фінанси в одному застосунку. Для салону краси, СТО та бізнесу, який працює за розкладом.</p><div class="hero-actions"><a class="button" href="#demo" data-t="requestDemo">Познайомитися з LOMVIKO ↗</a><a class="text-link" href="#downloads" data-t="chooseApp">Обрати застосунок ↓</a></div></div><div class="hero-visual" id="hero-stage">
-<div class="stage-label"><span class="status-dot"></span><span>LOMVIKO / LIVE</span><span class="stage-index">01 / 03</span></div>
-<div class="day-board" aria-hidden="true"><div class="board-top"><span class="board-logo">LOMVIKO</span><div><strong data-motion="dayTitle"></strong><span data-motion="daySubtitle"></span></div><span class="board-date">14 / 10</span></div><div class="board-columns"><span></span><span data-motion="memberOne"></span><span data-motion="memberTwo"></span></div><div class="board-grid"><div class="board-times"><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span></div><div class="board-lane"><div class="booking booking-one"><span>10:00 — 11:00</span><strong data-motion="serviceOne"></strong><small data-motion="customerOne"></small></div><div class="booking booking-new"><span>12:00 — 13:00</span><strong data-motion="serviceTwo"></strong><small data-motion="customerTwo"></small><i>✓</i></div></div><div class="board-lane"><div class="booking booking-two"><span>11:00 — 12:00</span><strong data-motion="serviceThree"></strong><small data-motion="customerThree"></small></div></div></div><div class="board-bottom"><span class="avatar-stack"><i>О</i><i>М</i></span><span data-motion="teamSync"></span><span class="sync-icon">↻</span></div></div>
-<div class="arrival-toast" aria-hidden="true"><span class="telegram-icon">↗</span><div><strong data-motion="newBooking"></strong><span data-motion="bookingDetail"></span></div><span class="toast-check">✓</span></div><div class="paper-note" aria-hidden="true"><span data-motion="paperNote"></span><span class="paper-arrow">↳</span></div>
-<div class="stage-footer"><span data-motion="illustration"></span><button class="motion-toggle" type="button" aria-pressed="false"></button></div></div></section>
-<div class="platform-strip"><span data-t="stripOne">macOS + Windows</span><span data-t="stripTwo">Українська + English</span><span data-t="stripThree">Світла + темна тема</span><span data-t="stripFour">Ваші дані можна експортувати</span></div>
-<section id="features" class="wrap section"><div class="section-heading"><h2 data-t="featuresTitle">Ваша команда знає,<br>що робити далі.</h2><p data-t="featuresIntro">Запис — це початок. Усе, що відбувається після, теж у LOMVIKO.</p></div><div class="benefit-studio"><div class="story-tabs" role="tablist" aria-label="CRM scenarios"><button class="story-tab selected" id="story-tab-0" role="tab" aria-selected="true" aria-controls="story-panel" data-story="0"><span>01</span><strong data-motion="tabSchedule"></strong><i>↗</i></button><button class="story-tab" id="story-tab-1" role="tab" aria-selected="false" aria-controls="story-panel" tabindex="-1" data-story="1"><span>02</span><strong data-motion="tabBot"></strong><i>↗</i></button><button class="story-tab" id="story-tab-2" role="tab" aria-selected="false" aria-controls="story-panel" tabindex="-1" data-story="2"><span>03</span><strong data-motion="tabMoney"></strong><i>↗</i></button></div><div id="story-panel" class="story-panel" role="tabpanel" aria-labelledby="story-tab-0" tabindex="0"></div></div><div id="features-grid" class="features-grid"></div></section>
-<section id="business" class="business-section"><div class="wrap business-layout"><div><h2 data-t="businessTitle">Не потрібно підлаштовуватися під CRM.</h2><p class="section-description" id="site-about">Один робочий простір для кількох бізнесів, команд і послуг.</p><div class="segments" role="tablist" aria-label="Business type"><button class="selected" role="tab" aria-selected="true" aria-controls="business-panel" id="tab-beauty" data-segment="beauty" data-t="beauty">Салон краси</button><button role="tab" aria-selected="false" aria-controls="business-panel" id="tab-auto" data-segment="auto" data-t="auto">СТО</button><button role="tab" aria-selected="false" aria-controls="business-panel" id="tab-other" data-segment="other" data-t="other">Інший бізнес</button></div></div><div id="business-panel" class="business-panel" role="tabpanel" aria-labelledby="tab-beauty"></div></div></section>
-<section class="wrap product-peek"><div><h2 data-motion="peekTitle"></h2><p data-motion="peekBody"></p></div><div class="app-frame"><div class="window-bar"><span>● ● ●</span><span>LOMVIKO</span><span>↗</span></div><img src="/assets/crm.png" width="1400" height="890" alt="LOMVIKO interface with illustrative demo appointments"></div><p class="demo-caption" data-t="demoCaption"></p></section><section id="downloads" class="wrap section download-section"><div class="section-heading"><h2 data-t="downloadsTitle">Наступний робочий день —<br>у LOMVIKO.</h2><p data-t="downloadHint">Завантажте застосунок. Для роботи потрібен бізнес-акаунт, який ми налаштуємо після знайомства.</p></div><p id="service-status" class="service-status" role="status"></p><div id="download-grid" class="download-grid"></div><p class="download-footnote" data-t="downloadSafety">Оновлюєте LOMVIKO? Спочатку скористайтеся резервною копією в застосунку. Встановлення нової версії зберігає каталог даних.</p></section>
-<section id="news" class="wrap section news-section"><div class="section-heading horizontal"><div><h2 data-t="newsTitle">Що нового</h2></div><span data-t="newsIntro">Анонси та новини продукту.</span></div><div id="announcements" class="announcements"></div></section>
-<section id="demo" class="demo-section"><div class="wrap demo-layout"><div class="demo-copy"><p class="eyebrow" data-t="demoEyebrow">ПОЧНЕМО З ВАШОГО БІЗНЕСУ</p><h2 id="site-price">Почніть зі знайомства</h2><p id="site-price-note">Залиште заявку: покажемо застосунок і підберемо умови для вашого бізнесу.</p><div class="demo-steps"><p><span>01</span><span data-t="stepOne">Розкажіть про ваш бізнес.</span></p><p><span>02</span><span data-t="stepTwo">Покажемо LOMVIKO і підготуємо демодоступ.</span></p><p><span>03</span><span data-t="stepThree">Встановіть застосунок і увійдіть у свій акаунт.</span></p></div></div><form id="demo-form" class="demo-form"><h3 data-t="formTitle">Заявка на демо</h3><label for="name" data-t="formName">Ваше ім’я</label><input id="name" name="name" autocomplete="name" maxlength="120" required><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required><label for="company" data-t="formBusiness">Назва бізнесу</label><input id="company" name="business" autocomplete="organization" maxlength="160"><label for="message" data-t="formMessage">Що важливо для вас?</label><textarea id="message" name="message" rows="3" maxlength="2000"></textarea><div class="honeypot" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div><label class="consent"><input name="consent" type="checkbox" required><span id="site-privacy">Погоджуюся на використання контактних даних для відповіді на заявку.</span></label><button class="button" id="demo-submit" type="submit" data-t="formSubmit">Надіслати заявку ↗</button><p id="form-status" role="status" aria-live="polite"></p></form></div></section>
-<section id="faq" class="wrap section faq-section"><div><p class="eyebrow" data-t="faqEyebrow">ПЕРЕД ПОЧАТКОМ</p><h2 data-t="faqTitle">Кілька відповідей.</h2></div><div id="faq-list"></div></section>
-</main><footer class="wrap footer"><a class="brand" href="#"><span class="monogram">L</span><span>LOMVIKO</span></a><p data-t="footerTagline">Коли ваш бізнес працює в ритмі.</p><a id="contact-email" hidden></a><span>© <span id="year"></span> LOMVIKO</span></footer></body></html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--meta:start-->
+<title>LOMVIKO — CRM для бізнесу за записом: онлайн-запис, клієнти, фінанси</title>
+<meta name="description" content="Застосунок для macOS і Windows: онлайн-запис через Telegram 24/7, нагадування клієнтам, спільний розклад команди, клієнтська база та фінансові звіти.">
+<link rel="canonical" href="https://lomviko.com/">
+<meta property="og:locale" content="uk_UA">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:url" content="https://lomviko.com/">
+<meta property="og:title" content="LOMVIKO — ваш день в ідеальному ритмі">
+<meta property="og:description" content="Онлайн-запис через Telegram, нагадування клієнтам, розклад команди та фінанси — в одному застосунку для macOS і Windows.">
+<meta property="og:image:alt" content="LOMVIKO — CRM для бізнесу за записом">
+<meta name="twitter:title" content="LOMVIKO — ваш день в ідеальному ритмі">
+<meta name="twitter:description" content="Онлайн-запис через Telegram, нагадування клієнтам, розклад команди та фінанси — в одному застосунку для macOS і Windows.">
+<!--meta:end-->
+<link rel="alternate" hreflang="uk" href="https://lomviko.com/">
+<link rel="alternate" hreflang="en" href="https://lomviko.com/en">
+<link rel="alternate" hreflang="x-default" href="https://lomviko.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LOMVIKO">
+<meta property="og:image" content="https://lomviko.com/assets/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://lomviko.com/assets/og.png">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#07080a">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="application-name" content="LOMVIKO">
+<meta name="apple-mobile-web-app-title" content="LOMVIKO">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="preload" href="/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/cormorant-garamond-cyrillic-500-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lomviko.com/#organization","name":"LOMVIKO","url":"https://lomviko.com/","logo":"https://lomviko.com/assets/icon-512.png"},{"@type":"WebSite","@id":"https://lomviko.com/#website","url":"https://lomviko.com/","name":"LOMVIKO","inLanguage":["uk","en"],"publisher":{"@id":"https://lomviko.com/#organization"}},{"@type":"SoftwareApplication","name":"LOMVIKO","url":"https://lomviko.com/","applicationCategory":"BusinessApplication","operatingSystem":"macOS, Windows","inLanguage":["uk","en"],"description":"CRM для бізнесу за записом: онлайн-запис через Telegram 24/7, нагадування клієнтам, спільний розклад команди, клієнтська база та фінансові звіти.","publisher":{"@id":"https://lomviko.com/#organization"}}]}</script>
+<script src="/app.js" defer></script>
+<script src="/motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main" data-t="skip">До вмісту</a>
+<div class="backdrop" aria-hidden="true"><div class="backdrop-grid"></div><div class="glow glow-a"></div><div class="glow glow-b"></div></div>
+
+<header class="header">
+  <div class="wrap header-inner">
+    <a class="wordmark" href="/" aria-label="LOMVIKO">LOMVIKO</a>
+    <nav class="nav" aria-label="Навігація" data-t-label="navLabel">
+      <a href="#features" data-t="navFeatures">Можливості</a>
+      <a href="#how" data-t="navHow">Як це працює</a>
+      <a href="#calc" data-t="navCalc">Калькулятор</a>
+      <a href="#business" data-t="navBusiness">Для кого</a>
+      <a href="#faq" data-t="navFaq">Питання</a>
+    </nav>
+    <div class="header-actions">
+      <div class="lang" role="group" aria-label="Мова / Language">
+        <button type="button" data-lang="uk" aria-pressed="true">UA</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn btn-light btn-sm" href="#downloads" data-cta><span data-cta-label>Завантажити</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section id="access-section" class="wrap access" hidden>
+    <form id="access-form" class="glass access-card">
+      <h2 id="access-title">Встановіть пароль</h2>
+      <p id="access-help" class="muted"></p>
+      <label id="access-label" for="access-password">Новий пароль</label>
+      <input id="access-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+      <label id="access-confirm-label" for="access-confirm">Повторіть пароль</label>
+      <input id="access-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+      <button class="btn btn-light" id="access-submit" type="submit">Зберегти пароль</button>
+      <p id="access-status" class="form-status" role="status"></p>
+    </form>
+  </section>
+
+  <section class="hero">
+    <div class="bg-word bg-word-hero" aria-hidden="true">LOMVIKO</div>
+    <div class="wrap hero-copy">
+      <h1 id="hero-title">Ваш день — <em>в ідеальному ритмі.</em></h1>
+      <p id="hero-description" class="lead">Клієнти записуються самі через Telegram, нагадування приходять вчасно, а розклад, оплати й команда — в одному вікні. LOMVIKO бере рутину на себе, щоб ви займалися своєю справою.</p>
+      <div class="hero-actions">
+        <a class="btn btn-light" href="#downloads" data-cta><span data-cta-label>Завантажити</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+        <a class="btn btn-ghost" href="#how" data-t="seeHow">Як це працює</a>
+      </div>
+      <ul class="hero-trust">
+        <li data-t="trustOne">macOS і Windows</li>
+        <li data-t="trustTwo">Запис через Telegram 24/7</li>
+        <li data-t="trustThree">Експорт даних будь-коли</li>
+      </ul>
+    </div>
+
+    <div class="wrap board-stage" id="board-stage">
+      <div class="board" aria-hidden="true">
+        <div class="board-bar">
+          <span class="board-dots"><i></i><i></i><i></i></span>
+          <span class="board-name" data-m="boardTitle">Розклад · сьогодні</span>
+          <span class="board-live"><i></i>LIVE</span>
+        </div>
+        <div class="board-body">
+          <aside class="board-side">
+            <p class="board-date" data-m="boardDate">Четвер, 14 жовтня</p>
+            <div class="board-stat"><span data-m="statBookings">Записів</span><strong>18</strong><i class="meter m-72"></i></div>
+            <div class="board-stat"><span data-m="statRevenue">Виручка</span><strong data-m="statRevenueValue">24 600 грн</strong><i class="meter m-64"></i></div>
+            <div class="board-stat"><span data-m="statLoad">Завантаженість</span><strong>86%</strong><i class="meter m-86"></i></div>
+          </aside>
+          <div class="board-grid">
+            <span class="board-head c1" data-m="memberOne">Олена</span>
+            <span class="board-head c2" data-m="memberTwo">Максим</span>
+            <span class="board-head c3" data-m="memberThree">Ірина</span>
+            <span class="board-head c4" data-m="memberFour">Софія</span>
+            <span class="board-time r1">09:00</span><span class="board-line r1"></span>
+            <span class="board-time r2">10:00</span><span class="board-line r2"></span>
+            <span class="board-time r3">11:00</span><span class="board-line r3"></span>
+            <span class="board-time r4">12:00</span><span class="board-line r4"></span>
+            <span class="board-time r5">13:00</span><span class="board-line r5"></span>
+            <span class="board-time r6">14:00</span><span class="board-line r6"></span>
+            <div class="bk tone-gold c1 r1 d2"><span>09:00 — 11:00</span><strong data-m="bkOne">Фарбування</strong><small data-m="bkOneClient">Ірина К.</small></div>
+            <div class="bk tone-blue c1 r4 d1"><span>12:00 — 13:00</span><strong data-m="bkTwo">Стрижка</strong><small data-m="bkTwoClient">Дмитро</small></div>
+            <div class="bk tone-violet c2 r2 d2"><span>10:00 — 12:00</span><strong data-m="bkThree">Масаж спини</strong><small data-m="bkThreeClient">Олег</small></div>
+            <div class="bk tone-rose c2 r5 d2"><span>13:00 — 15:00</span><strong data-m="bkFour">SPA-догляд</strong><small data-m="bkFourClient">Марія</small></div>
+            <div class="bk tone-blue c3 r1 d1"><span>09:00 — 10:00</span><strong data-m="bkFive">Манікюр</strong><small data-m="bkFiveClient">Вікторія</small></div>
+            <div class="bk tone-gold c3 r3 d2 bk-new"><span>11:00 — 13:00</span><strong data-m="bkSix">Манікюр + покриття</strong><small data-m="bkSixClient">Анна · Telegram</small></div>
+            <div class="bk tone-violet c4 r2 d1"><span>10:00 — 11:00</span><strong data-m="bkSeven">Корекція брів</strong><small data-m="bkSevenClient">Катерина</small></div>
+            <div class="bk tone-rose c4 r4 d3"><span>12:00 — 15:00</span><strong data-m="bkEight">Догляд за обличчям</strong><small data-m="bkEightClient">Юлія</small></div>
+          </div>
+        </div>
+        <div class="float float-booking">
+          <span class="float-icon"><svg viewBox="0 0 24 24"><path d="m21 4-18 7 6 2m12-9-3 16-9-7m12-9-12 9v6l3-4"/></svg></span>
+          <span><strong data-m="toastBooking">Новий запис через Telegram</strong><small data-m="toastBookingDetail">Анна · Манікюр · 11:00</small></span>
+        </div>
+        <div class="float float-reminder">
+          <span class="float-icon"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zm4 4h4"/></svg></span>
+          <span><strong data-m="toastReminder">Нагадування надіслано</strong><small data-m="toastReminderDetail">Ігор · завтра о 10:00</small></span>
+        </div>
+      </div>
+      <p class="board-note" data-m="boardNote">Демонстрація сценарію · вигадані дані</p>
+    </div>
+  </section>
+
+  <section class="marquee" aria-label="Для бізнесу, який працює за записом" data-t-label="marqueeLabel">
+    <div class="marquee-viewport"><div class="marquee-track" id="marquee-track"></div></div>
+  </section>
+
+  <section id="why" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="whyTitle">Хаос у чатах — <em>у минулому.</em></h2>
+      <p class="section-intro" data-t="whyIntro">Знайомо? Ось що змінюється з першого дня.</p>
+    </header>
+    <div class="compare">
+      <div class="compare-col compare-before reveal">
+        <h3 data-t="beforeTitle">Як зараз</h3>
+        <ul id="pains"></ul>
+      </div>
+      <div class="compare-col compare-after glass reveal">
+        <h3 data-t="afterTitle">З LOMVIKO</h3>
+        <ul id="gains"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="calc" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="calcTitle">Скільки коштують <em>неявки?</em></h2>
+      <p class="section-intro" data-t="calcIntro">Клієнт забув про запис — майстер простоює, а час уже не продати. Порахуйте, скільки це коштує вашому бізнесу.</p>
+    </header>
+    <div class="calc glass reveal">
+      <form class="calc-inputs" id="calc-form">
+        <div class="range"><label for="calc-check"><span data-t="calcCheck">Середній чек</span><output id="calc-check-out" for="calc-check"></output></label><input type="range" id="calc-check" min="100" max="5000" step="50" value="800"></div>
+        <div class="range"><label for="calc-visits"><span data-t="calcVisits">Записів на день</span><output id="calc-visits-out" for="calc-visits"></output></label><input type="range" id="calc-visits" min="2" max="80" step="1" value="16"></div>
+        <div class="range"><label for="calc-noshow"><span data-t="calcNoShow">Неявок і запізнілих скасувань</span><output id="calc-noshow-out" for="calc-noshow"></output></label><input type="range" id="calc-noshow" min="1" max="30" step="1" value="8"></div>
+        <div class="range"><label for="calc-days"><span data-t="calcDays">Робочих днів на місяць</span><output id="calc-days-out" for="calc-days"></output></label><input type="range" id="calc-days" min="8" max="31" step="1" value="24"></div>
+        <div class="range"><label for="calc-saved"><span data-t="calcSaved">Скільки неявок повернуть нагадування</span><output id="calc-saved-out" for="calc-saved"></output></label><input type="range" id="calc-saved" min="10" max="80" step="5" value="40"></div>
+      </form>
+      <div class="calc-result" aria-live="polite">
+        <p class="calc-label" data-t="calcLoss">Ви втрачаєте щомісяця</p>
+        <strong class="calc-big" id="calc-loss">0</strong>
+        <p class="calc-sub" id="calc-missed"></p>
+        <div class="calc-save">
+          <span data-t="calcBack">Можна повернути з нагадуваннями LOMVIKO</span>
+          <strong id="calc-back">0</strong>
+          <small id="calc-year"></small>
+        </div>
+        <p class="calc-note" data-t="calcNote">Це оцінка за вашими числами. Частку повернутих візитів ви задаєте самі. Бот нагадує клієнту за 24 і за 2 години до візиту.</p>
+        <a class="btn btn-light btn-block" href="#downloads" data-cta><span data-cta-label>Завантажити</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="featuresTitle">Усе, що потрібно. <em>Нічого зайвого.</em></h2>
+      <p class="section-intro" data-t="featuresIntro">Інструменти, які щодня економлять години — без складних налаштувань.</p>
+    </header>
+    <div id="features-grid" class="bento"></div>
+  </section>
+
+  <section id="how" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="howTitle">Один день <em>з LOMVIKO.</em></h2>
+      <p class="section-intro" data-t="howIntro">Оберіть сценарій і подивіться, що відбувається між записом клієнта та завершеним візитом.</p>
+    </header>
+    <div class="stories reveal">
+      <div class="story-tabs" role="tablist" aria-label="Сценарії" data-t-label="storiesLabel" id="story-tabs"></div>
+      <div id="story-panel" class="story-panel glass" role="tabpanel" tabindex="0"></div>
+    </div>
+  </section>
+
+  <section class="wrap section peek">
+    <header class="section-head">
+      <h2 data-h="peekTitle">Відкрили. Побачили день. <em>До роботи.</em></h2>
+      <p class="section-intro" data-t="peekBody">Розклад, клієнти й оплати поруч. Не потрібно згадувати, в якому чаті домовлялися.</p>
+    </header>
+    <figure class="peek-frame reveal">
+      <div class="peek-bar" aria-hidden="true"><span class="board-dots"><i></i><i></i><i></i></span><span>LOMVIKO</span><span></span></div>
+      <img src="/assets/app-dark.png" width="1400" height="900" loading="lazy" decoding="async" alt="Інтерфейс LOMVIKO: розклад на день із записами клієнтів" data-t-alt="peekAlt">
+      <figcaption data-t="peekCaption">Справжній інтерфейс застосунку. На зображенні — демонстраційні дані.</figcaption>
+    </figure>
+  </section>
+
+  <section id="business" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="businessTitle">Не потрібно підлаштовуватися <em>під CRM.</em></h2>
+      <p class="section-intro" id="site-about">Один робочий простір для кількох бізнесів, команд і послуг.</p>
+    </header>
+    <div class="segments" role="tablist" aria-label="Тип бізнесу" data-t-label="segmentsLabel" id="segments"></div>
+    <div id="business-panel" class="business-panel glass" role="tabpanel"></div>
+  </section>
+
+  <section id="trust" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="trustTitle">Ваші дані — <em>тільки ваші.</em></h2>
+      <p class="section-intro" data-t="trustIntro">Клієнтська база — найцінніше, що є у бізнесу. Тому вона захищена й завжди залишається у вас.</p>
+    </header>
+    <div class="trust-grid" id="trust-grid"></div>
+  </section>
+
+  <section class="wrap section stats-section" aria-label="LOMVIKO у цифрах" data-t-label="statsLabel">
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section id="presentation" class="wrap section" hidden>
+    <div class="deck glass reveal">
+      <div class="deck-copy">
+        <h2 data-h="deckTitle">Покажіть LOMVIKO <em>своїй команді.</em></h2>
+        <p class="section-intro" data-t="deckBody">Коротка презентація: можливості, сценарії роботи, безпека даних і запуск. Зручно переслати партнеру чи власнику бізнесу.</p>
+        <div class="deck-actions">
+          <a class="btn btn-light" id="deck-download" href="/presentation" target="_blank" rel="noopener"><span data-t="deckButton">Відкрити презентацію</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+          <span class="deck-meta" id="deck-meta"></span>
+        </div>
+      </div>
+      <div class="deck-visual" aria-hidden="true">
+        <div class="deck-slide deck-slide-3"></div>
+        <div class="deck-slide deck-slide-2"><span class="deck-bars"><i></i><i></i><i></i><i></i></span></div>
+        <div class="deck-slide deck-slide-1"><span class="deck-mark">LOMVIKO</span><span class="deck-title">Ваш день —<br><em>в ідеальному ритмі.</em></span><span class="deck-ghost">LOMVIKO</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" class="wrap section demo">
+    <div class="demo-copy">
+      <h2 id="site-price">Почніть зі знайомства</h2>
+      <p class="section-intro" id="site-price-note">Залиште заявку: покажемо застосунок і підберемо умови для вашого бізнесу.</p>
+      <ol class="steps">
+        <li><span>01</span><span data-t="stepOne">Розкажіть про ваш бізнес — це займе хвилину.</span></li>
+        <li><span>02</span><span data-t="stepTwo">Покажемо LOMVIKO і підготуємо демодоступ.</span></li>
+        <li><span>03</span><span data-t="stepThree">Встановіть застосунок і працюйте.</span></li>
+      </ol>
+    </div>
+    <div class="demo-side">
+      <form id="demo-form" class="glass demo-form" hidden>
+        <h3 data-t="formTitle">Заявка на демо</h3>
+        <label for="name" data-t="formName">Ваше ім’я</label>
+        <input id="name" name="name" autocomplete="name" maxlength="120" required>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="company" data-t="formBusiness">Назва бізнесу</label>
+        <input id="company" name="business" autocomplete="organization" maxlength="160">
+        <label for="message" data-t="formMessage">Що для вас найважливіше?</label>
+        <textarea id="message" name="message" rows="3" maxlength="2000"></textarea>
+        <div class="honeypot" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+        <label class="consent"><input name="consent" type="checkbox" required><span><span id="site-privacy">Погоджуюся на використання контактних даних для відповіді на заявку.</span> <a id="privacy-inline" class="inline-link" hidden target="_blank" rel="noopener"></a></span></label>
+        <button class="btn btn-light btn-block" id="demo-submit" type="submit" data-t="formSubmit">Надіслати заявку</button>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+      </form>
+      <div id="demo-fallback" class="glass demo-fallback">
+        <h3 data-t="offTitle">Почніть уже сьогодні</h3>
+        <p class="muted" id="demo-fallback-text">Завантажте LOMVIKO для macOS або Windows. Онлайн-заявки відкриються найближчим часом.</p>
+        <div class="demo-fallback-actions">
+          <a class="btn btn-light" href="#downloads" data-t="ctaDownload">Завантажити</a>
+          <a class="btn btn-ghost" id="demo-fallback-mail" hidden data-t="writeUs">Написати нам</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="downloads" class="wrap section">
+    <header class="section-head">
+      <h2 data-h="downloadsTitle">Наступний робочий день — <em>у LOMVIKO.</em></h2>
+      <p class="section-intro" data-t="downloadHint">Для роботи потрібен бізнес-акаунт — ми налаштуємо його після знайомства.</p>
+    </header>
+    <p id="service-status" class="service-status" role="status"></p>
+    <div id="download-grid" class="downloads"></div>
+    <p class="footnote" data-t="downloadSafety">Оновлюєте LOMVIKO? Спочатку створіть резервну копію в застосунку. Встановлення нової версії зберігає ваші дані.</p>
+  </section>
+
+  <section id="news" class="wrap section" hidden>
+    <header class="section-head">
+      <h2 data-t="newsTitle">Що нового</h2>
+    </header>
+    <div id="announcements" class="announcements"></div>
+  </section>
+
+  <section id="faq" class="wrap section faq">
+    <header class="section-head">
+      <h2 data-h="faqTitle">Перед <em>початком.</em></h2>
+    </header>
+    <div id="faq-list" class="faq-list"></div>
+  </section>
+
+  <section class="wrap final reveal">
+    <div class="bg-word bg-word-final" aria-hidden="true" data-t="finalWord">РИТМ</div>
+    <h2 data-h="finalTitle">Почніть новий день <em>з LOMVIKO.</em></h2>
+    <p class="section-intro" data-t="finalBody">Налаштуємо застосунок під ваш бізнес і покажемо, як він працює.</p>
+    <div class="hero-actions">
+      <a class="btn btn-light" href="#downloads" data-cta><span data-cta-label>Завантажити</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <a class="wordmark" href="/" aria-label="LOMVIKO">LOMVIKO</a>
+      <p data-t="footerTagline">CRM для бізнесу, що працює за записом.</p>
+    </div>
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="#features" data-t="navFeatures">Можливості</a>
+      <a href="#how" data-t="navHow">Як це працює</a>
+      <a href="#downloads" data-t="navDownload">Завантажити</a>
+      <a href="#faq" data-t="navFaq">Питання</a>
+    </nav>
+    <a id="contact-email" class="footer-mail" hidden></a>
+  </div>
+  <div class="wrap footer-base"><span>© <span id="year">2026</span> LOMVIKO</span><nav class="footer-legal" id="footer-legal" aria-label="Документи" data-t-label="legalLabel"></nav><span data-t="footerMade">macOS · Windows · Українська · English</span></div>
+  <div class="footer-giant" aria-hidden="true">LOMVIKO</div>
+</footer>
+</body>
+</html>

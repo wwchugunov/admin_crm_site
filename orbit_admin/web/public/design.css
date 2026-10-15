@@ -3,13 +3,13 @@
   --canvas: #f4f5f7;
   --surface: #ffffff;
   --sidebar: #eef0f2;
-  --ink: #202924;
+  --ink: #292620;
   --muted: #637069;
-  --line: #dfe5e1;
-  --accent: #23794f;
-  --accent-soft: #e2eee7;
-  --field: #fafbfa;
-  --hover: #f0f4f1;
+  --line: #e5e3df;
+  --accent: #755827;
+  --accent-soft: #eeeae2;
+  --field: #fbfbfa;
+  --hover: #f4f3f0;
   --elevation: 0 2px 5px #18291f04, 0 12px 28px #18291f04;
   --focus: #23794f66;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -22,11 +22,11 @@ html[data-theme="dark"] {
   --canvas: #15191c;
   --surface: #20262a;
   --sidebar: #191f23;
-  --ink: #edf2ee;
+  --ink: #f2f0ed;
   --muted: #abb8af;
   --line: #35403a;
-  --accent: #287c53;
-  --accent-soft: #283e32;
+  --accent: #7b5d29;
+  --accent-soft: #3e3628;
   --field: #1a2023;
   --hover: #2a3330;
   --elevation: 0 2px 5px #0001, 0 12px 28px #0001;
@@ -70,7 +70,7 @@ html[data-theme="dark"] .brand-icon {
   height: 42px;
   border-radius: 14px;
   font-size: 18px;
-  background: #23794f;
+  background: #755827;
   box-shadow: 0 4px 10px #12332114;
   color: white;
 }
@@ -151,7 +151,7 @@ html[data-theme="dark"] .nav.active {
   width: 3px;
   height: 16px;
   border-radius: 3px;
-  background: #3b9666;
+  background: #96753b;
   position: absolute;
   left: 0;
   top: 12px;
@@ -224,7 +224,7 @@ html[data-theme="dark"] .primary {
 }
 .primary:hover,
 html[data-theme="dark"] .primary:hover {
-  background: #1b6541;
+  background: #604920;
 }
 .secondary,
 .row-actions button,
@@ -269,7 +269,7 @@ html[data-theme="dark"] .search {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #559c73;
+  border-color: #9c8255;
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 input::placeholder,
@@ -398,7 +398,7 @@ html[data-theme="dark"] .empty strong {
 }
 .empty-icon {
   font-size: 28px;
-  color: #3d9465;
+  color: #94743d;
 }
 .side-card {
   padding: 20px;
@@ -448,7 +448,7 @@ html[data-theme="dark"] .mono {
   color: var(--ink);
 }
 .callout {
-  border-left: 3px solid #3b9666;
+  border-left: 3px solid #96753b;
   border-radius: 12px;
 }
 .grid-2 {
@@ -491,10 +491,10 @@ html[data-theme="dark"] .chart-axis {
   fill: var(--muted);
 }
 .chart-load {
-  fill: #3b9666;
+  fill: #96753b;
 }
 .chart-income {
-  fill: #87bea0;
+  fill: #beaa87;
 }
 dialog {
   padding: 26px;
@@ -527,7 +527,7 @@ html[data-theme="dark"] .calendar-popup {
   background: var(--accent);
 }
 #toast {
-  background: #263b30;
+  background: #3b3326;
   border-radius: 12px;
   box-shadow: 0 8px 25px #0002;
 }
@@ -545,7 +545,7 @@ html[data-theme="dark"] #web-login {
   width: 50px;
   height: 50px;
   margin-bottom: 24px;
-  background: #23794f;
+  background: #755827;
   color: #fff;
   font-size: 22px;
   font-weight: 700;
@@ -683,7 +683,7 @@ html[data-theme="dark"] .empty-icon,
 html[data-theme="dark"] .mini-price,
 html[data-theme="dark"] .connection-url,
 html[data-theme="dark"] .event-tag {
-  color: #87cda2;
+  color: #cdb387;
 }
 .dashboard-stats .stat-number {
   font-size: 25px;
@@ -720,3 +720,12 @@ html[data-theme="dark"] .event-tag {
 #toast:popover-open {
   transform: none; position:fixed; inset:18px 18px auto auto; margin:0; max-width:min(480px,calc(100vw - 36px)); z-index:2147483647; }
 #toast::backdrop { background:transparent; pointer-events:none; }
+
+/* Documents */
+.doc-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.doc-actions .secondary,.doc-actions .danger{padding:7px 10px;font-size:11.5px}
+.doc-link{display:inline-flex;align-items:center;text-decoration:none;border-radius:8px}
+.doc-hint{max-width:640px;line-height:1.6;margin-top:6px}
+.badge.doc-current{background:var(--accent-soft);color:var(--accent)}
+.badge.doc-archive{background:var(--hover);color:var(--muted)}
+.nav span[data-doc-nav]{font-size:12px;min-width:0}

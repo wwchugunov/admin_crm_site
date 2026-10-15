@@ -2,7 +2,7 @@ FROM node:24-bookworm-slim
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-COPY owner/server.cjs owner/accounts.cjs owner/businesses.cjs owner/admin-auth.cjs owner/releases.cjs owner/public-site.cjs owner/mail.cjs owner/registration.cjs owner/bot-workers.cjs owner/website-booking.cjs owner/entitlements.cjs ./owner/
+COPY owner/server.cjs owner/accounts.cjs owner/businesses.cjs owner/admin-auth.cjs owner/releases.cjs owner/public-site.cjs owner/mail.cjs owner/registration.cjs owner/bot-workers.cjs owner/website-booking.cjs owner/entitlements.cjs owner/documents.cjs ./owner/
 COPY src/store.cjs src/security.cjs src/integrations.cjs src/google-config.cjs src/request-proof.cjs ./src/
 COPY src/ui/i18n.js ./src/ui/
 COPY worker ./worker

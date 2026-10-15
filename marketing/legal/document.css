@@ -1,0 +1,15 @@
+/* Print layout for LOMVIKO legal documents (A4). */
+@page { size: A4; margin: 22mm 20mm 24mm; }
+body { margin: 0; color: #15161a; background: #fff; font: 400 10.5pt/1.6 Onest, -apple-system, 'Segoe UI', Arial, sans-serif; }
+.wordmark { font-weight: 600; letter-spacing: .42em; font-size: 9pt; color: #15161a; }
+.draft { margin: 10pt 0 18pt; padding: 9pt 12pt; border: 1px solid #c9a96a; border-radius: 6pt; background: #fbf6ea; color: #5c4518; font-size: 9.5pt; }
+h1 { margin: 14pt 0 4pt; font-size: 22pt; line-height: 1.15; font-weight: 600; letter-spacing: -.02em; }
+.meta { color: #5d6069; font-size: 9.5pt; margin-bottom: 18pt; }
+h2 { margin: 18pt 0 6pt; font-size: 12.5pt; font-weight: 600; break-after: avoid; }
+p, li { margin: 0 0 6pt; text-align: left; }
+ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+table { width: 100%; border-collapse: collapse; margin: 6pt 0 10pt; font-size: 9.5pt; }
+th, td { text-align: left; vertical-align: top; padding: 6pt 8pt; border: 1px solid #d9dbe0; }
+th { background: #f4f2ec; font-weight: 600; }
+.fill { background: #fff1c9; padding: 0 2pt; border-radius: 2pt; }
+.requisites td { width: 50%; }

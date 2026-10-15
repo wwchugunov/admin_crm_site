@@ -78,7 +78,7 @@ class PublicSite {
     for (const platform of ['mac', 'win']) for (const arch of ['x64', 'arm64']) {
       const r = this.updates.latest(platform, arch); if (r) releases.push({ version: r.version, platform, arch, sha256: r.sha256, size: r.size, notes: r.notes, publishedAt: r.published_at, path: `/public/download/${r.version}/${platform}/${arch}` });
     }
-    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), releases, demoAvailable: !!content.contactEmail };
+    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), releases, documents: this.documents?.public() || {}, demoAvailable: !!content.contactEmail };
   }
   lead(data) {
     if (!this.public().demoAvailable) fail('Demo requests are not configured yet', 503);
