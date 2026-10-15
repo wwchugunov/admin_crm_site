@@ -3147,7 +3147,20 @@
 "mailQueued":{"uk": "Лист поставлено в чергу", "en": "Email queued"},
 "mailVerified":{"uk": "SMTP-з’єднання працює", "en": "SMTP connection verified"},
 "mailNotConfiguredDemo":{"uk": "Демо створено. Лист не поставлено в чергу: налаштуйте SMTP і публічні URL.", "en": "Demo created. No email queued: configure SMTP and public URLs."},
-"mailLanguage":{"uk": "Мова листа", "en": "Email language"}
+"mailLanguage":{"uk": "Мова листа", "en": "Email language"},
+"companySearch":{"uk": "Пошук компанії або власника", "en": "Search company or owner"},
+"companyCount":{"uk": "Компаній", "en": "Companies"},
+"companyOwner":{"uk": "Власник", "en": "Owner"},
+"companyTeam":{"uk": "Команда", "en": "Team"},
+"companyAccess":{"uk": "Доступ до", "en": "Access until"},
+"companyHint":{"uk": "Власник може мати кілька компаній, співробітники отримують доступ за ролями. Профіль і послуги, підготовлені тут, завантажаться після першого входу клієнта.", "en": "An owner can have several companies; staff get role-based access. The profile and services prepared here load on the client's first sign-in."},
+"companyNone":{"uk": "Компаній за цим запитом немає", "en": "No companies match"},
+"deleteUser":{"uk": "Видалити", "en": "Delete"},
+"deleteUserTitle":{"uk": "Видалити назавжди", "en": "Delete permanently"},
+"deleteOwnerBody":{"uk": "Буде видалено власника, усіх співробітників акаунта, компанії з базою клієнтів, записами, платежами, ботом і резервними копіями на сервері. Відновити неможливо.", "en": "This removes the owner, every team member of the account, and the companies with clients, appointments, payments, bot and server backups. This cannot be undone."},
+"deleteMemberBody":{"uk": "Буде видалено лише цього співробітника, його пристрої та сеанси. Дані компанії залишаться у власника. Відновити неможливо.", "en": "Only this team member, their devices and sessions are removed. Company data stays with the owner. This cannot be undone."},
+"deleteUserConfirm":{"uk": "Для підтвердження введіть email користувача", "en": "Type the user's email to confirm"},
+"deleteUserDone":{"uk": "Акаунт видалено назавжди", "en": "Account deleted permanently"}
 };
   let language='uk';try{if(globalThis.localStorage?.getItem('orbit.language')==='en')language='en';}catch{}
   function t(key,lang=language){const value=messages[key];if(!value)throw Error('Unknown message: '+key);return value[lang==='en'?'en':'uk'];}

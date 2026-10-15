@@ -15,6 +15,7 @@ const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
 const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
+const {AccountDeletion}=require('./account-deletion.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
 function fail(status, message) { const error = Error(message); error.status = status; throw error; }
@@ -82,6 +83,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const accounts=new Accounts({store,directory:businessDirectory,body,fail,string,license,telegramFactory,updates});
   const registration=new Registration({store,accounts,mail,fail,string});
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
+  const deletion=new AccountDeletion({store,accounts,fail});accounts.deletion=deletion;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
     if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
@@ -152,6 +154,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
           if (!Number.isSafeInteger(expires) || expires <= 0 || !Number.isInteger(seats) || seats < 1 || seats > 100) fail(400, OrbitI18n.t('m679'));
           store.transaction(() => { store.db.prepare('UPDATE users SET stage=?,expires=?,max_devices=? WHERE id=?').run(data.stage, expires, seats, data.id); if(data.stage==='blocked')store.db.prepare('DELETE FROM sessions WHERE user_id=? OR user_id IN(SELECT id FROM users WHERE account_id=?)').run(data.id,data.id);store.event('user.updated', data.id, null, '', data.stage); }); return reply(200, { ok: true });
         }
+        // Permanent deletion; the panel must repeat the user's email so a misclick cannot erase an account.
+        if (req.method === 'POST' && route === '/admin/user/delete') { const data = await body(req), user = store.db.prepare('SELECT * FROM users WHERE id=?').get(string(data.id, 64)); if (!user) fail(404, OrbitI18n.t('m641')); if (typeof data.confirm !== 'string' || data.confirm.trim().toLowerCase() !== user.email.toLowerCase()) fail(400, 'Введіть email користувача для підтвердження / Type the user email to confirm'); return reply(200, deletion.delete(user.id)); }
         if (req.method === 'POST' && route === '/admin/revoke') { const data = await body(req); const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64)); if (!device) fail(404, OrbitI18n.t('m680')); store.db.prepare('UPDATE devices SET revoked=1 WHERE id=?').run(device.id); store.db.prepare('DELETE FROM sessions WHERE device_id=?').run(device.id);store.event('device.revoked', device.user_id, device.id); return reply(200, { ok: true }); }
         if (req.method === 'GET' && route === '/admin/export') { const data = {}; for (const table of ['users', 'devices', 'events','businesses','memberships','releases','update_policies','device_builds','update_backups','site_content','site_history','site_leads','site_downloads','security_rejections','purchases']) data[table] = store.db.prepare(`SELECT * FROM ${table}`).all().map(row=>{const copy={...row};delete copy.password_hash;return copy;}); return reply(200, { format: 'orbit-owner', version: 1, exported_at: new Date().toISOString(), tables: data }); }
         fail(404, OrbitI18n.t('m652'));

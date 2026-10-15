@@ -2,3 +2,31 @@
 #modal textarea{display:block;width:100%;font:inherit;padding:12px;border:1px solid var(--line);border-radius:8px;resize:vertical;box-sizing:border-box}.lead-message{max-width:360px;white-space:pre-wrap;overflow-wrap:anywhere}aside nav .nav{padding-top:9px;padding-bottom:9px}
 
 #web-login{position:fixed;inset:0;z-index:10000;background:var(--surface,#fff);color:#303030;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:30px max(30px,calc((100vw - 420px)/2));margin:0}#web-login input{display:block}html[data-theme="dark"] #web-login{background:#181818;color:#eee}
+
+/* Companies page: one card per company instead of a bare table and a separate bot list. */
+.company-toolbar{gap:14px;justify-content:flex-start}
+.company-toolbar .search{flex:1;max-width:420px}
+.company-toolbar .primary{margin-left:auto}
+.company-count{color:var(--muted);font-size:12px;white-space:nowrap}
+.company-hint{margin:-4px 0 20px;max-width:760px;color:var(--muted);font-size:12px;line-height:1.6}
+.company-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.company-card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--elevation);overflow:hidden}
+.company-card header{display:flex;align-items:center;gap:12px;padding:20px 20px 16px}
+.company-mark{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:17px}
+html[data-theme="dark"] .company-mark{color:#e7cf9f}
+.company-title{min-width:0;flex:1}
+.company-title h3{margin:0;font-size:15px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.company-title p{margin:4px 0 0;color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.company-facts{display:grid;grid-template-columns:1.4fr 1fr .6fr;margin:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.company-facts div{padding:12px 20px;min-width:0}
+.company-facts div+div{border-left:1px solid var(--line)}
+.company-facts dt{font-size:10.5px;color:var(--muted);margin-bottom:5px}
+.company-facts dd{margin:0;font-size:12.5px;font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bot-state::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#b8b8b8;margin-right:7px;vertical-align:1px}
+.bot-state.on::before{background:#3f9d6b}
+.company-card footer{display:flex;gap:8px;padding:14px 20px;margin-top:auto}
+.company-card footer button{flex:1;font-size:12px;padding:9px 10px}
+.danger-note{margin:14px 0 4px;padding:12px 14px;border-radius:10px;background:#fff0ee;color:#9d4b45;font-size:12.5px;line-height:1.6}
+html[data-theme="dark"] .danger-note{background:#3a2422;color:#f1b8b2}
+.inline-actions .danger{font-size:10px;padding:7px 9px}
+@media(max-width:700px){.company-toolbar{flex-wrap:wrap}.company-toolbar .search{max-width:none;flex-basis:100%}.company-grid{grid-template-columns:1fr}}
