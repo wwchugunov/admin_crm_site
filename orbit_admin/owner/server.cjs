@@ -13,6 +13,7 @@ const {BotWorkers}=require('./bot-workers.cjs');
 const {Releases,version:stableVersion}=require('./releases.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
+const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
@@ -71,6 +72,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const updates=new Releases(store,privateKey,releaseDirectory);
   const website=new PublicSite(store,updates);
   const documents=new Documents(store,documentDirectory);website.documents=documents;
+  const publishing=new ReleasePublishing(store,updates);
   const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;
   function admin(req){administrator.verify(req);}
   function license(device, user) {
@@ -100,12 +102,14 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         administrator.uploadSession(req);const size=Number(req.headers['content-length']);if(!Number.isSafeInteger(size)||size<1||size>512*1024*1024)fail(413,'Installer must be at most 512 MiB');const target=updates.file(url.searchParams.get('version'),url.searchParams.get('platform'),url.searchParams.get('arch'));if(fs.existsSync(target))fail(409,'Installer already exists; use a new version');const temporary=target+'.'+id()+'.partial',digest=crypto.createHash('sha256');let fd=fs.openSync(temporary,'wx',0o600),received=0;
         try{for await(const chunk of req){received+=chunk.length;if(received>size)fail(413,'Invalid installer size');digest.update(chunk);fs.writeFileSync(fd,chunk);}if(received!==size)fail(400,'Incomplete installer');fs.fsyncSync(fd);fs.closeSync(fd);fd=null;administrator.verifyUpload(req,digest.digest('hex'));fs.linkSync(temporary,target);return reply(201,{ok:true});}finally{if(fd!==null)fs.closeSync(fd);fs.rmSync(temporary,{force:true});}
       }
+      if(req.method==='PUT'&&route==='/publish/file')return reply(201,await publishing.upload(req,url));
       if(req.method==='PUT'&&route==='/admin/documents/file'){
         administrator.uploadSession(req);const size=Number(req.headers['content-length']);if(!Number.isSafeInteger(size)||size<1||size>DOCUMENT_MAX)fail(413,'Document must be at most 25 MiB');const temporary=documents.temporary(),digest=crypto.createHash('sha256');let fd=fs.openSync(temporary,'wx',0o600),received=0;
         try{for await(const chunk of req){received+=chunk.length;if(received>size)fail(413,'Invalid document size');digest.update(chunk);fs.writeFileSync(fd,chunk);}if(received!==size)fail(400,'Incomplete document');fs.fsyncSync(fd);fs.closeSync(fd);fd=null;const hex=digest.digest('hex');administrator.verifyUpload(req,hex);const p=url.searchParams;return reply(201,documents.add(temporary,{kind:p.get('kind'),language:p.get('language'),title:p.get('title'),filename:p.get('filename'),activate:p.get('activate')!=='0'},size,hex));}finally{if(fd!==null)fs.closeSync(fd);fs.rmSync(temporary,{force:true});}
       }
       if(['POST','PUT'].includes(req.method))await body(req);
       if (req.method === 'GET' && route === '/healthz') { store.db.prepare('SELECT 1').get(); return reply(200, { status: 'ok' }); }
+      if(req.method==='POST'&&route==='/publish/release')return reply(201,await publishing.register(req,req.parsedBody));
       if(req.method==='POST'&&route==='/admin/session')return reply(200,administrator.login(req,req.parsedBody));
       if (route.startsWith('/admin/')) {
         admin(req);
@@ -244,7 +248,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
     await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
-  server.mail=mail;server.updates=updates;server.documents=documents;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
+  server.mail=mail;server.updates=updates;server.documents=documents;server.publishing=publishing;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
   server.requestTimeout = 15*60000; server.headersTimeout = 10000;
   return server;
 }
