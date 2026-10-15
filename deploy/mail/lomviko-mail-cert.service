@@ -1,0 +1,7 @@
+[Unit]
+Description=Copy renewed Caddy certificate to Stalwart
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sync-lomviko-mail-cert

@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch the LOMVIKO mail certificate managed by Caddy
+
+[Path]
+PathModified=/var/lib/docker/volumes/orbit-admin_caddy-data/_data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/mail.lomviko.com/mail.lomviko.com.crt
+Unit=lomviko-mail-cert.service
+
+[Install]
+WantedBy=multi-user.target

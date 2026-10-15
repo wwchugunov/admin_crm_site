@@ -1,0 +1,57 @@
+name: lomviko-mail
+
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:v0.16
+    restart: unless-stopped
+    init: true
+    environment:
+      STALWART_PUBLIC_URL: https://mail.lomviko.com
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - stalwart-etc:/etc/stalwart
+      - stalwart-data:/var/lib/stalwart
+      - ./certs:/opt/stalwart/cert:ro,Z
+    networks:
+      default:
+        aliases:
+          - mail.lomviko.com
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  roundcube:
+    image: roundcube/roundcubemail:1.6.19-apache
+    restart: unless-stopped
+    depends_on:
+      stalwart:
+        condition: service_healthy
+    environment:
+      ROUNDCUBEMAIL_DB_TYPE: sqlite
+      ROUNDCUBEMAIL_DEFAULT_HOST: ssl://mail.lomviko.com
+      ROUNDCUBEMAIL_DEFAULT_PORT: "993"
+      ROUNDCUBEMAIL_SMTP_SERVER: ssl://mail.lomviko.com
+      ROUNDCUBEMAIL_SMTP_PORT: "465"
+      ROUNDCUBEMAIL_USERNAME_DOMAIN: lomviko.com
+      ROUNDCUBEMAIL_SKIN: elastic
+      TZ: Europe/Kyiv
+    volumes:
+      - roundcube-db:/var/roundcube/db
+      - ./secrets/roundcube_des_key:/run/secrets/roundcube_des_key:ro,Z
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  stalwart-etc:
+  stalwart-data:
+  roundcube-db:

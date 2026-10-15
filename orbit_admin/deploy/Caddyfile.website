@@ -27,3 +27,15 @@
 www.{$ORBIT_WEBSITE_DOMAIN} {
   redir https://{$ORBIT_WEBSITE_DOMAIN}{uri} permanent
 }
+
+mail.lomviko.com, mail-admin.lomviko.com, mta-sts.lomviko.com, autoconfig.lomviko.com, autodiscover.lomviko.com, ua-auto-config.lomviko.com {
+  encode zstd gzip
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy stalwart:8080
+}
+
+webmail.lomviko.com {
+  encode zstd gzip
+  header Strict-Transport-Security "max-age=31536000"
+  reverse_proxy roundcube:80
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily LOMVIKO mail backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=lomviko-mail-backup.service
+
+[Install]
+WantedBy=timers.target

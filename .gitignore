@@ -5,6 +5,11 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Production mail runtime data and private material
+deploy/mail/secrets/
+deploy/mail/certs/
+deploy/mail/backups/
 *.sqlite
 *.sqlite-*
 *.db
