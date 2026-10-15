@@ -37,3 +37,14 @@ test('Document routes require a session',async t=>{
  const f=await fixture(t,'landing');
  assert.equal((await fetch(f.origin+'/web/document?kind=site-privacy&language=uk&title=x&filename=x.pdf',{method:'PUT',headers:{Origin:f.origin},body:'x'})).status,401);
 });
+test('Panel sign-in forwards email, password and code with a proof bound to the login',async t=>{
+ const f=await fixture(t,'landing'),before=f.calls.length;
+ const send=body=>fetch(f.origin+'/web/login',{method:'POST',headers:{Origin:f.origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+ assert.equal((await send({login:'owner@example.test',password:'',otp:'123456'})).status,401);
+ assert.equal((await send({login:'owner@example.test',password:'long-password-1',otp:'12'})).status,401);
+ assert.equal(f.calls.length,before,'incomplete forms never reach the API');
+ const ok=await send({login:'owner@example.test',password:'long-password-1',otp:'123456'});assert.equal(ok.status,200);
+ const call=f.calls.at(-1),body=JSON.parse(call.body.toString());
+ assert.equal(call.route,'/admin/session');assert.equal(body.login,'owner@example.test');assert.equal(body.password,'long-password-1');assert(!('token' in body));
+ assert.equal(call.headers.authorization,'Bearer owner@example.test');assert(call.headers['x-orbit-proof']);
+});

@@ -727,3 +727,5 @@ html[data-theme="dark"] .event-tag {
 .nav span[data-doc-nav]{font-size:12px;min-width:0}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);border:0}
 #web-login .hint{margin-top:10px}
+#web-login .link-switch{margin-top:12px;background:none;border:0;padding:4px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font:inherit;font-size:13px;align-self:center}
+#web-login .link-switch:hover{color:var(--ink)}
