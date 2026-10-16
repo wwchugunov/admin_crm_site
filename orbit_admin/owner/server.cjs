@@ -16,6 +16,7 @@ const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
 const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
+const {Monobank}=require('./monobank.cjs');
 const {AdminMembers}=require('./admin-members.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
@@ -86,6 +87,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const registration=new Registration({store,accounts,mail,fail,string});
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
   const deletion=new AccountDeletion({store,accounts,fail});accounts.deletion=deletion;
+  const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
     if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
@@ -177,6 +179,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
       if(await botWorkers.handle(req,url,reply))return;
+      if(await monobank.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
       if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true });
@@ -235,6 +238,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   });
   const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup(); for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
+  const payTimer=setInterval(()=>monobank.poll().catch(()=>{}),180000);payTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;
   function tickBots() {
@@ -254,7 +258,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   server.once('listening', tickBots);
   let resolveDisposed; server.disposed = new Promise(resolve => { resolveDisposed = resolve; });
   server.on('close', () => {
-    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);
+    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);clearInterval(payTimer);
     Promise.all([botWork,mail.close()]).finally(() => { accounts.close(); resolveDisposed(); });
   });
   server.shutdown = async () => {

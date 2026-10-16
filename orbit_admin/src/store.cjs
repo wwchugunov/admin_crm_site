@@ -5,7 +5,7 @@ const { randomUUID, randomBytes } = require('node:crypto');
 const { mkdirSync, chmodSync } = require('node:fs');
 const { dirname } = require('node:path');
 
-const TABLES = ['clients', 'services', 'resources', 'appointments', 'settings', 'audit', 'reminders', 'appointment_clients', 'appointment_resources', 'payments','reminder_deliveries','service_resources','resource_absences'];
+const TABLES = ['clients', 'services', 'resources', 'appointments', 'settings', 'audit', 'reminders', 'appointment_clients', 'appointment_resources', 'payments','reminder_deliveries','service_resources','resource_absences','payment_links'];
 function text(value, max = 500) { if (typeof value !== 'string' || !value.trim() || value.length > max) throw Error(OrbitI18n.t('m533')); return value.trim(); }
 function cents(value) { const amount = Math.round(Number(value) * 100); if (!Number.isSafeInteger(amount) || amount < 0 || amount > 1e10) throw Error(OrbitI18n.t('m534')); return amount; }
 function zonedTime(date, clock, timezone) {
@@ -202,6 +202,7 @@ class Store {
     this.db.exec(
       "CREATE TABLE IF NOT EXISTS service_resources(service_id TEXT NOT NULL REFERENCES services(id),resource_id TEXT NOT NULL REFERENCES resources(id),PRIMARY KEY(service_id,resource_id));CREATE TABLE IF NOT EXISTS resource_absences(id TEXT PRIMARY KEY,resource_id TEXT NOT NULL REFERENCES resources(id),start_date TEXT NOT NULL,end_date TEXT NOT NULL,reason TEXT NOT NULL DEFAULT '')",
     );
+    this.db.exec("CREATE TABLE IF NOT EXISTS payment_links(id TEXT PRIMARY KEY,appointment_id TEXT NOT NULL REFERENCES appointments(id),provider TEXT NOT NULL,invoice_id TEXT NOT NULL,amount INTEGER NOT NULL,credited INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL,url TEXT NOT NULL,created_at INTEGER NOT NULL,expires INTEGER NOT NULL,modified TEXT NOT NULL DEFAULT '',UNIQUE(provider,invoice_id))");
   }
   businessDay(ms) {
     return new Intl.DateTimeFormat("en-CA", {
@@ -386,16 +387,16 @@ class Store {
       a.client_name = a.clients.map((c) => c.name).join(", ");
     }
     const profile={};for(const key of ['business','industry','installation','timezone','currency','logo','phone','address','work_start','work_end','work_days','onboarded','website_enabled'])profile[key]=this.get(key);
-    return {clients:this.db.prepare('SELECT id,name,phone,notes,chat_id FROM clients ORDER BY name').all(),services:this.db.prepare('SELECT * FROM services WHERE archived=0 ORDER BY name').all().map(sv=>({...sv,resource_ids:this.serviceStaff(sv.id)})),absences:this.db.prepare('SELECT * FROM resource_absences ORDER BY start_date').all(),resources:this.db.prepare('SELECT * FROM resources WHERE archived=0 ORDER BY name').all(),appointments,payments:this.db.prepare('SELECT p.*,s.name service_name FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN services s ON s.id=a.service_id ORDER BY at DESC').all(),...profile};
+    return {clients:this.db.prepare('SELECT id,name,phone,notes,chat_id FROM clients ORDER BY name').all(),services:this.db.prepare('SELECT * FROM services WHERE archived=0 ORDER BY name').all().map(sv=>({...sv,resource_ids:this.serviceStaff(sv.id)})),absences:this.db.prepare('SELECT * FROM resource_absences ORDER BY start_date').all(),resources:this.db.prepare('SELECT * FROM resources WHERE archived=0 ORDER BY name').all(),appointments,payments:this.db.prepare('SELECT p.*,s.name service_name FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN services s ON s.id=a.service_id ORDER BY at DESC').all(),payment_links:this.openPaymentLinks(),...profile};
   }
   export() { const tables = {}; for (const table of TABLES) tables[table] = this.db.prepare(`SELECT * FROM ${table}`).all().map(row => ({ ...row })); for (const client of tables.clients) client.link_code = null; return { format: 'orbit-crm', version: 2, exported_at: new Date().toISOString(), tables }; }
   restore(data) {
     if(data?.format==='orbit-crm'&&data.version===1&&data.tables){data=JSON.parse(JSON.stringify(data));data.version=2;for(const s of data.tables.services||[])Object.assign(s,{capacity:1,required_resources:1,bot_visible:1,web_visible:0});for(const a of data.tables.appointments||[])Object.assign(a,{total:data.tables.services.find(s=>s.id===a.service_id)?.price||0,cost:0,people_count:1});data.tables.appointment_clients=(data.tables.appointments||[]).map(a=>({appointment_id:a.id,client_id:a.client_id}));data.tables.appointment_resources=(data.tables.appointments||[]).map(a=>({appointment_id:a.id,resource_id:a.resource_id}));data.tables.payments=[];}
     if(data?.format==='orbit-crm'&&data.version===2&&data.tables&&!data.tables.reminder_deliveries)data.tables.reminder_deliveries=(data.tables.reminders||[]).flatMap(q=>(data.tables.appointment_clients||[]).filter(p=>p.appointment_id===q.appointment_id).map(p=>({...q,client_id:p.client_id})));
-    if(data?.format==='orbit-crm'&&data.version===2&&data.tables)for(const t of ['service_resources','resource_absences'])if(!data.tables[t])data.tables[t]=[];
+    if(data?.format==='orbit-crm'&&data.version===2&&data.tables)for(const t of ['service_resources','resource_absences','payment_links'])if(!data.tables[t])data.tables[t]=[];
     if (data?.format !== 'orbit-crm' || data.version !== 2 || !data.tables || TABLES.some(t => !Array.isArray(data.tables[t]))) throw Error(OrbitI18n.t('m546'));
     // Preserve device identity and local integration state. Credentials are never exported.
-    const local = ['installation', 'telegram_offset', 'drive_last', 'drive_enabled'].map(k => [k, this.get(k)]);
+    const local = ['installation', 'telegram_offset', 'drive_last', 'drive_enabled','monobank_merchant','monobank_key'].map(k => [k, this.get(k)]);
     this.transaction(() => {
       for (const t of [...TABLES].reverse()) this.db.exec(`DELETE FROM ${t}`);
       for (const t of TABLES) {
@@ -446,6 +447,18 @@ class Store {
     return selected.length === service.required_resources ? selected : [];
   }
   payment(data){const amount=Number(data.amount),value=Math.round(amount*100);if(!Number.isSafeInteger(value)||!value||Math.abs(value)>1e10)throw Error(OrbitI18n.t('m548'));const at=Number(data.at||Date.now());if(!Number.isSafeInteger(at)||at>Date.now()+60000)throw Error(OrbitI18n.t('m549'));const method=['cash','card','transfer','refund'].includes(data.method)?data.method:'cash';if((value<0)!==(method==='refund'))throw Error(OrbitI18n.t('m550'));const appointment=text(data.appointment_id);const row=this.db.prepare('SELECT id FROM appointments WHERE id=?').get(appointment);if(!row)throw Error(OrbitI18n.t('m551'));const id=randomUUID();this.db.prepare('INSERT INTO payments VALUES(?,?,?,?,?)').run(id,appointment,value,at,method);this.audit('payment.created',id);return id;}
+  // Online payment links (monobank and others): money goes straight to the company's account.
+  openPaymentLinks(){return this.db.prepare("SELECT id,appointment_id,provider,amount,status,url,created_at,expires FROM payment_links WHERE status IN ('created','processing','hold') AND expires>? ORDER BY created_at").all(Date.now());}
+  addPaymentLink(data){const id=randomUUID();this.db.prepare('INSERT INTO payment_links(id,appointment_id,provider,invoice_id,amount,status,url,created_at,expires) VALUES(?,?,?,?,?,?,?,?,?)').run(id,data.appointment_id,data.provider,data.invoice_id,data.amount,'created',data.url,Date.now(),data.expires);this.audit('payment_link.created',id);return id;}
+  // Money is credited once: the visit gets the difference between what the bank reports as paid now and what was already credited (refunds become negative).
+  settlePaymentLink(provider,invoiceId,state){
+    const link=this.db.prepare('SELECT * FROM payment_links WHERE provider=? AND invoice_id=?').get(provider,invoiceId);if(!link)return null;
+    const modified=String(state.modified||'');if(modified&&link.modified&&modified<link.modified)return link;
+    const target=['success','reversed'].includes(state.status)?Math.max(0,Math.round(Number(state.paid)||0)):link.credited;if(!Number.isSafeInteger(target)||target>1e10)throw Error('Invalid payment amount');
+    const delta=target-link.credited;
+    this.transaction(()=>{if(delta)this.db.prepare('INSERT INTO payments VALUES(?,?,?,?,?)').run(randomUUID(),link.appointment_id,delta,Date.now(),delta>0?provider:'refund');this.db.prepare('UPDATE payment_links SET status=?,credited=?,modified=? WHERE id=?').run(String(state.status),target,modified||link.modified,link.id);});
+    if(delta)this.audit('payment_link.settled',link.id);return{...link,status:state.status,credited:target,delta};
+  }
   saveProfile(data){if(!['beauty','auto','universal'].includes(data.industry))throw Error(OrbitI18n.t('m552'));text(data.business,120);if(data.timezone){try{new Intl.DateTimeFormat('en',{timeZone:data.timezone});}catch{throw Error(OrbitI18n.t('m553'));}}if(data.currency&&!/^[A-Z]{3}$/.test(data.currency))throw Error(OrbitI18n.t('m554'));const start=data.work_start||this.get('work_start'),end=data.work_end||this.get('work_end');if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(end)||start>=end)throw Error(OrbitI18n.t('m555'));if(data.work_days&&(!Array.isArray(data.work_days)||!data.work_days.length||data.work_days.some(d=>!Number.isInteger(d)||d<1||d>7)))throw Error(OrbitI18n.t('m556'));if(data.logo!==undefined&&data.logo!==null&&data.logo!==''&&(typeof data.logo!=='string'||data.logo.length>3000000||!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(data.logo)))throw Error(OrbitI18n.t('m557'));this.transaction(()=>{for(const key of ['business','industry','timezone','currency','phone','address','work_start','work_end','work_days','logo','website_enabled'])if(data[key]!==undefined)this.set(key,typeof data[key]==='string'?data[key].trim():data[key]);this.set('onboarded',true);this.audit('settings.changed',this.get('installation'));});}
 }
 module.exports = { Store, zonedTime };

@@ -3018,6 +3018,14 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "uk": "Цей час щойно зайняли. Оберіть інший час — ми перевіримо доступність знову.",
     "en": "This time was just booked. Choose another time and we will check availability again."
   },
+  "botPayInvoice": {
+    "uk": "💳 Рахунок на оплату",
+    "en": "💳 Payment request"
+  },
+  "botPayButton": {
+    "uk": "Оплатити",
+    "en": "Pay"
+  },
   "botReminder": {
     "uk": "🔔 Нагадуємо про ваш запис",
     "en": "🔔 Your appointment reminder"

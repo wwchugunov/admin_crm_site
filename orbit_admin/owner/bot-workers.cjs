@@ -17,6 +17,8 @@ class BotWorkers{
   this.store.transaction(()=>{this.db.prepare('DELETE FROM bot_messages WHERE business_id=?').run(business.id);this.db.prepare('INSERT INTO bot_workers(business_id,token_hash,public_key) VALUES(?,?,?) ON CONFLICT(business_id) DO UPDATE SET token_hash=excluded.token_hash,public_key=excluded.public_key,last_seen=0').run(business.id,hash(token),pair.publicKey.export({type:'spki',format:'pem'}));runtime.vault.remove('telegram');runtime.store.set('bot_hosting','external');this.store.event('bot.external.prepared',business.account_id,null,'',business.id);});
   return {config:{api:url,business_id:business.id,token,private_key:pair.privateKey.export({type:'pkcs8',format:'pem'})},worker:fs.readFileSync(path.join(__dirname,'../worker/telegram-worker.cjs'),'utf8')};
  }
+ // Outgoing message for a self-hosted bot; the worker delivers it on its next poll.
+ queue(businessId,method,payload){if(this.db.prepare('SELECT count(*) n FROM bot_messages WHERE business_id=?').get(businessId).n>=1000)this.fail(429,'Bot delivery queue full');this.db.prepare('INSERT INTO bot_messages VALUES(?,?,?,?,?)').run(crypto.randomUUID(),businessId,method,JSON.stringify(payload),Date.now());}
  detach(business){if(this.work.has(business.id))this.fail(409,'External bot request is running; try again');this.db.prepare('DELETE FROM bot_messages WHERE business_id=?').run(business.id);this.db.prepare('DELETE FROM bot_workers WHERE business_id=?').run(business.id);this.accounts.businesses.get(business).store.set('bot_hosting','hosted');}
  async handle(req,url,reply){
   if(!url.pathname.startsWith('/v1/bot/'))return false;
