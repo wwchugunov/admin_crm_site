@@ -57,7 +57,7 @@ class Accounts {
       if(req.method!=='POST')this.fail(404,OrbitI18n.t('m652'));const data=await this.body(req);let value;
       if(route==='/v1/crm/client')value=store.addClient(data);
       else if(route==='/v1/crm/book'){if(ctx.business.role==='staff'){delete data.total;delete data.cost;}value=store.book(data);}
-      else if(route==='/v1/crm/status')value=store.status(data.id,data.status);
+      else if(route==='/v1/crm/status'){value=store.status(data.id,data.status);this.monobank?.reconcile(ctx.runtime,data.id).catch(()=>{});}
       else if(route==='/v1/crm/reschedule')value=store.reschedule(data);
       else if(route==='/v1/crm/service/delete')value=store.deleteService(data);
       else if(route==='/v1/crm/resource/delete')value=store.deleteResource(data);
@@ -69,8 +69,8 @@ class Accounts {
       else if(route==='/v1/crm/absence/delete')value=store.deleteAbsence(data);
       else if(route==='/v1/crm/client/update')value=store.updateClient(data);
       else if(route==='/v1/crm/client/delete')value=store.deleteClient(data);
-      else if(route==='/v1/crm/visit/update')value=store.updateVisit(data);
-      else if(route==='/v1/crm/payment')value=store.payment(data);
+      else if(route==='/v1/crm/visit/update'){value=store.updateVisit(data);this.monobank?.reconcile(ctx.runtime,data.id).catch(()=>{});}
+      else if(route==='/v1/crm/payment'){value=store.payment(data);this.monobank?.reconcile(ctx.runtime,data.appointment_id).catch(()=>{});}
       else if(route==='/v1/crm/profile'){store.saveProfile(data);this.db.prepare('UPDATE businesses SET name=? WHERE id=?').run(store.get('business'),ctx.business.id);}
       else if(route==='/v1/crm/monobank/connect'){if(ctx.business.role!=='owner')this.fail(403,OrbitI18n.t('m656'));value=await this.monobank.connect(ctx.runtime,data.token);}
       else if(route==='/v1/crm/monobank/disconnect'){if(ctx.business.role!=='owner')this.fail(403,OrbitI18n.t('m656'));this.monobank.disconnect(ctx.runtime);}

@@ -64,6 +64,14 @@ class Monobank{
   else{if(!runtime.vault.has('telegram'))this.fail(400,OrbitI18n.t('m514'));await telegram.call('sendMessage',payload);}
   return true;
  }
+ // After a manual payment, a price change or a cancellation: an unpaid link asking for more than is
+ // still due (or for a cancelled visit) is withdrawn at the bank, so the client cannot pay twice.
+ async reconcile(runtime,appointmentId){
+  const token=runtime.vault.get('monobank');if(!token)return;
+  const a=runtime.store.db.prepare('SELECT a.status,a.total,COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0) paid FROM appointments a WHERE a.id=?').get(String(appointmentId||''));if(!a)return;
+  const due=a.total-a.paid,stale=runtime.store.db.prepare(`SELECT id FROM payment_links WHERE appointment_id=? AND provider='monobank' AND status IN ('created','processing','hold') AND (amount>? OR ?)`).get(String(appointmentId),Math.max(due,0),a.status==='cancelled'?1:0);
+  if(stale)await this.removeOpen(runtime,token,String(appointmentId));
+ }
  async cancel(runtime,data){
   const token=this.token(runtime),a=this.visit(runtime.store,data?.appointment_id);
   await this.removeOpen(runtime,token,a.id);return true;
@@ -101,6 +109,7 @@ class Monobank{
    const token=runtime.vault.get('monobank');if(!token)continue;
    const links=runtime.store.db.prepare(`SELECT * FROM payment_links WHERE provider='monobank' AND status IN ('created','processing','hold') AND created_at>? ORDER BY created_at LIMIT 20`).all(Date.now()-(VALIDITY+86400)*1000);
    for(const link of links)await this.check(runtime,token,link).catch(()=>{});
+   for(const id of new Set(links.map(l=>l.appointment_id)))await this.reconcile(runtime,id).catch(()=>{});
   }})().finally(()=>{this.polling=null;});
   return this.polling;
  }

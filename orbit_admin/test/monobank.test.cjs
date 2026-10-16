@@ -298,3 +298,21 @@ test("Backups keep payment links; older backups without them still restore", (t)
   s.store.restore(backup);
   assert.equal(s.store.snapshot().payment_links.length, 0);
 });
+
+test("A manual payment or a lower price withdraws an unpaid link that asks for more than is due", async (t) => {
+  const s = setup(t);
+  await s.mono.connect(s.runtime, "test-token-0123456789");
+  await s.mono.invoice(s.business, s.runtime, { appointment_id: s.visit });
+  s.store.payment({ appointment_id: s.visit, amount: 800, method: "cash" });
+  await s.mono.reconcile(s.runtime, s.visit);
+  assert.equal(s.invoices.get("inv1").status, "removed");
+  assert.equal(s.store.snapshot().payment_links.length, 0);
+  // A link for the exact rest stays.
+  s.store.payment({ appointment_id: s.visit, amount: -300, method: "cash" });
+  await s.mono.invoice(s.business, s.runtime, { appointment_id: s.visit });
+  await s.mono.reconcile(s.runtime, s.visit);
+  assert.equal(s.store.snapshot().payment_links.length, 1);
+  s.store.updateVisit({ id: s.visit, total: 600 });
+  await s.mono.poll();
+  assert.equal(s.store.snapshot().payment_links.length, 0);
+});

@@ -3026,6 +3026,30 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "uk": "Оплатити",
     "en": "Pay"
   },
+  "payTooMuch": {
+    "uk": "Сума більша за залишок до оплати ({due}). Якщо вартість візиту змінилася — спочатку натисніть «Змінити суму».",
+    "en": "The amount is more than what is due ({due}). If the visit price changed, use “Change amount” first."
+  },
+  "payNothingDue": {
+    "uk": "Візит уже повністю оплачено. Щоб повернути гроші, введіть суму зі знаком мінус.",
+    "en": "The visit is already fully paid. To refund, enter the amount with a minus sign."
+  },
+  "refundTooMuch": {
+    "uk": "Повернути можна не більше, ніж сплачено ({paid}).",
+    "en": "You can refund at most what was paid ({paid})."
+  },
+  "payOverpaid": {
+    "uk": "Переплата",
+    "en": "Overpaid"
+  },
+  "payRefundSaved": {
+    "uk": "Повернення збережено",
+    "en": "Refund saved"
+  },
+  "payAmountHint": {
+    "uk": "Щоб оформити повернення, введіть суму зі знаком мінус, наприклад −200, і оберіть, як повернули гроші.",
+    "en": "For a refund enter the amount with a minus sign, e.g. −200, and choose how the money was returned."
+  },
   "botReminder": {
     "uk": "🔔 Нагадуємо про ваш запис",
     "en": "🔔 Your appointment reminder"
