@@ -2056,12 +2056,12 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Activate your license. Database export remains available without activation."
   },
   "m509": {
-    "uk": "Недопустиме джерело запиту",
-    "en": "Invalid request source"
+    "uk": "Дію заблоковано з міркувань безпеки. Перезапустіть застосунок і спробуйте ще раз.",
+    "en": "The action was blocked for security. Restart the app and try again."
   },
   "m510": {
-    "uk": "Операцію не виконано",
-    "en": "Operation failed"
+    "uk": "Не вдалося виконати дію. Спробуйте ще раз — якщо повториться, натисніть «Написати нам», і ми допоможемо.",
+    "en": "The action could not be completed. Try again — if it repeats, press “Write to us” and we will help."
   },
   "m511": {
     "uk": "Логотип до 2 МБ",
@@ -2152,8 +2152,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "An integration is still running. Retry restore in a few seconds."
   },
   "m533": {
-    "uk": "Перевірте заповнення полів",
-    "en": "Check the required fields"
+    "uk": "Перевірте поля форми: деякі порожні або задовгі.",
+    "en": "Check the form: some fields are empty or too long."
   },
   "m534": {
     "uk": "Некоректна сума",
@@ -2196,8 +2196,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Amount is too large"
   },
   "m544": {
-    "uk": "Некоректний стан",
-    "en": "Invalid status"
+    "uk": "Цю дію не можна застосувати до запису в його поточному стані.",
+    "en": "This action does not apply to the visit in its current state."
   },
   "m545": {
     "uk": "Запис уже закритий",
@@ -2260,24 +2260,24 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "No connection. Check your internet; the app reconnects automatically."
   },
   "m560": {
-    "uk": "Помилка сервера видавця",
-    "en": "Publisher server error"
+    "uk": "Сервер LOMVIKO тимчасово не відповідає. Ваші дані збережені — спробуйте ще раз за хвилину.",
+    "en": "The LOMVIKO server is not responding right now. Your data is safe — try again in a minute."
   },
   "m561": {
-    "uk": "Некоректний ключ видавця",
-    "en": "Invalid publisher key"
+    "uk": "Не вдалося перевірити справжність сервера LOMVIKO. Оновіть застосунок або напишіть нам.",
+    "en": "Could not verify the LOMVIKO server. Update the app or write to us."
   },
   "m562": {
-    "uk": "Ключ сервера не збігається з довіреним ключем застосунку",
-    "en": "The server key does not match the app trust key"
+    "uk": "Сервер не пройшов перевірку безпеки, тому з’єднання зупинено. Напишіть нам — ми допоможемо.",
+    "en": "The server failed the security check, so the connection was stopped. Write to us — we will help."
   },
   "m563": {
     "uk": "Дочекайтеся завершення підключення",
     "en": "Wait for the connection to finish"
   },
   "m564": {
-    "uk": "Захищене сховище недоступне",
-    "en": "Secure storage unavailable"
+    "uk": "Захищене сховище паролів системи недоступне. Розблокуйте його (Keychain на Mac, диспетчер облікових даних у Windows) або перезапустіть комп’ютер.",
+    "en": "The system password store is unavailable. Unlock it (Keychain on Mac, Credential Manager on Windows) or restart the computer."
   },
   "m565": {
     "uk": "Адміністратор ще не надав доступ до компанії",
@@ -2304,8 +2304,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "The account or company changed. Refresh the screen."
   },
   "m571": {
-    "uk": "Захищений ключ пристрою недоступний",
-    "en": "Secure device key unavailable"
+    "uk": "Захищений ключ цього комп’ютера недоступний. Розблокуйте сховище паролів системи або перезапустіть комп’ютер.",
+    "en": "This computer's protected key is unavailable. Unlock the system password store or restart the computer."
   },
   "m572": {
     "uk": "Пристрій зареєстровано",
@@ -2348,8 +2348,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "). Check your connection and permissions."
   },
   "m582": {
-    "uk": "Некоректна відповідь сервісу",
-    "en": "Invalid service response"
+    "uk": "Сервіс надіслав незрозумілу відповідь. Спробуйте ще раз за хвилину.",
+    "en": "The service sent an unexpected reply. Try again in a minute."
   },
   "m583": {
     "uk": "Підключіть Telegram-бота",
@@ -2548,12 +2548,12 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Use an HTTPS server address or local http://127.0.0.1:4545"
   },
   "m632": {
-    "uk": "Сервер власника недоступний",
-    "en": "Owner server unavailable"
+    "uk": "Сервер LOMVIKO зараз недоступний. Перевірте інтернет — ваші дані збережені.",
+    "en": "The LOMVIKO server is unavailable right now. Check your internet — your data is safe."
   },
   "m633": {
-    "uk": "Недопустимий запит",
-    "en": "Invalid request"
+    "uk": "Запит не пройшов перевірку. Оновіть застосунок і спробуйте ще раз.",
+    "en": "The request did not pass validation. Update the app and try again."
   },
   "m634": {
     "uk": "Потрібен PNG або JPEG",
@@ -2580,8 +2580,8 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Password: 12 to 128 characters"
   },
   "m640": {
-    "uk": "Доступ призупинений або підписка спливла",
-    "en": "Access suspended or subscription expired"
+    "uk": "Доступ призупинено або підписка закінчилась. Ваші дані збережені — продовжте підписку або напишіть нам.",
+    "en": "Access is paused or the subscription has ended. Your data is safe — renew or write to us."
   },
   "m641": {
     "uk": "Користувача не знайдено",
@@ -2604,32 +2604,32 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Incorrect login or password"
   },
   "m646": {
-    "uk": "Некоректний ключ пристрою",
-    "en": "Invalid device key"
+    "uk": "Ключ цього комп’ютера пошкоджено. Вийдіть з акаунта й увійдіть знову.",
+    "en": "This computer's key is damaged. Sign out and sign in again."
   },
   "m647": {
-    "uk": "Потрібен Ed25519",
-    "en": "Ed25519 required"
+    "uk": "Ключ цього комп’ютера застарілого типу. Вийдіть з акаунта й увійдіть знову.",
+    "en": "This computer's key is outdated. Sign out and sign in again."
   },
   "m648": {
     "uk": "Час входу сплив",
     "en": "Sign-in timed out"
   },
   "m649": {
-    "uk": "Немає підтвердження пристрою",
-    "en": "Device proof missing"
+    "uk": "Комп’ютер не підтвердив свою справжність. Вийдіть з акаунта й увійдіть знову.",
+    "en": "This computer could not prove its identity. Sign out and sign in again."
   },
   "m650": {
     "uk": "Пристрій вимкнений або прив’язаний до іншого акаунта",
     "en": "Device revoked or linked to another account"
   },
   "m651": {
-    "uk": "Досягнуто ліміту пристроїв компанії",
-    "en": "Company device limit reached"
+    "uk": "Досягнуто ліміту комп’ютерів компанії. Вимкніть старий пристрій або напишіть нам — додамо місце.",
+    "en": "The company's device limit is reached. Disable an old device or write to us to add more."
   },
   "m652": {
-    "uk": "Метод не знайдено",
-    "en": "Method not found"
+    "uk": "Ця дія недоступна у вашій версії. Оновіть застосунок.",
+    "en": "This action is not available in your version. Update the app."
   },
   "m653": {
     "uk": "Цей бот уже підключений до іншого бізнесу",
@@ -2700,12 +2700,12 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Time unavailable"
   },
   "m670": {
-    "uk": "Запит завеликий",
-    "en": "Request too large"
+    "uk": "Забагато даних в одному запиті. Зменште файл або текст і спробуйте ще раз.",
+    "en": "Too much data in one request. Make the file or text smaller and try again."
   },
   "m671": {
-    "uk": "Некоректний JSON",
-    "en": "Invalid JSON"
+    "uk": "Сервер не зміг прочитати запит. Оновіть застосунок і спробуйте ще раз.",
+    "en": "The server could not read the request. Update the app and try again."
   },
   "m672": {
     "uk": "Некоректний термін або кількість пристроїв",
@@ -2724,12 +2724,12 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Owner access required"
   },
   "m676": {
-    "uk": "Некоректний підпис запиту",
-    "en": "Invalid request signature"
+    "uk": "Запит не пройшов перевірку безпеки. Переконайтеся, що дата й час на комп’ютері встановлюються автоматично, і спробуйте ще раз.",
+    "en": "The request failed the security check. Make sure the computer's date and time are set automatically and try again."
   },
   "m677": {
-    "uk": "Повторний запит",
-    "en": "Repeated request"
+    "uk": "Цей запит уже виконано. Оновіть екран.",
+    "en": "This request was already processed. Refresh the screen."
   },
   "m678": {
     "uk": "Виберіть роль",
@@ -2744,20 +2744,20 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Device not found"
   },
   "m681": {
-    "uk": "Забагато запитів",
-    "en": "Too many requests"
+    "uk": "Забагато спроб поспіль. Зачекайте хвилину і спробуйте ще раз.",
+    "en": "Too many attempts in a row. Wait a minute and try again."
   },
   "m682": {
-    "uk": "Підписка спливла",
-    "en": "Subscription expired"
+    "uk": "Підписка закінчилась. Ваші дані збережені — продовжте підписку, і все запрацює як раніше.",
+    "en": "The subscription has ended. Your data is safe — renew and everything works as before."
   },
   "m683": {
     "uk": "Запит активації сплив",
     "en": "Activation request expired"
   },
   "m684": {
-    "uk": "Немає підтвердження ключа пристрою",
-    "en": "Device key proof missing"
+    "uk": "Комп’ютер не підтвердив свій ключ. Вийдіть з акаунта й увійдіть знову.",
+    "en": "This computer could not confirm its key. Sign out and sign in again."
   },
   "m685": {
     "uk": "Активація недоступна",
@@ -2768,16 +2768,16 @@ bookingSetupRequired: {uk: 'Спочатку додайте послугу та 
     "en": "Device already registered or revoked"
   },
   "m687": {
-    "uk": "Досягнуто ліміту пристроїв",
-    "en": "Device limit reached"
+    "uk": "Досягнуто ліміту комп’ютерів у тарифі. Вимкніть старий пристрій або напишіть нам — додамо місце.",
+    "en": "The device limit of your plan is reached. Disable an old device or write to us to add more."
   },
   "m688": {
     "uk": "Інсталятор ще не опублікований",
     "en": "Installer not published yet"
   },
   "m689": {
-    "uk": "Не вдалося виконати операцію",
-    "en": "Could not complete the operation"
+    "uk": "Не вдалося виконати дію. Спробуйте ще раз — якщо повториться, натисніть «Написати нам».",
+    "en": "The action could not be completed. Try again — if it repeats, press “Write to us”."
   },
   "m690": {
     "uk": "ЗАПИС І БІЗНЕС",

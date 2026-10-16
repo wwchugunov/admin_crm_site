@@ -37,6 +37,7 @@ class AccountDeletion{
    each('DELETE FROM mail_outbox WHERE lower(recipient)=?',emails);
    each('DELETE FROM registration_pending WHERE lower(email)=?',emails);
    each('DELETE FROM site_leads WHERE lower(email)=?',emails);
+   if(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='support_requests'").get())each('DELETE FROM support_requests WHERE lower(email)=?',emails);
    each("UPDATE purchases SET user_id='deleted' WHERE user_id=?",ids);
    each('DELETE FROM businesses WHERE id=?',businesses.map(b=>b.id));
    // Team members first: they point to the owner through account_id.

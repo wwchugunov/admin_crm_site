@@ -39,3 +39,10 @@ html[data-theme="dark"] .danger-note{background:#3a2422;color:#f1b8b2}
 .invite-key{display:flex;gap:8px;align-items:center;margin:8px 0 4px}
 .invite-key code{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:14px;letter-spacing:.06em;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field,#fafafa);overflow-wrap:anywhere;user-select:all}
 .nav span[data-nav-label]{font-size:12px;min-width:0}
+.support-list{display:grid;gap:12px}
+.support-item header{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.support-item header .hint{margin-left:auto}
+.support-item.closed{opacity:.6}
+.support-from{margin:6px 0;font-size:13px}
+.support-text{white-space:pre-wrap;margin:8px 0}
+.support-item pre{white-space:pre-wrap;font-size:11px;max-height:240px;overflow:auto}

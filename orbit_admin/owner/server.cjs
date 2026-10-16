@@ -17,6 +17,7 @@ const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
+const {Support}=require('./support.cjs');
 const {AdminMembers}=require('./admin-members.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
@@ -78,6 +79,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const documents=new Documents(store,documentDirectory);website.documents=documents;
   const publishing=new ReleasePublishing(store,updates);
   const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;members.mail=mail;
+  const support=new Support({store,mail,fail});
   function admin(req){return administrator.verify(req);}
   function license(device, user) {
     const now = Date.now(); const claims = Buffer.from(JSON.stringify({ version: 1, license_id:device, kind:user.stage==='trial'?'demo':'subscription', trial:user.stage==='trial', installation: device, customer: user.business, issued: now, expires: Math.min(user.expires, now + 300000) }));
@@ -126,11 +128,13 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if(req.method==='POST'&&route==='/admin/account'){administrator.owner(session);return reply(200,administrator.setAccount(req.parsedBody));}
         if(req.method==='POST'&&route==='/admin/members/invite'){administrator.owner(session);return reply(201,members.invite(req.parsedBody,administrator.account().login,inviter()));}
         if(req.method==='POST'&&route==='/admin/members/resend'){administrator.owner(session);return reply(200,members.resend(req.parsedBody?.id,inviter()));}
+        if(req.method==='POST'&&route==='/admin/support/stage')return reply(200,support.stage(req.parsedBody));
+        if(req.method==='POST'&&route==='/admin/support/delete')return reply(200,support.remove(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/members/delete'){administrator.owner(session);members.remove(req.parsedBody?.id);administrator.endMember(req.parsedBody?.id);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/documents/activate')return reply(200,documents.activate(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/documents/delete')return reply(200,documents.delete(req.parsedBody));
         if(req.method==='GET'&&route==='/admin/documents/file')return await documents.send(res,documents.owned({id:url.searchParams.get('id')||'',kind:url.searchParams.get('kind')||undefined}));
-        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),releases:updates.list(),policies:store.db.prepare('SELECT * FROM update_policies').all(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage,COALESCE(b.arch,'x64') arch FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id LEFT JOIN device_builds b ON b.device_id=d.id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
+        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),supportRequests:support.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),releases:updates.list(),policies:store.db.prepare('SELECT * FROM update_policies').all(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage,COALESCE(b.arch,'x64') arch FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id LEFT JOIN device_builds b ON b.device_id=d.id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
         if(req.method==='POST'&&route==='/admin/mail/settings')return reply(200,mail.save(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/mail/verify')return reply(200,await mail.verify());
         if(req.method==='POST'&&route==='/admin/mail/test'){const c=mail.settings();if(!mail.configured())fail(400,'Configure SMTP first');mail.enqueue('test',c.fromEmail,req.parsedBody.language||'uk',{});return reply(201,{queued:true});}
@@ -178,11 +182,12 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(documentMatch&&['GET','HEAD'].includes(req.method))return await documents.send(res,documents.resolve(documentMatch[1],documentMatch[2]),req.method==='HEAD');
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
+      if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));
       if(await botWorkers.handle(req,url,reply))return;
       if(await monobank.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
-      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true });
+      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true,support:support.contact() });
       if (req.method === 'POST' && route === '/v1/challenge') {
         const data = await body(req), invitation = store.findInvite(data.token, true);
         accounts.allowed(store.db.prepare('SELECT * FROM users WHERE id=?').get(invitation.user_id));if (invitation.user_expires <= Date.now()) fail(403, OrbitI18n.t('m682'));
