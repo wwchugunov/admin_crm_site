@@ -66,11 +66,11 @@ class Registration {
     const userId=this.store.transaction(()=>{
       const device=hash(crypto.createPublicKey(pending.public_key).export({type:'spki',format:'der'}));
       if(this.db.prepare('SELECT device FROM trial_consumptions WHERE device=? OR email_hash=?').get(device,hash(pending.email)))this.fail(409,'Trial already used');
-      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:14,max_devices:2,password_hash:pending.password_hash});
+      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:30,max_devices:2,password_hash:pending.password_hash});
       this.accounts.addBusiness(id,pending.business);
       this.db.prepare('INSERT INTO trial_consumptions VALUES(?,?,?)').run(device,hash(pending.email),Date.now());
       this.db.prepare('DELETE FROM registration_pending WHERE id=?').run(pending.id);
-      this.store.event('trial.started',id,null,'','14 days; verified email');
+      this.store.event('trial.started',id,null,'','30 days; verified email');
       const c=this.mail.settings();if(c.ownerNotice)this.mail.enqueue('trial-started',c.ownerEmail||c.fromEmail,data.language,{name:pending.name,email:pending.email,business:pending.business},{userId:id,dedupe:'trial:'+id});
       return id;
     });

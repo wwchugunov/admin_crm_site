@@ -18,6 +18,7 @@ const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
 const {Support}=require('./support.cjs');
+const {Retention}=require('./retention.cjs');
 const {AdminMembers}=require('./admin-members.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
@@ -89,6 +90,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const registration=new Registration({store,accounts,mail,fail,string});
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
   const deletion=new AccountDeletion({store,accounts,fail});accounts.deletion=deletion;
+  const retention=new Retention({store,accounts,mail});
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
@@ -241,7 +243,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       fail(404, OrbitI18n.t('m652'));
     } catch (error) { if([401,403,409,429].includes(error.status))website.reject(new URL(req.url,'http://localhost').pathname,error.status);if (!res.headersSent && !res.destroyed) reply(error.status || (error.code?.startsWith('SQLITE_CONSTRAINT')||[19,2067,1555].includes(error.errcode) ? 409 : 500), { error: error.status ? error.message : OrbitI18n.t('m689'),...(error.update?{update:error.update}:{}) }); else res.destroy(); }
   });
-  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup(); for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
+  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup();if(now-(retention.last||0)>3600000){retention.last=now;try{retention.tick(now);}catch{console.error('LOMVIKO retention cycle failed');}} for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
   const payTimer=setInterval(()=>monobank.poll().catch(()=>{}),180000);payTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
