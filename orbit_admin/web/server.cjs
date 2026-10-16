@@ -1,6 +1,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
 const {signRequest,signDigest}=require('./request-proof.cjs');
 const siteRoutes={ 'owner:site:save':'/admin/site/draft','owner:site:publish':'/admin/site/publish','owner:site:lead':'/admin/site/lead','owner:site:lead:delete':'/admin/site/lead/delete','owner:site:export':'/admin/site/export','owner:release:withdraw':'/admin/releases/withdraw','owner:admin:account':'/admin/account'};
+const memberRoutes={'owner:members:invite':'/admin/members/invite','owner:members:resend':'/admin/members/resend','owner:members:delete':'/admin/members/delete'};
 const productRoutes={'owner:user:add':'/admin/users','owner:user:update':'/admin/user','owner:password':'/admin/password','owner:user:delete':'/admin/user/delete','owner:business:add':'/admin/business','owner:invite':'/admin/invite','owner:revoke':'/admin/revoke','owner:demo':'/admin/demo','owner:key:revoke':'/admin/invite/revoke','owner:policy':'/admin/policy','owner:export':'/admin/export','owner:mail:settings':'/admin/mail/settings','owner:mail:verify':'/admin/mail/verify','owner:mail:test':'/admin/mail/test','owner:mail:retry':'/admin/mail/retry','owner:mail:access':'/admin/mail/access','owner:purchase':'/admin/purchase'};
 // Panel sessions slide with activity (30 minutes idle) and end 12 hours after sign-in.
 const IDLE=30*60000,MAX=12*3600000;
@@ -8,7 +9,7 @@ function problem(status,message){throw Object.assign(Error(message),{status});}
 function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path.join(__dirname,'public')}={}){
  const api=new URL(apiUrl||process.env.CH_API_URL||'http://127.0.0.1:4545');if(!['http:','https:'].includes(api.protocol)||api.username||api.password||api.pathname!=='/'||api.search||api.hash)throw Error('CH_API_URL must be an origin');
  const external=new URL(origin||process.env.CH_ADMIN_ORIGIN||'http://127.0.0.1:4548');if(external.pathname!=='/'||external.username||external.password||external.search||external.hash||!(external.protocol==='https:'||(external.protocol==='http:'&&['127.0.0.1','localhost'].includes(external.hostname))))throw Error('CH_ADMIN_ORIGIN requires HTTPS or local loopback');
- const sessions=new Map(),routes={...siteRoutes,...(profile==='product'?productRoutes:{})};
+ const sessions=new Map(),routes={...siteRoutes,...(profile==='product'?{...productRoutes,...memberRoutes}:{})};
  // Each admin manages only its own public documents: the website admin edits site files, the product admin edits the app policy.
  const documentKinds=profile==='product'?['app-privacy']:['site-privacy','site-offer','presentation'];const ownDocument=kind=>{if(!documentKinds.includes(kind))problem(403,'Document type unavailable in this admin');return kind;};let failures=0,resetAt=Date.now()+900000;
  const cookie=profile==='product'?'ch_product_admin':'ch_site_admin';const getSession=req=>{const value=(req.headers.cookie||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(cookie+'='))?.slice(cookie.length+1);const s=sessions.get(value);if(!s||s.expires<=Date.now()){sessions.delete(value);problem(401,'Sign in again with a new verification code');}s.expires=Math.min(Date.now()+IDLE,s.started+MAX);return s;};
@@ -28,6 +29,12 @@ function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path
      const key=crypto.generateKeyPairSync('ed25519').privateKey,public_key=crypto.createPublicKey(key).export({type:'spki',format:'pem'}),auth=await upstream({token:byPassword?d.login:d.token,key},'/admin/session',byPassword?{login:d.login,password:d.password,otp:d.otp,public_key}:{token:d.token,otp:d.otp,public_key});
      const id=crypto.randomBytes(32).toString('base64url');for(const[k,v]of sessions)if(v.expires<=Date.now())sessions.delete(k);if(sessions.size>=100)problem(429,'Too many sessions');sessions.set(id,{token:auth.session,key,expires:Date.now()+IDLE,started:Date.now()});failures=0;
      res.setHeader('Set-Cookie',`${cookie}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});
+    }
+    // Invitation page for a new administrator: no session yet, the link token is the credential.
+    if(profile==='product'&&req.method==='POST'&&['/web/invite/info','/web/invite/accept'].includes(url.pathname)){
+     const d=await json(req),route=url.pathname==='/web/invite/info'?'/admin/invite/info':'/admin/invite/accept';
+     const response=await fetch(api.origin+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:d.token,password:d.password,otp:d.otp}),redirect:'error',signal:AbortSignal.timeout(30000)});
+     const value=await response.json();if(!response.ok)problem(response.status,value.error||'Invitation unavailable');return reply(200,value);
     }
     const s=getSession(req);
     if(req.method==='POST'&&url.pathname==='/web/logout'){for(const[k,v]of sessions)if(v===s)sessions.delete(k);res.setHeader('Set-Cookie',`${cookie}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});}

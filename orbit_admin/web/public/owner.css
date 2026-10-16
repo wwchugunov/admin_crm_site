@@ -30,3 +30,10 @@ html[data-theme="dark"] .company-mark{color:#e7cf9f}
 html[data-theme="dark"] .danger-note{background:#3a2422;color:#f1b8b2}
 .inline-actions .danger{font-size:10px;padding:7px 9px}
 @media(max-width:700px){.company-toolbar{flex-wrap:wrap}.company-toolbar .search{max-width:none;flex-basis:100%}.company-grid{grid-template-columns:1fr}}
+
+/* Administrator invitation page */
+#web-login.invite-form{justify-content:flex-start;overflow-y:auto;padding-top:48px}
+.invite-steps{margin:8px 0 12px;padding-left:20px;display:grid;gap:10px;font-size:13px;line-height:1.55}
+.invite-key{display:flex;gap:8px;align-items:center;margin:8px 0 4px}
+.invite-key code{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:14px;letter-spacing:.06em;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--field,#fafafa);overflow-wrap:anywhere;user-select:all}
+.nav span[data-nav-label]{font-size:12px;min-width:0}

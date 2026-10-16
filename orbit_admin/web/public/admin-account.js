@@ -5,6 +5,7 @@
   const L = (uk, en) => (OrbitI18n.language === 'en' ? en : uk);
   let prompted = false;
   function accountModal() {
+    if (data?.adminMe && !data.adminMe.owner) return toast(L('Логін власника змінює лише власник. Свій пароль ви задали під час активації запрошення.', 'Only the owner changes the owner sign-in. You set your own password when accepting the invitation.'));
     const account = data?.adminAccount || {}, first = !account.configured;
     modal(
       first ? L('Створіть логін і пароль', 'Create your sign-in') : L('Логін і пароль', 'Sign-in details'),

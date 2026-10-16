@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const {isIP}=require('node:net');
 const { DatabaseSync } = require('node:sqlite');
-const {AdminAuth}=require('./admin-auth.cjs');
+const {AdminAuth,totp,base32}=require('./admin-auth.cjs');
 const {PublicSite}=require('./public-site.cjs');
 const {Mailer}=require('./mail.cjs');
 const {Registration}=require('./registration.cjs');
@@ -16,6 +16,7 @@ const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
 const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
+const {AdminMembers}=require('./admin-members.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
 function fail(status, message) { const error = Error(message); error.status = status; throw error; }
@@ -70,12 +71,13 @@ class ProductStore {
 function createProductServer({ store, adminToken, privateKey, publicKey, releases = {}, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,releaseDirectory=path.join(store.directory,'releases'),documentDirectory=path.join(store.directory,'documents'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
   const rates = new Map();
   const administrator=new AdminAuth({directory:store.directory,token:adminToken,db:store.db,local:allowLocalAdmin});
+  const members=new AdminMembers({db:store.db,mail:null,adminUrl:process.env.CH_PRODUCT_ADMIN_URL||(process.env.CH_APP_ADMIN_DOMAIN?'https://'+process.env.CH_APP_ADMIN_DOMAIN:''),totp,base32});administrator.members=members;
   const updates=new Releases(store,privateKey,releaseDirectory);
   const website=new PublicSite(store,updates);
   const documents=new Documents(store,documentDirectory);website.documents=documents;
   const publishing=new ReleasePublishing(store,updates);
-  const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;
-  function admin(req){administrator.verify(req);}
+  const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;members.mail=mail;
+  function admin(req){return administrator.verify(req);}
   function license(device, user) {
     const now = Date.now(); const claims = Buffer.from(JSON.stringify({ version: 1, license_id:device, kind:user.stage==='trial'?'demo':'subscription', trial:user.stage==='trial', installation: device, customer: user.business, issued: now, expires: Math.min(user.expires, now + 300000) }));
     return `${claims.toString('base64url')}.${crypto.sign(null, claims, privateKey).toString('base64url')}`;
@@ -113,13 +115,20 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if (req.method === 'GET' && route === '/healthz') { store.db.prepare('SELECT 1').get(); return reply(200, { status: 'ok' }); }
       if(req.method==='POST'&&route==='/publish/release')return reply(201,await publishing.register(req,req.parsedBody));
       if(req.method==='POST'&&route==='/admin/session')return reply(200,administrator.login(req,req.parsedBody));
+      // Invitation link for a new administrator: the single-use token is the credential.
+      if(req.method==='POST'&&route==='/admin/invite/info')return reply(200,members.info(req.clientAddress||req.socket.remoteAddress,req.parsedBody));
+      if(req.method==='POST'&&route==='/admin/invite/accept')return reply(200,members.accept(req.clientAddress||req.socket.remoteAddress,req.parsedBody));
       if (route.startsWith('/admin/')) {
-        admin(req);
-        if(req.method==='POST'&&route==='/admin/account')return reply(200,administrator.setAccount(req.parsedBody));
+        const session=admin(req);
+        const inviter=()=>session?.name||administrator.account().login||'LOMVIKO';
+        if(req.method==='POST'&&route==='/admin/account'){administrator.owner(session);return reply(200,administrator.setAccount(req.parsedBody));}
+        if(req.method==='POST'&&route==='/admin/members/invite'){administrator.owner(session);return reply(201,members.invite(req.parsedBody,administrator.account().login,inviter()));}
+        if(req.method==='POST'&&route==='/admin/members/resend'){administrator.owner(session);return reply(200,members.resend(req.parsedBody?.id,inviter()));}
+        if(req.method==='POST'&&route==='/admin/members/delete'){administrator.owner(session);members.remove(req.parsedBody?.id);administrator.endMember(req.parsedBody?.id);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/documents/activate')return reply(200,documents.activate(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/documents/delete')return reply(200,documents.delete(req.parsedBody));
         if(req.method==='GET'&&route==='/admin/documents/file')return await documents.send(res,documents.owned({id:url.searchParams.get('id')||'',kind:url.searchParams.get('kind')||undefined}));
-        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),documents:documents.list(),releases:updates.list(),policies:store.db.prepare('SELECT * FROM update_policies').all(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage,COALESCE(b.arch,'x64') arch FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id LEFT JOIN device_builds b ON b.device_id=d.id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
+        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),releases:updates.list(),policies:store.db.prepare('SELECT * FROM update_policies').all(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage,COALESCE(b.arch,'x64') arch FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id LEFT JOIN device_builds b ON b.device_id=d.id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
         if(req.method==='POST'&&route==='/admin/mail/settings')return reply(200,mail.save(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/mail/verify')return reply(200,await mail.verify());
         if(req.method==='POST'&&route==='/admin/mail/test'){const c=mail.settings();if(!mail.configured())fail(400,'Configure SMTP first');mail.enqueue('test',c.fromEmail,req.parsedBody.language||'uk',{});return reply(201,{queued:true});}
@@ -224,7 +233,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       fail(404, OrbitI18n.t('m652'));
     } catch (error) { if([401,403,409,429].includes(error.status))website.reject(new URL(req.url,'http://localhost').pathname,error.status);if (!res.headersSent && !res.destroyed) reply(error.status || (error.code?.startsWith('SQLITE_CONSTRAINT')||[19,2067,1555].includes(error.errcode) ? 409 : 500), { error: error.status ? error.message : OrbitI18n.t('m689'),...(error.update?{update:error.update}:{}) }); else res.destroy(); }
   });
-  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();website.cleanup(); for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
+  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup(); for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;
