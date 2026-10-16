@@ -396,7 +396,7 @@ class Store {
     if(data?.format==='orbit-crm'&&data.version===2&&data.tables)for(const t of ['service_resources','resource_absences','payment_links'])if(!data.tables[t])data.tables[t]=[];
     if (data?.format !== 'orbit-crm' || data.version !== 2 || !data.tables || TABLES.some(t => !Array.isArray(data.tables[t]))) throw Error(OrbitI18n.t('m546'));
     // Preserve device identity and local integration state. Credentials are never exported.
-    const local = ['installation', 'telegram_offset', 'drive_last', 'drive_enabled','monobank_merchant','monobank_key'].map(k => [k, this.get(k)]);
+    const local = ['installation', 'telegram_offset', 'drive_last', 'drive_enabled','monobank_merchant','monobank_key','liqpay_merchant','liqpay_sandbox'].map(k => [k, this.get(k)]);
     this.transaction(() => {
       for (const t of [...TABLES].reverse()) this.db.exec(`DELETE FROM ${t}`);
       for (const t of TABLES) {

@@ -19,7 +19,7 @@ services:
       ORBIT_RELEASES_DIR: /releases
       # Address of the product admin panel, used in administrator invitation emails.
       CH_APP_ADMIN_DOMAIN: ${CH_APP_ADMIN_DOMAIN:-}
-      # Public API address for payment callbacks (monobank).
+      # Public API address for payment callbacks (monobank, LiqPay).
       CH_API_DOMAIN: ${ORBIT_DOMAIN:-}
     volumes:
       - orbit-data:/data
