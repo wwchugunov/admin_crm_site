@@ -18,6 +18,7 @@ const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
 const {LiqPay}=require('./liqpay.cjs');
+const {BookingPage}=require('./booking-page.cjs');
 const {Support}=require('./support.cjs');
 const {Retention}=require('./retention.cjs');
 const {Legal}=require('./legal.cjs');
@@ -96,6 +97,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const legal=new Legal({store,fail});accounts.legal=legal;registration.legal=legal;
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   const liqpay=new LiqPay({db:store.db,accounts,fail,api:process.env.CH_LIQPAY_API,sender:monobank,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.liqpay=liqpay;
+  // Booking pages live on the website domain (lomviko.com/b/<address>); the API domain serves them too.
+  const bookingPage=new BookingPage({db:store.db,accounts,fail,booking:accounts.websiteBooking,publicUrl:process.env.CH_BOOKING_URL||(process.env.CH_WEBSITE_DOMAIN?'https://'+process.env.CH_WEBSITE_DOMAIN:(process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')))});accounts.bookingPage=bookingPage;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
     if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
@@ -191,6 +194,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
       if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));
+      if(await bookingPage.handle(req,url,res,reply))return;
       if(await botWorkers.handle(req,url,reply))return;
       if(await support.handle(req,url,reply,accounts))return;
       if(await legal.handle(req,url,reply,accounts))return;

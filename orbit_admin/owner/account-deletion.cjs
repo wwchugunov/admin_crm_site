@@ -44,6 +44,8 @@ class AccountDeletion{
     each('DELETE FROM support_requests WHERE id=?',tickets);
    }
    each("UPDATE purchases SET user_id='deleted' WHERE user_id=?",ids);
+   // Booking page addresses become free again.
+   if(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='booking_pages'").get())each('DELETE FROM booking_pages WHERE business_id=?',businesses.map(b=>b.id));
    each('DELETE FROM businesses WHERE id=?',businesses.map(b=>b.id));
    // Team members first: they point to the owner through account_id.
    each('DELETE FROM users WHERE id=?',[...ids].reverse());

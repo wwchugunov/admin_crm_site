@@ -10,7 +10,13 @@
 {$ORBIT_WEBSITE_DOMAIN} {
   encode zstd gzip
   header Strict-Transport-Security "max-age=31536000"
-  reverse_proxy landing:4546
+  # Company booking pages: lomviko.com/b/<address>.
+  handle /b/* {
+    reverse_proxy orbit:4545
+  }
+  handle {
+    reverse_proxy landing:4546
+  }
 }
 
 {$CH_APP_ADMIN_DOMAIN} {

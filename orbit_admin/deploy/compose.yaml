@@ -21,6 +21,8 @@ services:
       CH_APP_ADMIN_DOMAIN: ${CH_APP_ADMIN_DOMAIN:-}
       # Public API address for payment callbacks (monobank, LiqPay).
       CH_API_DOMAIN: ${ORBIT_DOMAIN:-}
+      # Website address for company booking pages (lomviko.com/b/<address>).
+      CH_WEBSITE_DOMAIN: ${ORBIT_WEBSITE_DOMAIN:-}
     volumes:
       - orbit-data:/data
       - ./releases:/releases:z
