@@ -131,6 +131,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if(req.method==='POST'&&route==='/admin/members/invite'){administrator.owner(session);return reply(201,members.invite(req.parsedBody,administrator.account().login,inviter()));}
         if(req.method==='POST'&&route==='/admin/members/resend'){administrator.owner(session);return reply(200,members.resend(req.parsedBody?.id,inviter()));}
         if(req.method==='POST'&&route==='/admin/support/stage')return reply(200,support.stage(req.parsedBody));
+        if(req.method==='POST'&&route==='/admin/support/status')return reply(200,support.status(req.parsedBody));
+        if(req.method==='POST'&&route==='/admin/support/reply')return reply(200,support.answer(req.parsedBody,req.parsedBody?.team||session?.name||'LOMVIKO'));
         if(req.method==='POST'&&route==='/admin/support/delete')return reply(200,support.remove(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/members/delete'){administrator.owner(session);members.remove(req.parsedBody?.id);administrator.endMember(req.parsedBody?.id);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/documents/activate')return reply(200,documents.activate(req.parsedBody));
@@ -186,6 +188,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
       if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));
       if(await botWorkers.handle(req,url,reply))return;
+      if(await support.handle(req,url,reply,accounts))return;
       if(await monobank.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;

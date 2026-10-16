@@ -37,7 +37,11 @@ class AccountDeletion{
    each('DELETE FROM mail_outbox WHERE lower(recipient)=?',emails);
    each('DELETE FROM registration_pending WHERE lower(email)=?',emails);
    each('DELETE FROM site_leads WHERE lower(email)=?',emails);
-   if(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='support_requests'").get())each('DELETE FROM support_requests WHERE lower(email)=?',emails);
+   if(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='support_requests'").get()){
+    const tickets=[...ids.flatMap(id=>this.db.prepare('SELECT id FROM support_requests WHERE user_id=?').all(id)),...emails.flatMap(e=>this.db.prepare('SELECT id FROM support_requests WHERE lower(email)=?').all(e))].map(r=>r.id);
+    if(this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='support_messages'").get())each('DELETE FROM support_messages WHERE request_id=?',tickets);
+    each('DELETE FROM support_requests WHERE id=?',tickets);
+   }
    each("UPDATE purchases SET user_id='deleted' WHERE user_id=?",ids);
    each('DELETE FROM businesses WHERE id=?',businesses.map(b=>b.id));
    // Team members first: they point to the owner through account_id.
