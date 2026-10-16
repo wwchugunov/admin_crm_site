@@ -1,8 +1,10 @@
+const crypto=require('node:crypto');
 // Permanent account deletion (App Store 5.1.1(v), Google Play account deletion, GDPR art. 17).
 // Deleting an account owner removes the owner, every team member of the account, every company
 // with its CRM database, vault, bot and update backups. Deleting a team member removes only that
-// person; the company data stays with the owner. Kept on purpose: anonymous purchase references
-// (accounting) and the hashed trial marker that stops repeated free trials, both without names or emails.
+// person; the company data stays with the owner. Nothing that identifies the person stays behind:
+// email, devices and the free-trial marker are erased too, so the same email or computer can
+// register again. Only anonymous purchase references remain for accounting.
 class AccountDeletion{
  constructor({store,accounts,fail}){Object.assign(this,{store,db:store.db,accounts,fail});}
  plan(userId){
@@ -19,6 +21,9 @@ class AccountDeletion{
    for(const b of businesses){for(const table of ['web_requests','bot_workers','bot_messages','bot_updates','update_backups','memberships'])this.db.prepare(`DELETE FROM ${table} WHERE business_id=?`).run(b.id);}
    each('DELETE FROM sessions WHERE user_id=?',ids);
    each('DELETE FROM login_challenges WHERE user_id=?',ids);
+   const devices=ids.flatMap(id=>this.db.prepare('SELECT id FROM devices WHERE user_id=?').all(id).map(d=>d.id));
+   each('DELETE FROM trial_consumptions WHERE device=?',devices);
+   each('DELETE FROM trial_consumptions WHERE email_hash=?',emails.map(e=>crypto.createHash('sha256').update(e).digest('hex')));
    each('DELETE FROM sessions WHERE device_id IN(SELECT id FROM devices WHERE user_id=?)',ids);
    each('DELETE FROM device_builds WHERE device_id IN(SELECT id FROM devices WHERE user_id=?)',ids);
    each('DELETE FROM devices WHERE user_id=?',ids);

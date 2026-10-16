@@ -29,3 +29,12 @@ test('Registration tolerates ten minutes of client clock drift but rejects stale
  assert.equal((await f.call('/v1/register/start',startAt('behind@example.test',Date.now()-10*60000).data)).status,201);
  const stale=await f.call('/v1/register/start',startAt('stale@example.test',Date.now()-20*60000).data);assert.equal(stale.status,401);assert.match(stale.value.error,/expired/);
 });
+test('After permanent deletion the same email and the same computer can register again',async t=>{
+ const f=await fixture(t),first=start('comeback@example.test'),{result}=await register(f,first);assert.equal(result.status,201);
+ const challenge=await f.call('/v1/auth/challenge',{login:first.data.email,password:first.data.password,public_key:first.data.public_key});
+ const login=await f.call('/v1/auth/login',{challenge_id:challenge.value.challenge_id,signature:crypto.sign(null,Buffer.from(JSON.stringify(challenge.value)),first.pair.privateKey).toString('base64url'),platform:'win32',arch:'x64',version:'1.3.2'});assert.equal(login.status,200);
+ assert.equal((await f.call('/admin/user/delete',{id:result.value.user_id,confirm:'comeback@example.test'})).status,200);
+ for(const table of ['trial_consumptions','devices','users','registration_pending'])assert.equal(f.store.db.prepare(`SELECT count(*) n FROM ${table}`).get().n,0,table+' keeps nothing about the person');
+ const again=await register(f,start('comeback@example.test',first.pair));
+ assert.equal(again.result.status,201,'a fresh registration with the same email and device succeeds');
+});
