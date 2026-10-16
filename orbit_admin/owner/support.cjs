@@ -28,6 +28,8 @@ class Support{
  }
  list(){return this.db.prepare('SELECT * FROM support_requests ORDER BY created_at DESC LIMIT 300').all();}
  stage(data){if(!['new','answered','closed'].includes(data?.stage))this.fail(400,'Invalid stage');if(!this.db.prepare('UPDATE support_requests SET stage=? WHERE id=?').run(data.stage,String(data.id||'')).changes)this.fail(404,'Not found');return{ok:true};}
+ // Answered or closed messages are kept for 12 months, as the privacy policy says.
+ cleanup(){this.db.prepare("DELETE FROM support_requests WHERE stage!='new' AND created_at<?").run(Date.now()-365*86400000);}
  remove(data){this.db.prepare('DELETE FROM support_requests WHERE id=?').run(String(data?.id||''));return{ok:true};}
 }
 module.exports={Support,TOPICS};
