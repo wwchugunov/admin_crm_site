@@ -12,6 +12,8 @@ class Registration {
     this.db.exec(`CREATE TABLE IF NOT EXISTS registration_pending(id TEXT PRIMARY KEY,email TEXT NOT NULL,name TEXT NOT NULL,business TEXT NOT NULL,password_hash TEXT NOT NULL,public_key TEXT NOT NULL,code_hash TEXT NOT NULL,expires INTEGER NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS trial_consumptions(device TEXT PRIMARY KEY,email_hash TEXT NOT NULL UNIQUE,started_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS registration_limits(bucket TEXT PRIMARY KEY,at INTEGER NOT NULL,count INTEGER NOT NULL);`);
+    // Whether the person ticked "I accept the offer and the privacy policy" (apps from 1.5.3 on).
+    if(!this.db.prepare('PRAGMA table_info(registration_pending)').all().some(c=>c.name==='accepted'))this.db.exec('ALTER TABLE registration_pending ADD COLUMN accepted INTEGER NOT NULL DEFAULT 0');
   }
   proof(data,publicKey,body) {
     if(typeof data.signature!=='string'||data.signature.length>150||!crypto.verify(null,Buffer.from(JSON.stringify(body)),publicKey,Buffer.from(data.signature,'base64url')))this.fail(401,'Потрібне підтвердження пристрою / Device proof required');
@@ -35,6 +37,8 @@ class Registration {
       let key;try{key=crypto.createPublicKey(this.string(data.public_key,1000));}catch{this.fail(400,'Invalid device key');}
       if(key.asymmetricKeyType!=='ed25519')this.fail(400,'Invalid device key');
       const fields={email:data.email,name:data.name,business:data.business,password:data.password,public_key:data.public_key,timestamp:data.timestamp,request_id:data.request_id};
+      // Newer apps sign the acceptance together with the form; older ones keep the previous signature.
+      if(data.accept!==undefined){if(data.accept!==true)this.fail(400,'Щоб зареєструватися, прийміть Публічну оферту і Політику конфіденційності / Accept the offer and the privacy policy to register');fields.accept=true;}
       if(!Number.isSafeInteger(data.timestamp)||Math.abs(Date.now()-data.timestamp)>15*60000||!/^[-a-f0-9]{36}$/.test(data.request_id||''))this.fail(401,'Registration request expired');
       this.proof(data,key,fields);
       const device=hash(key.export({type:'spki',format:'der'}));
@@ -52,7 +56,8 @@ class Registration {
         if(this.db.prepare('SELECT id FROM requests WHERE id=?').get(data.request_id))this.fail(409,'Request already used');
         this.db.prepare('INSERT INTO requests VALUES(?,?)').run(data.request_id,Date.now());
         this.db.prepare('DELETE FROM registration_pending WHERE email=?').run(email);
-        this.db.prepare('INSERT INTO registration_pending VALUES(?,?,?,?,?,?,?,?,0,?)').run(id,email,name,business,encoded,key.export({type:'spki',format:'pem'}),this.codeHash(id,code),Date.now()+15*60000,Date.now());
+        this.db.prepare('INSERT INTO registration_pending(id,email,name,business,password_hash,public_key,code_hash,expires,attempts,created_at) VALUES(?,?,?,?,?,?,?,?,0,?)').run(id,email,name,business,encoded,key.export({type:'spki',format:'pem'}),this.codeHash(id,code),Date.now()+15*60000,Date.now());
+        if(data.accept===true)this.db.prepare('UPDATE registration_pending SET accepted=1 WHERE id=?').run(id);
         this.mail.enqueue('registration',email,data.language,{name,code},{dedupe:'registration:'+id,expires:Date.now()+15*60000});
         this.store.event('registration.requested');
       });
@@ -71,10 +76,11 @@ class Registration {
       this.db.prepare('INSERT INTO trial_consumptions VALUES(?,?,?)').run(device,hash(pending.email),Date.now());
       this.db.prepare('DELETE FROM registration_pending WHERE id=?').run(pending.id);
       this.store.event('trial.started',id,null,'','30 days; verified email');
+      this.legal?.record({userId:id,email:pending.email,method:pending.accepted?'registration-checkbox+email-code':'registration-email-code',ip:req.clientAddress||req.socket?.remoteAddress,device:device,app:String(data.version||'')});
       const c=this.mail.settings();if(c.ownerNotice)this.mail.enqueue('trial-started',c.ownerEmail||c.fromEmail,data.language,{name:pending.name,email:pending.email,business:pending.business},{userId:id,dedupe:'trial:'+id});
       return id;
     });
-    reply(201,{ok:true,user_id:userId,login:pending.email,trial_days:14});return true;
+    reply(201,{ok:true,user_id:userId,login:pending.email,trial_days:30});return true;
   }
   cleanup(){this.db.prepare('DELETE FROM registration_pending WHERE expires<?').run(Date.now());this.db.prepare('DELETE FROM registration_limits WHERE at<?').run(Date.now()-86400000);}
   codeHash(id,code){return crypto.createHmac('sha256',this.key).update(id+':'+code).digest('hex');}

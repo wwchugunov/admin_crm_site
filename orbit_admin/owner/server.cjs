@@ -19,6 +19,7 @@ const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
 const {Support}=require('./support.cjs');
 const {Retention}=require('./retention.cjs');
+const {Legal}=require('./legal.cjs');
 const {AdminMembers}=require('./admin-members.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
@@ -91,6 +92,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
   const deletion=new AccountDeletion({store,accounts,fail});accounts.deletion=deletion;
   const retention=new Retention({store,accounts,mail});
+  const legal=new Legal({store,fail});accounts.legal=legal;registration.legal=legal;
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
@@ -189,6 +191,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));
       if(await botWorkers.handle(req,url,reply))return;
       if(await support.handle(req,url,reply,accounts))return;
+      if(await legal.handle(req,url,reply,accounts))return;
       if(await monobank.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
