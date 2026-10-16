@@ -17,6 +17,7 @@ const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
+const {LiqPay}=require('./liqpay.cjs');
 const {Support}=require('./support.cjs');
 const {Retention}=require('./retention.cjs');
 const {Legal}=require('./legal.cjs');
@@ -25,7 +26,7 @@ const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const id = () => crypto.randomUUID();
 function fail(status, message) { const error = Error(message); error.status = status; throw error; }
 function string(value, max = 200) { if (typeof value !== 'string' || !value.trim() || value.length > max) fail(400, OrbitI18n.t('m533')); return value.trim(); }
-function body(req) { if(req.parsedBody!==undefined)return Promise.resolve(req.parsedBody);return new Promise((resolve, reject) => { const chunks = []; let length = 0; req.on('data', c => { length += c.length; if (length > 4*1024*1024) { reject(Object.assign(Error(OrbitI18n.t('m670')), { status: 413 })); req.destroy(); } else chunks.push(c); }); req.on('end', () => { try { req.rawBody=Buffer.concat(chunks).toString();req.parsedBody=JSON.parse(req.rawBody||'{}');resolve(req.parsedBody); } catch { reject(Object.assign(Error(OrbitI18n.t('m671')), { status: 400 })); } }); req.on('error', reject); }); }
+function body(req) { if(req.parsedBody!==undefined)return Promise.resolve(req.parsedBody);return new Promise((resolve, reject) => { const chunks = []; let length = 0; req.on('data', c => { length += c.length; if (length > 4*1024*1024) { reject(Object.assign(Error(OrbitI18n.t('m670')), { status: 413 })); req.destroy(); } else chunks.push(c); }); req.on('end', () => { try { req.rawBody=Buffer.concat(chunks).toString();req.parsedBody=String(req.headers['content-type']||'').startsWith('application/x-www-form-urlencoded')?Object.fromEntries(new URLSearchParams(req.rawBody)):JSON.parse(req.rawBody||'{}');resolve(req.parsedBody); } catch { reject(Object.assign(Error(OrbitI18n.t('m671')), { status: 400 })); } }); req.on('error', reject); }); }
 function setup(directory) {
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
   const tokenPath = path.join(directory, 'admin.secret'), privatePath = path.join(directory, 'publisher-private.pem');
@@ -94,6 +95,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const retention=new Retention({store,accounts,mail});
   const legal=new Legal({store,fail});accounts.legal=legal;registration.legal=legal;
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
+  const liqpay=new LiqPay({db:store.db,accounts,fail,api:process.env.CH_LIQPAY_API,sender:monobank,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.liqpay=liqpay;
   function authenticatedDevice(data) {
     const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
     if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
@@ -193,6 +195,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(await support.handle(req,url,reply,accounts))return;
       if(await legal.handle(req,url,reply,accounts))return;
       if(await monobank.handle(req,url,reply))return;
+      if(await liqpay.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
       if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true,support:support.contact() });
@@ -251,7 +254,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   });
   const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup();if(now-(retention.last||0)>3600000){retention.last=now;try{retention.tick(now);}catch{console.error('LOMVIKO retention cycle failed');}} for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
-  const payTimer=setInterval(()=>monobank.poll().catch(()=>{}),180000);payTimer.unref();
+  const payTimer=setInterval(()=>{monobank.poll().catch(()=>{});liqpay.poll().catch(()=>{});},180000);payTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;
   function tickBots() {
