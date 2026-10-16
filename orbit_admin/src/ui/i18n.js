@@ -1,6 +1,12 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const messages={
+    staffCannotDo: { uk: "Цей спеціаліст не виконує обрану послугу", en: "This specialist does not provide the selected service" },
+    staffScheduleInvalid: { uk: "Перевірте графік: потрібен хоча б один робочий день", en: "Check the schedule: at least one working day is needed" },
+    staffAbsenceInvalid: { uk: "Перевірте дати відсутності", en: "Check the absence dates" },
+    clientMissing: { uk: "Клієнта не знайдено", en: "Client not found" },
+    clientDeletedName: { uk: "Видалений клієнт", en: "Deleted client" },
+
 "fiveMinutes":{"uk": "5 хвилин", "en": "5 minutes"},"companyBots":{"uk": "Боти компаній", "en": "Company bots"},"botWaiting":{"uk": "Очікує запуску", "en": "Waiting for worker"},"botOnOwnServer":{"uk": "Власний сервер", "en": "Own server"},"botNotConnected":{"uk": "Не підключено", "en": "Not connected"},"trialStarted":{"uk": "Початок пробного періоду", "en": "Trial started"},"registrationRequested":{"uk": "Реєстрація", "en": "Registration"},"botExternalOnline":{"uk": "✓ Власний сервер", "en": "✓ Own server"},"botExternalWaiting":{"uk": "Очікує запуску на власному сервері", "en": "Waiting for your server"},
 "panelTitle": {"uk": "Адмін-панель застосунку", "en": "Application admin panel"},
 "panelName": {"uk": "Застосунок", "en": "App admin"},

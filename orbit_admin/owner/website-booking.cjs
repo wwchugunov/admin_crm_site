@@ -43,7 +43,7 @@ class WebsiteBooking {
       reply(200, {
         business: store.get('business'), currency: store.get('currency'), timezone: store.get('timezone'),
         services: services.map(({id, name, duration, price, capacity, required_resources}) => ({id, name, duration, price, capacity, required_resources})),
-        resources: snapshot.resources.map(({id, name}) => ({id, name})),
+        resources: snapshot.resources.filter(r => !serviceId || store.canDo(serviceId, r.id)).map(({id, name}) => ({id, name})),
         ...(serviceId && date ? { slots: store.slots(serviceId, resourceId, date) } : {})
       });
       return true;

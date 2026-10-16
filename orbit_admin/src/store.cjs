@@ -1,10 +1,11 @@
 const OrbitI18n = require('./ui/i18n.js');
+const OrbitStaff = require('./ui/staff-rules.js');
 const { DatabaseSync } = require('node:sqlite');
 const { randomUUID, randomBytes } = require('node:crypto');
 const { mkdirSync, chmodSync } = require('node:fs');
 const { dirname } = require('node:path');
 
-const TABLES = ['clients', 'services', 'resources', 'appointments', 'settings', 'audit', 'reminders', 'appointment_clients', 'appointment_resources', 'payments','reminder_deliveries'];
+const TABLES = ['clients', 'services', 'resources', 'appointments', 'settings', 'audit', 'reminders', 'appointment_clients', 'appointment_resources', 'payments','reminder_deliveries','service_resources','resource_absences'];
 function text(value, max = 500) { if (typeof value !== 'string' || !value.trim() || value.length > max) throw Error(OrbitI18n.t('m533')); return value.trim(); }
 function cents(value) { const amount = Math.round(Number(value) * 100); if (!Number.isSafeInteger(amount) || amount < 0 || amount > 1e10) throw Error(OrbitI18n.t('m534')); return amount; }
 function zonedTime(date, clock, timezone) {
@@ -49,6 +50,9 @@ class Store {
     if (!this.get('work_start')) this.set('work_start','09:00');
     if (!this.get('work_end')) this.set('work_end','18:00');
     if (!this.get('work_days')) this.set('work_days',[1,2,3,4,5,6,7]);
+    this.staffSchema();
+    // Indexes for the snapshot and client history (added after all tables exist).
+    this.db.exec("CREATE INDEX IF NOT EXISTS payment_visit ON payments(appointment_id);CREATE INDEX IF NOT EXISTS visit_clients ON appointment_clients(client_id);CREATE INDEX IF NOT EXISTS visit_resources ON appointment_resources(resource_id);");
   }
   get(key) { const r = this.db.prepare('SELECT value FROM settings WHERE key=?').get(key); return r ? JSON.parse(r.value) : null; }
   set(key, value) { this.db.prepare('INSERT INTO settings VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key, JSON.stringify(value)); }
@@ -60,10 +64,10 @@ class Store {
     this.audit('client.created', id); return id;
   }
   addService(data) {
-    const values=this.serviceValues(data),id=randomUUID();this.db.prepare('INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible) VALUES(?,?,?,?,?,?,?,?)').run(id,...values);this.audit('service.created',id);return id;
+    const values=this.serviceValues(data),id=randomUUID();this.db.prepare('INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible) VALUES(?,?,?,?,?,?,?,?)').run(id,...values);if(Array.isArray(data.resource_ids))this.setServiceStaff(id,data.resource_ids);this.audit('service.created',id);return id;
   }
   serviceValues(data){const duration=Number(data.duration),price=cents(data.price),capacity=Number(data.capacity||1),required=Number(data.required_resources||1);if(!Number.isInteger(duration)||duration<5||duration>480||!Number.isInteger(capacity)||capacity<1||capacity>100||!Number.isInteger(required)||required<1||required>8)throw Error(OrbitI18n.t('m537'));return[text(data.name,120),duration,price,capacity,required,data.bot_visible===false||data.bot_visible==='0'?0:1,data.web_visible===true||data.web_visible==='1'?1:0];}
-  updateService(data){if(!this.db.prepare('UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=? WHERE id=? AND archived=0').run(...this.serviceValues(data),text(data.id)).changes)throw Error(OrbitI18n.t('m538'));this.audit('service.updated',data.id);}
+  updateService(data){if(!this.db.prepare('UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=? WHERE id=? AND archived=0').run(...this.serviceValues(data),text(data.id)).changes)throw Error(OrbitI18n.t('m538'));if(Array.isArray(data.resource_ids))this.setServiceStaff(text(data.id),data.resource_ids);this.audit('service.updated',data.id);}
   addResource(data) { const id = randomUUID(); this.db.prepare('INSERT INTO resources(id,name) VALUES(?,?)').run(id, text(data.name, 120)); this.audit('resource.created', id); return id; }
 
   deleteService(data) {
@@ -102,7 +106,7 @@ class Store {
       if (!Number.isSafeInteger(start) || start < Date.now() - 60000 || start > Date.now() + 366 * 86400000) throw Error(OrbitI18n.t('m539'));
       const clients=this.bookingClients(data), resources=[...new Set((data.resource_ids||[data.resource_id]).map(v=>text(v)))];
       const people=Number(data.people_count||clients.length);if(!clients.length||!resources.length||!Number.isInteger(people)||people<clients.length||people>service.capacity||resources.length<service.required_resources||resources.length>8)throw Error(OrbitI18n.t('m540'));
-      for(const resource of resources)if(!this.resourceFree(resource,start,end))throw Error(OrbitI18n.t('m541'));
+      for(const resource of resources)if(!this.canDo(service.id,resource))throw Error(OrbitI18n.t('staffCannotDo'));for(const resource of resources)if(!this.resourceFree(resource,start,end))throw Error(OrbitI18n.t('m541'));
       for(const client of clients)if(this.db.prepare("SELECT a.id FROM appointments a JOIN appointment_clients c ON c.appointment_id=a.id WHERE c.client_id=? AND a.status='confirmed' AND a.start<? AND a.end>?").get(client,end,start))throw Error(OrbitI18n.t('m542'));
       const id = randomUUID();
       const total=data.total===undefined?service.price*people:cents(data.total),cost=cents(data.cost||0);if(total>1e10)throw Error(OrbitI18n.t('m543'));
@@ -144,6 +148,9 @@ class Store {
         "SELECT a.id FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE r.resource_id=? AND a.id<>? AND a.status='confirmed' AND a.start<? AND a.end>?",
       );
       for (const resource of resources)
+        if (!this.canDo(a.service_id, resource))
+          throw Error(OrbitI18n.t("staffCannotDo"));
+      for (const resource of resources)
         if (
           !this.db
             .prepare("SELECT id FROM resources WHERE id=? AND archived=0")
@@ -183,21 +190,209 @@ class Store {
       return id;
     });
   }
+  // Staff rules: which services a person does, their shift pattern and absences.
+  staffSchema() {
+    if (
+      !this.db
+        .prepare("PRAGMA table_info(resources)")
+        .all()
+        .some((c) => c.name === "schedule")
+    )
+      this.db.exec("ALTER TABLE resources ADD COLUMN schedule TEXT");
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS service_resources(service_id TEXT NOT NULL REFERENCES services(id),resource_id TEXT NOT NULL REFERENCES resources(id),PRIMARY KEY(service_id,resource_id));CREATE TABLE IF NOT EXISTS resource_absences(id TEXT PRIMARY KEY,resource_id TEXT NOT NULL REFERENCES resources(id),start_date TEXT NOT NULL,end_date TEXT NOT NULL,reason TEXT NOT NULL DEFAULT '')",
+    );
+  }
+  businessDay(ms) {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: this.get("timezone") || "Europe/Kyiv",
+    }).format(ms);
+  }
+  serviceStaff(serviceId) {
+    return this.db
+      .prepare(
+        "SELECT s.resource_id FROM service_resources s JOIN resources r ON r.id=s.resource_id WHERE s.service_id=? AND r.archived=0",
+      )
+      .all(serviceId)
+      .map((r) => r.resource_id);
+  }
+  canDo(serviceId, resourceId) {
+    return OrbitStaff.capable(
+      { resource_ids: this.serviceStaff(serviceId) },
+      resourceId,
+    );
+  }
+  worksOn(resourceId, date) {
+    const resource = this.db
+      .prepare("SELECT id,schedule FROM resources WHERE id=?")
+      .get(resourceId);
+    const absences = this.db
+      .prepare("SELECT * FROM resource_absences WHERE resource_id=?")
+      .all(resourceId);
+    return OrbitStaff.works(resource, date, absences);
+  }
+  setServiceStaff(serviceId, ids) {
+    const unique = [...new Set(ids.map((v) => text(v)))];
+    for (const id of unique)
+      if (
+        !this.db
+          .prepare("SELECT id FROM resources WHERE id=? AND archived=0")
+          .get(id)
+      )
+        throw Error(OrbitI18n.t("catalogResourceMissing"));
+    this.db
+      .prepare("DELETE FROM service_resources WHERE service_id=?")
+      .run(serviceId);
+    for (const id of unique)
+      this.db
+        .prepare("INSERT INTO service_resources VALUES(?,?)")
+        .run(serviceId, id);
+  }
+  updateResource(data) {
+    const id = text(data.id);
+    let schedule;
+    try {
+      schedule = OrbitStaff.normalize(data.schedule);
+    } catch {
+      throw Error(OrbitI18n.t("staffScheduleInvalid"));
+    }
+    if (
+      !this.db
+        .prepare(
+          "UPDATE resources SET name=?,schedule=? WHERE id=? AND archived=0",
+        )
+        .run(
+          text(data.name, 120),
+          schedule ? JSON.stringify(schedule) : null,
+          id,
+        ).changes
+    )
+      throw Error(OrbitI18n.t("catalogResourceMissing"));
+    this.audit("resource.updated", id);
+  }
+  addAbsence(data) {
+    const resource = text(data.resource_id),
+      from = String(data.start_date || ""),
+      to = String(data.end_date || "");
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(from) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(to) ||
+      to < from
+    )
+      throw Error(OrbitI18n.t("staffAbsenceInvalid"));
+    if (
+      !this.db
+        .prepare("SELECT id FROM resources WHERE id=? AND archived=0")
+        .get(resource)
+    )
+      throw Error(OrbitI18n.t("catalogResourceMissing"));
+    const id = randomUUID();
+    this.db
+      .prepare("INSERT INTO resource_absences VALUES(?,?,?,?,?)")
+      .run(id, resource, from, to, String(data.reason || "").slice(0, 200));
+    this.audit("resource.absence", id);
+    return id;
+  }
+  deleteAbsence(data) {
+    this.db
+      .prepare("DELETE FROM resource_absences WHERE id=?")
+      .run(text(data.id));
+  }
+  updateClient(data) {
+    const id = text(data.id);
+    if (
+      !this.db
+        .prepare("UPDATE clients SET name=?,phone=?,notes=? WHERE id=?")
+        .run(
+          text(data.name, 120),
+          String(data.phone || "").slice(0, 40),
+          String(data.notes || "").slice(0, 2000),
+          id,
+        ).changes
+    )
+      throw Error(OrbitI18n.t("clientMissing"));
+    this.audit("client.updated", id);
+  }
+  // A client with visits is anonymised (visits stay in the books); one without is removed.
+  deleteClient(data) {
+    const id = text(data.id);
+    if (!this.db.prepare("SELECT id FROM clients WHERE id=?").get(id))
+      throw Error(OrbitI18n.t("clientMissing"));
+    const used = this.db
+      .prepare(
+        "SELECT 1 FROM appointment_clients WHERE client_id=? UNION SELECT 1 FROM appointments WHERE client_id=? LIMIT 1",
+      )
+      .get(id, id);
+    this.transaction(() => {
+      if (used)
+        this.db
+          .prepare(
+            "UPDATE clients SET name=?,phone='',notes='',chat_id=NULL,link_code=? WHERE id=?",
+          )
+          .run(
+            OrbitI18n.t("clientDeletedName"),
+            randomBytes(24).toString("base64url"),
+            id,
+          );
+      else this.db.prepare("DELETE FROM clients WHERE id=?").run(id);
+      this.audit("client.deleted", id);
+    });
+  }
+  // The real price is often known only after the visit (parts, extra work).
+  updateVisit(data) {
+    const id = text(data.id),
+      a = this.db.prepare("SELECT * FROM appointments WHERE id=?").get(id);
+    if (!a || a.status === "cancelled") throw Error(OrbitI18n.t("m545"));
+    const total = cents(data.total),
+      cost = data.cost === undefined ? a.cost : cents(data.cost);
+    if (total > 1e10) throw Error(OrbitI18n.t("m543"));
+    this.db
+      .prepare("UPDATE appointments SET total=?,cost=?,notes=? WHERE id=?")
+      .run(
+        total,
+        cost,
+        data.notes === undefined ? a.notes : String(data.notes).slice(0, 2000),
+        id,
+      );
+    this.audit("appointment.updated", id);
+  }
   status(id, status) {
     if (!['completed', 'cancelled', 'no_show'].includes(status)) throw Error(OrbitI18n.t('m544'));
     if (!this.db.prepare("UPDATE appointments SET status=? WHERE id=? AND status='confirmed'").run(status, text(id)).changes) throw Error(OrbitI18n.t('m545'));
     this.audit(`appointment.${status}`, id);
   }
   snapshot() {
-    const appointments=this.db.prepare(`SELECT a.*,c.name client_name,c.phone,s.name service_name,a.total price,r.name resource_name,COALESCE((SELECT sum(amount) FROM payments p WHERE p.appointment_id=a.id),0) paid FROM appointments a JOIN clients c ON c.id=a.client_id JOIN services s ON s.id=a.service_id JOIN resources r ON r.id=a.resource_id ORDER BY start`).all();
-    for(const a of appointments){a.clients=this.db.prepare('SELECT c.id,c.name FROM appointment_clients p JOIN clients c ON c.id=p.client_id WHERE p.appointment_id=?').all(a.id);a.resources=this.db.prepare('SELECT r.id,r.name FROM appointment_resources p JOIN resources r ON r.id=p.resource_id WHERE p.appointment_id=?').all(a.id);a.resource_name=a.resources.map(r=>r.name).join(', ');a.client_name=a.clients.map(c=>c.name).join(', ');}
+    const appointments=this.db.prepare(`SELECT a.*,c.name client_name,c.phone,s.name service_name,a.total price,r.name resource_name,COALESCE(p.paid,0) paid FROM appointments a JOIN clients c ON c.id=a.client_id JOIN services s ON s.id=a.service_id JOIN resources r ON r.id=a.resource_id LEFT JOIN (SELECT appointment_id,sum(amount) paid FROM payments GROUP BY appointment_id) p ON p.appointment_id=a.id ORDER BY start`).all();
+    // Participants and specialists for all visits in two queries instead of two per visit.
+    const byVisit = new Map(appointments.map((a) => [a.id, a]));
+    for (const a of appointments) {
+      a.clients = [];
+      a.resources = [];
+    }
+    for (const row of this.db
+      .prepare(
+        "SELECT p.appointment_id,c.id,c.name FROM appointment_clients p JOIN clients c ON c.id=p.client_id",
+      )
+      .all())
+      byVisit.get(row.appointment_id)?.clients.push({ id: row.id, name: row.name });
+    for (const row of this.db
+      .prepare(
+        "SELECT p.appointment_id,r.id,r.name FROM appointment_resources p JOIN resources r ON r.id=p.resource_id",
+      )
+      .all())
+      byVisit.get(row.appointment_id)?.resources.push({ id: row.id, name: row.name });
+    for (const a of appointments) {
+      a.resource_name = a.resources.map((r) => r.name).join(", ");
+      a.client_name = a.clients.map((c) => c.name).join(", ");
+    }
     const profile={};for(const key of ['business','industry','installation','timezone','currency','logo','phone','address','work_start','work_end','work_days','onboarded','website_enabled'])profile[key]=this.get(key);
-    return {clients:this.db.prepare('SELECT id,name,phone,notes,chat_id FROM clients ORDER BY name').all(),services:this.db.prepare('SELECT * FROM services WHERE archived=0 ORDER BY name').all(),resources:this.db.prepare('SELECT * FROM resources WHERE archived=0 ORDER BY name').all(),appointments,payments:this.db.prepare('SELECT p.*,s.name service_name FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN services s ON s.id=a.service_id ORDER BY at DESC').all(),...profile};
+    return {clients:this.db.prepare('SELECT id,name,phone,notes,chat_id FROM clients ORDER BY name').all(),services:this.db.prepare('SELECT * FROM services WHERE archived=0 ORDER BY name').all().map(sv=>({...sv,resource_ids:this.serviceStaff(sv.id)})),absences:this.db.prepare('SELECT * FROM resource_absences ORDER BY start_date').all(),resources:this.db.prepare('SELECT * FROM resources WHERE archived=0 ORDER BY name').all(),appointments,payments:this.db.prepare('SELECT p.*,s.name service_name FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN services s ON s.id=a.service_id ORDER BY at DESC').all(),...profile};
   }
   export() { const tables = {}; for (const table of TABLES) tables[table] = this.db.prepare(`SELECT * FROM ${table}`).all().map(row => ({ ...row })); for (const client of tables.clients) client.link_code = null; return { format: 'orbit-crm', version: 2, exported_at: new Date().toISOString(), tables }; }
   restore(data) {
     if(data?.format==='orbit-crm'&&data.version===1&&data.tables){data=JSON.parse(JSON.stringify(data));data.version=2;for(const s of data.tables.services||[])Object.assign(s,{capacity:1,required_resources:1,bot_visible:1,web_visible:0});for(const a of data.tables.appointments||[])Object.assign(a,{total:data.tables.services.find(s=>s.id===a.service_id)?.price||0,cost:0,people_count:1});data.tables.appointment_clients=(data.tables.appointments||[]).map(a=>({appointment_id:a.id,client_id:a.client_id}));data.tables.appointment_resources=(data.tables.appointments||[]).map(a=>({appointment_id:a.id,resource_id:a.resource_id}));data.tables.payments=[];}
     if(data?.format==='orbit-crm'&&data.version===2&&data.tables&&!data.tables.reminder_deliveries)data.tables.reminder_deliveries=(data.tables.reminders||[]).flatMap(q=>(data.tables.appointment_clients||[]).filter(p=>p.appointment_id===q.appointment_id).map(p=>({...q,client_id:p.client_id})));
+    if(data?.format==='orbit-crm'&&data.version===2&&data.tables)for(const t of ['service_resources','resource_absences'])if(!data.tables[t])data.tables[t]=[];
     if (data?.format !== 'orbit-crm' || data.version !== 2 || !data.tables || TABLES.some(t => !Array.isArray(data.tables[t]))) throw Error(OrbitI18n.t('m546'));
     // Preserve device identity and local integration state. Credentials are never exported.
     const local = ['installation', 'telegram_offset', 'drive_last', 'drive_enabled'].map(k => [k, this.get(k)]);
@@ -226,14 +421,28 @@ class Store {
   }
   resourceFree(resource,start,end){return Boolean(this.db.prepare('SELECT id FROM resources WHERE id=? AND archived=0').get(resource))&&!this.db.prepare("SELECT a.id FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE r.resource_id=? AND a.status='confirmed' AND a.start<? AND a.end>?").get(resource,end,start);}
   availableResources(serviceId, primary, start) {
-    const service = this.db.prepare('SELECT * FROM services WHERE id=? AND archived=0').get(serviceId);
+    const service = this.db
+      .prepare("SELECT * FROM services WHERE id=? AND archived=0")
+      .get(serviceId);
     if (!service || !Number.isSafeInteger(start)) return [];
-    const automatic = primary == null || primary === '' || primary === 'any';
-    const end = start + service.duration * 60000;
-    if (!automatic && !this.resourceFree(primary, start, end)) return [];
-    const free = this.db.prepare('SELECT id FROM resources WHERE archived=0 ORDER BY name,id').all()
-      .filter(r => r.id !== primary && this.resourceFree(r.id, start, end)).map(r => r.id);
-    const selected = (automatic ? free : [primary, ...free]).slice(0, service.required_resources);
+    const automatic = primary == null || primary === "" || primary === "any";
+    const end = start + service.duration * 60000,
+      day = this.businessDay(start);
+    // Only people who do this service and work that day are offered (bot, website, grid).
+    const fits = (id) =>
+      this.canDo(serviceId, id) &&
+      this.worksOn(id, day) &&
+      this.resourceFree(id, start, end);
+    if (!automatic && !fits(primary)) return [];
+    const free = this.db
+      .prepare("SELECT id FROM resources WHERE archived=0 ORDER BY name,id")
+      .all()
+      .filter((r) => r.id !== primary && fits(r.id))
+      .map((r) => r.id);
+    const selected = (automatic ? free : [primary, ...free]).slice(
+      0,
+      service.required_resources,
+    );
     return selected.length === service.required_resources ? selected : [];
   }
   payment(data){const amount=Number(data.amount),value=Math.round(amount*100);if(!Number.isSafeInteger(value)||!value||Math.abs(value)>1e10)throw Error(OrbitI18n.t('m548'));const at=Number(data.at||Date.now());if(!Number.isSafeInteger(at)||at>Date.now()+60000)throw Error(OrbitI18n.t('m549'));const method=['cash','card','transfer','refund'].includes(data.method)?data.method:'cash';if((value<0)!==(method==='refund'))throw Error(OrbitI18n.t('m550'));const appointment=text(data.appointment_id);const row=this.db.prepare('SELECT id FROM appointments WHERE id=?').get(appointment);if(!row)throw Error(OrbitI18n.t('m551'));const id=randomUUID();this.db.prepare('INSERT INTO payments VALUES(?,?,?,?,?)').run(id,appointment,value,at,method);this.audit('payment.created',id);return id;}

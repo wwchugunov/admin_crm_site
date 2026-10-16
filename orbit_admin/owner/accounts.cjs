@@ -62,6 +62,12 @@ class Accounts {
       else if(route==='/v1/crm/service')value=store.addService(data);
       else if(route==='/v1/crm/service/update')value=store.updateService(data);
       else if(route==='/v1/crm/resource')value=store.addResource(data);
+      else if(route==='/v1/crm/resource/update')value=store.updateResource(data);
+      else if(route==='/v1/crm/absence')value=store.addAbsence(data);
+      else if(route==='/v1/crm/absence/delete')value=store.deleteAbsence(data);
+      else if(route==='/v1/crm/client/update')value=store.updateClient(data);
+      else if(route==='/v1/crm/client/delete')value=store.deleteClient(data);
+      else if(route==='/v1/crm/visit/update')value=store.updateVisit(data);
       else if(route==='/v1/crm/payment')value=store.payment(data);
       else if(route==='/v1/crm/profile'){store.saveProfile(data);this.db.prepare('UPDATE businesses SET name=? WHERE id=?').run(store.get('business'),ctx.business.id);}
       else if(route==='/v1/crm/telegram/external'){value=this.botWorkers.create(ctx.business,data.api_url);}

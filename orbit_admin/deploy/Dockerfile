@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY owner/server.cjs owner/accounts.cjs owner/businesses.cjs owner/admin-auth.cjs owner/releases.cjs owner/public-site.cjs owner/mail.cjs owner/registration.cjs owner/bot-workers.cjs owner/website-booking.cjs owner/entitlements.cjs owner/documents.cjs owner/release-publishing.cjs owner/account-deletion.cjs ./owner/
 COPY src/store.cjs src/security.cjs src/integrations.cjs src/google-config.cjs src/request-proof.cjs ./src/
-COPY src/ui/i18n.js ./src/ui/
+COPY src/ui/i18n.js src/ui/staff-rules.js ./src/ui/
 COPY worker ./worker
 COPY web ./web
 COPY tools/admin-setup.cjs tools/provision-owner.cjs tools/release-key.cjs ./tools/
