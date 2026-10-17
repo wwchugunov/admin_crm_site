@@ -30,7 +30,7 @@ class WebsiteBooking {
     a.allowed(a.db.prepare('SELECT * FROM users WHERE id=?').get(business.account_id));
     const { store } = a.businesses.get(business);
     if (!store.get('website_enabled')) a.fail(404, 'Website booking is disabled');
-    const snapshot = store.snapshot();
+    const snapshot = store.catalogue();
     const services = snapshot.services.filter(s => s.web_visible);
     if (req.method === 'GET' && !match[2]) {
       const serviceId = url.searchParams.get('service_id');
