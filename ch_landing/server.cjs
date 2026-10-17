@@ -13,6 +13,7 @@ const STATIC = new Map([
   ['/assets/icon.png', ['assets/icon.png', 'image/png', DAY]],
   ['/assets/app-dark.png', ['assets/app-dark.png', 'image/png', DAY]],
   ['/assets/og.png', ['assets/og.png', 'image/png', DAY]],
+  ['/assets/og-en.png', ['assets/og-en.png', 'image/png', DAY]],
   ['/assets/icon-192.png', ['assets/icon-192.png', 'image/png', DAY]],
   ['/assets/icon-512.png', ['assets/icon-512.png', 'image/png', DAY]],
   ['/assets/apple-touch-icon.png', ['assets/apple-touch-icon.png', 'image/png', DAY]],
