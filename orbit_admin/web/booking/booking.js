@@ -57,9 +57,9 @@
     if (!state.services.length) return `<section class="step"><h2>Онлайн-запис</h2><p class="empty">${state.loaded ? `Зараз немає послуг для онлайн-запису.${cfg.phone ? ` Зателефонуйте нам: ${esc(cfg.phone)}` : ''}` : 'Завантаження…'}</p>${errorBox()}</section>`;
     if (state.service) {
       const s = state.service;
-      return `<section class="step"><div class="step-title"><h2>Послуга</h2><button class="link" type="button" data-act="change-service">Змінити</button></div><div class="option" aria-pressed="true"><span><span class="name">${esc(s.name)}</span><br><span class="meta">${duration(s.duration)}</span></span>${s.price ? `<span class="price">${money(s.price)}</span>` : ''}</div></section>`;
+      return `<section class="step"><div class="step-title"><h2>Послуга</h2><button class="link" type="button" data-act="change-service">Змінити</button></div><div class="option" aria-pressed="true"><span><span class="name">${esc(s.name)}</span><br><span class="meta">${duration(s.duration)}</span></span>${s.price ? `<span class="price">${money(s.price / 100)}</span>` : ''}</div></section>`;
     }
-    return `<section class="step"><h2>Оберіть послугу</h2><div class="list">${state.services.map((s) => `<button type="button" class="option" data-act="service" data-id="${esc(s.id)}"><span><span class="name">${esc(s.name)}</span><br><span class="meta">${duration(s.duration)}</span></span>${s.price ? `<span class="price">${money(s.price)}</span>` : ''}</button>`).join('')}</div>${errorBox()}</section>`;
+    return `<section class="step"><h2>Оберіть послугу</h2><div class="list">${state.services.map((s) => `<button type="button" class="option" data-act="service" data-id="${esc(s.id)}"><span><span class="name">${esc(s.name)}</span><br><span class="meta">${duration(s.duration)}</span></span>${s.price ? `<span class="price">${money(s.price / 100)}</span>` : ''}</button>`).join('')}</div>${errorBox()}</section>`;
   }
   function resourceStep() {
     if (!state.service || state.resources.length < 2) return '';
@@ -67,7 +67,7 @@
   }
   function timeStep() {
     if (!state.service) return '';
-    const strip = days.map((d) => { const l = dayLabel(d); return `<button type="button" class="day" data-act="day" data-date="${d}" ${pressed(state.date === d)} aria-label="${l.num} ${l.month}"><small>${d === today ? 'сьогодні' : esc(l.week)}</small><b>${l.num}</b><small>${esc(l.month)}</small></button>`; }).join('');
+    const strip = days.map((d) => { const l = dayLabel(d); return `<button type="button" class="day" data-act="day" data-date="${d}" ${pressed(state.date === d)} aria-label="${l.num} ${l.month}"><small${d === today ? ' class="today"' : ''}>${d === today ? 'сьогодні' : esc(l.week)}</small><b>${l.num}</b><small>${esc(l.month)}</small></button>`; }).join('');
     const slots = state.slots === null ? '<p class="loading">Шукаємо вільний час…</p>' : state.slots.length ? `<div class="times">${state.slots.map((t) => `<button type="button" class="time" data-act="time" data-start="${t}" ${pressed(state.start === t)}>${time(t)}</button>`).join('')}</div>` : '<p class="empty">На цей день вільного часу немає — оберіть інший день.</p>';
     return `<section class="step"><h2>Дата і час</h2><div class="days" id="days">${strip}</div>${slots}${state.start ? '' : errorBox()}</section>`;
   }

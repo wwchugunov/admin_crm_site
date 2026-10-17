@@ -193,7 +193,7 @@ section.step {
 }
 .day {
   flex: none;
-  width: 58px;
+  width: 60px;
   padding: 8px 0;
   border-radius: var(--radius-small);
   border: 1px solid var(--line);
@@ -204,6 +204,7 @@ section.step {
   line-height: 1.25;
 }
 .day small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.day small.today { font-size: 9.5px; letter-spacing: 0; }
 .day b { font-size: 18px; font-weight: 650; }
 .day[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .day[aria-pressed="true"] small { color: inherit; opacity: 0.85; }
