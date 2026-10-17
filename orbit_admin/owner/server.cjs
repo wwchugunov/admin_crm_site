@@ -19,6 +19,7 @@ const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
 const {LiqPay}=require('./liqpay.cjs');
 const {BookingPage}=require('./booking-page.cjs');
+const {Notify}=require('./notify.cjs');
 const {Support}=require('./support.cjs');
 const {Retention}=require('./retention.cjs');
 const {Legal}=require('./legal.cjs');
@@ -97,6 +98,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const legal=new Legal({store,fail});accounts.legal=legal;registration.legal=legal;
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   const liqpay=new LiqPay({db:store.db,accounts,fail,api:process.env.CH_LIQPAY_API,sender:monobank,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.liqpay=liqpay;
+  // Morning summaries, reports and instant news for the company team (Telegram and email).
+  const notify=new Notify({db:store.db,accounts,mail,fail});accounts.notify=notify;
   // Booking pages live on the website domain (lomviko.com/b/<address>); the API domain serves them too.
   const bookingPage=new BookingPage({db:store.db,accounts,fail,booking:accounts.websiteBooking,publicUrl:process.env.CH_BOOKING_URL||(process.env.CH_WEBSITE_DOMAIN?'https://'+process.env.CH_WEBSITE_DOMAIN:(process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')))});accounts.bookingPage=bookingPage;
   function authenticatedDevice(data) {
@@ -258,6 +261,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   });
   const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup();if(now-(retention.last||0)>3600000){retention.last=now;try{retention.tick(now);}catch{console.error('LOMVIKO retention cycle failed');}} for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
+  const notifyTimer=setInterval(()=>notify.tick().catch(()=>{}),60000);notifyTimer.unref();
   const payTimer=setInterval(()=>{monobank.poll().catch(()=>{});liqpay.poll().catch(()=>{});},180000);payTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;

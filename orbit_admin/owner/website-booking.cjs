@@ -87,6 +87,8 @@ class WebsiteBooking {
       store.db.prepare('INSERT INTO website_requests VALUES(?,?,?,?)').run(requestId, bodyHash, id, Date.now());
       return id;
     });
+    // The owner and administrators may want to hear about every online booking at once.
+    this.accounts.notify?.event(business, 'booking', appointment, 'online').catch(() => {});
     return { status: 201, appointment_id: appointment };
   }
 
