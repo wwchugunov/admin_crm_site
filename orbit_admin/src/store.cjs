@@ -816,8 +816,9 @@ class Store {
     this.audit(`appointment.${status}`, id);
   }
   snapshot(options = {}) {
+    // Apps before 1.6 expect every visit: they ask without a window.
     const revision = this.revision(),
-      from = this.windowStart();
+      from = options.all ? 0 : this.windowStart();
     // Nothing changed since the app's last copy: only say so.
     if (options.revision === revision && Number(options.from) === from)
       return { unchanged: true, revision, loaded_from: from };
