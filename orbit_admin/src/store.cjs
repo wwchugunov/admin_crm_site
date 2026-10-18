@@ -20,6 +20,7 @@ const TABLES = [
   "service_resources",
   "resource_absences",
   "payment_links",
+  "waitlist",
 ];
 // Company settings the app shows; changing one of them counts as a change of data.
 const PROFILE = [
@@ -36,6 +37,7 @@ const PROFILE = [
   "work_days",
   "onboarded",
   "website_enabled",
+  "lapsed_days",
 ];
 function text(value, max = 500) {
   if (typeof value !== "string" || !value.trim() || value.length > max)
@@ -121,6 +123,10 @@ class Store {
         "people_count",
         "INTEGER NOT NULL DEFAULT 1 CHECK(people_count BETWEEN 1 AND 100)",
       ],
+      // The client pressed "I'll come" in a reminder.
+      ["appointments", "client_confirmed", "INTEGER NOT NULL DEFAULT 0"],
+      // When the company bot last invited a client who had not come for a while.
+      ["clients", "invited_at", "INTEGER"],
     ]) {
       if (
         !this.db
@@ -187,6 +193,7 @@ class Store {
       "service_resources",
       "resource_absences",
       "payment_links",
+      "waitlist",
     ])
       for (const op of ["insert", "update", "delete"])
         this.db.exec(
@@ -556,6 +563,12 @@ class Store {
               "INSERT INTO reminder_deliveries(appointment_id,kind,client_id,status) VALUES(?,?,?,'pending')",
             )
             .run(id, kind, client);
+      if (data.wait_id)
+        this.db
+          .prepare(
+            "UPDATE waitlist SET status='booked',appointment_id=? WHERE id=? AND status='waiting'",
+          )
+          .run(id, text(data.wait_id));
       this.audit("appointment.created", id);
       return id;
     });
@@ -612,7 +625,7 @@ class Store {
           throw Error(OrbitI18n.t("m542"));
       this.db
         .prepare(
-          "UPDATE appointments SET start=?,end=?,resource_id=? WHERE id=?",
+          "UPDATE appointments SET start=?,end=?,resource_id=?,client_confirmed=0 WHERE id=?",
         )
         .run(start, end, resources[0], id);
       this.db
@@ -647,6 +660,11 @@ class Store {
     // Online payment links (monobank and others): money goes straight to the company's account.
     this.db.exec(
       "CREATE TABLE IF NOT EXISTS payment_links(id TEXT PRIMARY KEY,appointment_id TEXT NOT NULL REFERENCES appointments(id),provider TEXT NOT NULL,invoice_id TEXT NOT NULL,amount INTEGER NOT NULL,credited INTEGER NOT NULL DEFAULT 0,status TEXT NOT NULL,url TEXT NOT NULL,created_at INTEGER NOT NULL,expires INTEGER NOT NULL,modified TEXT NOT NULL DEFAULT '',UNIQUE(provider,invoice_id))",
+    );
+    // Waiting list: a client wants a service on a day that is full. Freed times of that day are offered
+    // to everyone waiting; "seen" remembers which times a person was already offered (or saw as free).
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS waitlist(id TEXT PRIMARY KEY,client_id TEXT NOT NULL REFERENCES clients(id),service_id TEXT NOT NULL REFERENCES services(id),resource_id TEXT,date TEXT NOT NULL,wanted INTEGER,note TEXT NOT NULL DEFAULT '',source TEXT NOT NULL DEFAULT 'app',status TEXT NOT NULL DEFAULT 'waiting',created_at INTEGER NOT NULL,appointment_id TEXT);CREATE INDEX IF NOT EXISTS waitlist_day ON waitlist(status,date);CREATE TABLE IF NOT EXISTS waitlist_seen(wait_id TEXT NOT NULL REFERENCES waitlist(id) ON DELETE CASCADE,start INTEGER NOT NULL,PRIMARY KEY(wait_id,start))",
     );
   }
   businessDay(ms) {
@@ -828,17 +846,18 @@ class Store {
     const totals = new Map(
       this.db
         .prepare(
-          "SELECT p.client_id id,sum(a.status='completed') done,sum(a.status='no_show') no_show,max(CASE WHEN a.status='completed' THEN a.start END) last,sum(COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) paid,sum(CASE WHEN a.status='completed' THEN max(0,a.total-COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) ELSE 0 END) due FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id GROUP BY p.client_id",
+          "SELECT p.client_id id,sum(a.status='confirmed' AND a.start>?) upcoming,sum(a.status='completed') done,sum(a.status='no_show') no_show,max(CASE WHEN a.status='completed' THEN a.start END) last,sum(COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) paid,sum(CASE WHEN a.status='completed' THEN max(0,a.total-COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) ELSE 0 END) due FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id GROUP BY p.client_id",
         )
-        .all()
+        .all(Date.now())
         .map((r) => [r.id, r]),
     );
+    const rhythm = this.rhythms();
     return {
       revision,
       loaded_from: from,
       clients: this.db
         .prepare(
-          "SELECT id,name,phone,notes,chat_id FROM clients ORDER BY name",
+          "SELECT id,name,phone,notes,chat_id,invited_at FROM clients ORDER BY name",
         )
         .all()
         .map((c) => {
@@ -851,6 +870,8 @@ class Store {
               last: t?.last || 0,
               paid: t?.paid || 0,
               due: t?.due || 0,
+              upcoming: t?.upcoming || 0,
+              rhythm: rhythm.get(c.id) || 0,
             },
           };
         }),
@@ -871,6 +892,7 @@ class Store {
       appointments: this.visits("a.start>=? OR a.status='confirmed'", [from]),
       payments: this.paymentsBetween(from, 8.64e15),
       payment_links: this.openPaymentLinks(),
+      waitlist: this.waitlist(),
       ...profile,
     };
   }
@@ -933,6 +955,7 @@ class Store {
         "service_resources",
         "resource_absences",
         "payment_links",
+        "waitlist",
       ])
         if (!data.tables[t]) data.tables[t] = [];
     if (
@@ -966,7 +989,11 @@ class Store {
         if (data.tables[t].length > 1000000) throw Error(OrbitI18n.t("m547"));
         for (const row of data.tables[t])
           stmt.run(
-            ...columns.map((c) => row[c] ?? (c === "archived" ? 0 : null)),
+            ...columns.map(
+              (c) =>
+                row[c] ??
+                (c === "archived" || c === "client_confirmed" ? 0 : null),
+            ),
           );
       }
       for (const [k, v] of local) this.set(k, v);
@@ -1153,6 +1180,216 @@ class Store {
     });
     if (delta) this.audit("payment_link.settled", link.id);
     return { ...link, status: state.status, credited: target, delta };
+  }
+  // Usual gap between a client's completed visits in days (median); none with fewer than two visit days.
+  rhythms() {
+    const day = new Intl.DateTimeFormat("en-CA", {
+        timeZone: this.get("timezone") || "Europe/Kyiv",
+      }),
+      byClient = new Map(),
+      out = new Map();
+    for (const r of this.db
+      .prepare(
+        "SELECT p.client_id id,a.start FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id WHERE a.status='completed' ORDER BY a.start",
+      )
+      .all()) {
+      const days = byClient.get(r.id) || new Set();
+      days.add(day.format(r.start));
+      byClient.set(r.id, days);
+    }
+    for (const [id, set] of byClient) {
+      const days = [...set];
+      if (days.length < 2) continue;
+      const gaps = days
+        .slice(1)
+        .map((d, i) =>
+          Math.round((Date.parse(d) - Date.parse(days[i])) / 86400000),
+        )
+        .sort((a, b) => a - b);
+      out.set(id, gaps[Math.floor((gaps.length - 1) / 2)]);
+    }
+    return out;
+  }
+  // Minimum days without a visit before a client shows in "Haven't visited for a while".
+  setLapsedDays(days) {
+    const n = Number(days);
+    if (!Number.isInteger(n) || n < 7 || n > 365)
+      throw Error(OrbitI18n.t("lapsedDaysInvalid"));
+    this.set("lapsed_days", n);
+  }
+  markInvited(id) {
+    this.db
+      .prepare("UPDATE clients SET invited_at=? WHERE id=?")
+      .run(Date.now(), text(id));
+  }
+  // The client pressed "I'll come" in a reminder.
+  clientConfirm(id, clientId) {
+    if (
+      !this.db
+        .prepare(
+          "UPDATE appointments SET client_confirmed=1 WHERE id=? AND status='confirmed' AND start>? AND EXISTS(SELECT 1 FROM appointment_clients WHERE appointment_id=appointments.id AND client_id=?)",
+        )
+        .run(text(id), Date.now(), text(clientId)).changes
+    )
+      throw Error(OrbitI18n.t("m545"));
+    this.audit("appointment.client_confirmed", id);
+  }
+  // The next free times from a day on (two weeks ahead), offered when the wanted day is full.
+  nearestSlots(serviceId, resourceId, date, count = 3) {
+    const out = [];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date))) return out;
+    for (let i = 0; i < 14 && out.length < count; i++) {
+      const d = new Date(`${date}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      out.push(
+        ...this.slots(
+          serviceId,
+          resourceId,
+          d.toISOString().slice(0, 10),
+        ).slice(0, count - out.length),
+      );
+    }
+    return out;
+  }
+  addWait(data) {
+    const client = this.db
+      .prepare("SELECT id FROM clients WHERE id=?")
+      .get(text(data.client_id));
+    if (!client) throw Error(OrbitI18n.t("clientMissing"));
+    const service = this.db
+      .prepare("SELECT * FROM services WHERE id=? AND archived=0")
+      .get(text(data.service_id));
+    if (!service) throw Error(OrbitI18n.t("m538"));
+    const resource =
+      data.resource_id && data.resource_id !== "any"
+        ? text(data.resource_id)
+        : null;
+    if (
+      resource &&
+      !this.db
+        .prepare("SELECT id FROM resources WHERE id=? AND archived=0")
+        .get(resource)
+    )
+      throw Error(OrbitI18n.t("catalogResourceMissing"));
+    const date = String(data.date || "");
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      date < this.businessDay(Date.now()) ||
+      date > this.businessDay(Date.now() + 366 * 86400000)
+    )
+      throw Error(OrbitI18n.t("waitDateInvalid"));
+    const wanted =
+      data.wanted == null || data.wanted === "" ? null : Number(data.wanted);
+    if (wanted !== null && !Number.isSafeInteger(wanted))
+      throw Error(OrbitI18n.t("m539"));
+    const source = ["app", "bot", "page"].includes(data.source)
+      ? data.source
+      : "app";
+    return this.transaction(() => {
+      const same = this.db
+        .prepare(
+          "SELECT id FROM waitlist WHERE client_id=? AND service_id=? AND date=? AND status='waiting'",
+        )
+        .get(client.id, service.id, date);
+      if (same) return same.id;
+      const id = randomUUID();
+      this.db
+        .prepare(
+          "INSERT INTO waitlist(id,client_id,service_id,resource_id,date,wanted,note,source,status,created_at) VALUES(?,?,?,?,?,?,?,?,'waiting',?)",
+        )
+        .run(
+          id,
+          client.id,
+          service.id,
+          resource,
+          date,
+          wanted,
+          String(data.note || "").slice(0, 500),
+          source,
+          Date.now(),
+        );
+      // Times free right now were already on offer: only times freed later are news.
+      for (const start of this.slots(service.id, resource || "any", date))
+        this.db
+          .prepare("INSERT OR IGNORE INTO waitlist_seen VALUES(?,?)")
+          .run(id, start);
+      this.audit("waitlist.added", id);
+      return id;
+    });
+  }
+  removeWait(data) {
+    const id = text(data.id);
+    if (
+      !this.db
+        .prepare(
+          "UPDATE waitlist SET status='removed' WHERE id=? AND status='waiting'",
+        )
+        .run(id).changes
+    )
+      throw Error(OrbitI18n.t("waitMissing"));
+    this.audit("waitlist.removed", id);
+  }
+  // Who is waiting today and later, with names for the app.
+  waitlist() {
+    return this.db
+      .prepare(
+        "SELECT w.*,c.name client_name,c.phone,c.chat_id IS NOT NULL telegram,s.name service_name,s.duration,r.name resource_name FROM waitlist w JOIN clients c ON c.id=w.client_id JOIN services s ON s.id=w.service_id LEFT JOIN resources r ON r.id=w.resource_id WHERE w.status='waiting' AND w.date>=? ORDER BY w.date,w.created_at",
+      )
+      .all(this.businessDay(Date.now()))
+      .map((w) => ({ ...w, telegram: Boolean(w.telegram) }));
+  }
+  // Times freed since a person joined the list, for people the bot can write to. Each time is
+  // offered to everyone waiting for that day at once, and to each person only once.
+  waitOffers() {
+    const out = [];
+    for (const w of this.db
+      .prepare(
+        "SELECT w.*,c.chat_id FROM waitlist w JOIN clients c ON c.id=w.client_id WHERE w.status='waiting' AND w.date>=? AND c.chat_id IS NOT NULL",
+      )
+      .all(this.businessDay(Date.now()))) {
+      const seen = new Set(
+        this.db
+          .prepare("SELECT start FROM waitlist_seen WHERE wait_id=?")
+          .all(w.id)
+          .map((r) => r.start),
+      );
+      const fresh = this.slots(
+        w.service_id,
+        w.resource_id || "any",
+        w.date,
+      ).filter((start) => !seen.has(start));
+      if (!fresh.length) continue;
+      for (const start of fresh)
+        this.db
+          .prepare("INSERT OR IGNORE INTO waitlist_seen VALUES(?,?)")
+          .run(w.id, start);
+      out.push({ ...w, starts: fresh });
+    }
+    return out;
+  }
+  // "I'll take it": books the freed time for this person unless someone was faster.
+  takeWait(waitId, start, clientId) {
+    return this.transaction(() => {
+      const w = this.db
+        .prepare(
+          "SELECT * FROM waitlist WHERE id=? AND client_id=? AND status='waiting'",
+        )
+        .get(text(waitId), text(clientId));
+      if (!w) throw Error(OrbitI18n.t("waitMissing"));
+      start = Number(start);
+      const resources =
+        Number.isSafeInteger(start) && this.businessDay(start) === w.date
+          ? this.availableResources(w.service_id, w.resource_id || "any", start)
+          : [];
+      if (!resources.length) throw Error(OrbitI18n.t("m541"));
+      return this.book({
+        client_id: w.client_id,
+        service_id: w.service_id,
+        resource_ids: resources,
+        start,
+        wait_id: w.id,
+      });
+    });
   }
   saveProfile(data) {
     if (!["beauty", "auto", "universal"].includes(data.industry))

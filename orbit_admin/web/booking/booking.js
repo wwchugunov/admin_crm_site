@@ -6,7 +6,7 @@
   const base = `/b/${cfg.slug}`;
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tz = cfg.timezone;
-  const state = { services: [], resources: [], service: null, resource: 'any', date: null, slots: null, start: null, step: 'service', error: '', busy: false, done: null, request: null };
+  const state = { services: [], resources: [], service: null, resource: 'any', date: null, slots: null, nearest: [], start: null, step: 'service', error: '', busy: false, done: null, request: null, waiting: false, waited: null };
 
   // Text on the company colour stays readable: white on dark colours, near-black on light ones.
   (() => {
@@ -27,6 +27,8 @@
   };
   const time = (ms) => new Intl.DateTimeFormat('uk-UA', { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
   const longDate = (ms) => new Intl.DateTimeFormat('uk-UA', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(ms));
+  const shortDay = (ms) => new Intl.DateTimeFormat('uk-UA', { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(ms));
+  const dayDate = (date) => new Intl.DateTimeFormat('uk-UA', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(`${date}T12:00:00Z`));
   const today = ymd(Date.now());
   const days = Array.from({ length: 30 }, (_, i) => addDays(today, i));
 
@@ -68,13 +70,22 @@
   function timeStep() {
     if (!state.service) return '';
     const strip = days.map((d) => { const l = dayLabel(d); return `<button type="button" class="day" data-act="day" data-date="${d}" ${pressed(state.date === d)} aria-label="${l.num} ${l.month}"><small${d === today ? ' class="today"' : ''}>${d === today ? 'сьогодні' : esc(l.week)}</small><b>${l.num}</b><small>${esc(l.month)}</small></button>`; }).join('');
-    const slots = state.slots === null ? '<p class="loading">Шукаємо вільний час…</p>' : state.slots.length ? `<div class="times">${state.slots.map((t) => `<button type="button" class="time" data-act="time" data-start="${t}" ${pressed(state.start === t)}>${time(t)}</button>`).join('')}</div>` : '<p class="empty">На цей день вільного часу немає — оберіть інший день.</p>';
+    const slots = state.slots === null ? '<p class="loading">Шукаємо вільний час…</p>' : state.slots.length ? `<div class="times">${state.slots.map((t) => `<button type="button" class="time" data-act="time" data-start="${t}" ${pressed(state.start === t)}>${time(t)}</button>`).join('')}</div>` : `<p class="empty">На цей день вільного часу немає.</p>${state.nearest.length ? `<p class="hint">Найближчий вільний час:</p><div class="times near">${state.nearest.map((t) => `<button type="button" class="time" data-act="near" data-start="${t}"><small>${esc(shortDay(t))}</small>${time(t)}</button>`).join('')}</div>` : ''}<div class="wait-offer"><p class="hint">Хочете саме цей день? Станьте в лист очікування — якщо хтось скасує запис, ми з вами зв’яжемося.</p><button type="button" class="secondary" data-act="wait-open" ${pressed(state.waiting)}>Чекати, якщо звільниться</button></div>`;
     return `<section class="step"><h2>Дата і час</h2><div class="days" id="days">${strip}</div>${slots}${state.start ? '' : errorBox()}</section>`;
   }
   function formStep() {
+    if (state.waiting && !state.start) return waitStep();
     if (!state.start) return '';
     const who = state.resource === 'any' ? '' : ` · ${esc(state.resources.find((r) => r.id === state.resource)?.name || '')}`;
-    return `<section class="step" id="form-step"><h2>Ваші дані</h2><div class="summary"><b>${esc(state.service.name)}${who}</b><span>${esc(longDate(state.start))}, ${time(state.start)}</span></div><form id="form" novalidate><label for="name">Ім’я</label><input id="name" name="name" type="text" autocomplete="name" maxlength="120" required value="${esc(state.name || '')}"><label for="phone">Телефон</label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="+380 67 123 45 67" value="${esc(state.phone || '')}"><div class="trap" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div><label class="consent"><input type="checkbox" name="consent" required ${state.consent ? 'checked' : ''}><span>Погоджуюся, що «${esc(cfg.name)}» використає моє ім’я і телефон для запису та нагадувань.</span></label>${errorBox()}<button class="primary" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? 'Записуємо…' : 'Записатися'}</button></form></section>`;
+    return `<section class="step" id="form-step"><h2>Ваші дані</h2><div class="summary"><b>${esc(state.service.name)}${who}</b><span>${esc(longDate(state.start))}, ${time(state.start)}</span></div><form id="form" novalidate>${fields('Записатися')}</form></section>`;
+  }
+  const fields = (button) => `<label for="name">Ім’я</label><input id="name" name="name" type="text" autocomplete="name" maxlength="120" required value="${esc(state.name || '')}"><label for="phone">Телефон</label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="+380 67 123 45 67" value="${esc(state.phone || '')}"><div class="trap" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div><label class="consent"><input type="checkbox" name="consent" required ${state.consent ? 'checked' : ''}><span>Погоджуюся, що «${esc(cfg.name)}» використає моє ім’я і телефон для запису та нагадувань.</span></label>${errorBox()}<button class="primary" type="submit" ${state.busy ? 'disabled' : ''}>${state.busy ? 'Зачекайте…' : button}</button>`;
+  function waitStep() {
+    const who = state.resource === 'any' ? '' : ` · ${esc(state.resources.find((r) => r.id === state.resource)?.name || '')}`;
+    return `<section class="step" id="form-step"><h2>Лист очікування</h2><div class="summary"><b>${esc(state.service.name)}${who}</b><span>${esc(dayDate(state.date))}</span></div><p class="empty">Якщо на цей день звільниться час, адміністратор зателефонує вам і запропонує його.</p><form id="form" novalidate>${fields('Чекати на вільний час')}</form></section>`;
+  }
+  function waitedStep() {
+    return `<section class="step done" role="status"><div class="check">✓</div><h2>Ви в листі очікування</h2><p class="when">${esc(dayDate(state.waited.date))}</p><p>${esc(state.service.name)}</p><p class="empty">Щойно звільниться час, ми зв’яжемося з вами за телефоном.</p><button class="link" type="button" data-act="again" style="margin-top:14px">Обрати інший час</button>${cfg.phone ? `<p class="empty" style="margin-top:12px">Питання? Телефонуйте: ${esc(cfg.phone)}</p>` : ''}</section>`;
   }
   function doneStep() {
     const d = state.done;
@@ -83,7 +94,7 @@
   }
   function render(focus) {
     const scroll = document.getElementById('days')?.scrollLeft;
-    app.innerHTML = header() + (state.done ? doneStep() : serviceStep() + resourceStep() + timeStep() + formStep()) + '<p class="foot">Онлайн-запис <a href="https://lomviko.com" target="_blank" rel="noopener">LOMVIKO</a></p>';
+    app.innerHTML = header() + (state.done ? doneStep() : state.waited ? waitedStep() : serviceStep() + resourceStep() + timeStep() + formStep()) + '<p class="foot">Онлайн-запис <a href="https://lomviko.com" target="_blank" rel="noopener">LOMVIKO</a></p>';
     const strip = document.getElementById('days');
     if (strip) {
       if (scroll !== undefined) strip.scrollLeft = scroll;
@@ -92,12 +103,13 @@
     if (focus) document.getElementById(focus)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function loadSlots(date) {
-    state.date = date; state.slots = null; state.start = null; render();
+    state.date = date; state.slots = null; state.nearest = []; state.start = null; state.waiting = false; render();
     try {
       const q = new URLSearchParams({ service_id: state.service.id, date, resource_id: state.resource });
       const data = await api('/catalog?' + q);
       if (state.date !== date) return;
       state.slots = data.slots || [];
+      state.nearest = data.nearest || [];
       state.resources = data.resources || [];
     } catch (e) { state.slots = []; state.error = e.message; }
     render();
@@ -137,8 +149,10 @@
     if (act === 'resource') { state.resource = b.dataset.id; return loadSlots(state.date || today); }
     if (act === 'day') return loadSlots(b.dataset.date);
     if (act === 'time') { state.start = Number(b.dataset.start); render('form-step'); document.getElementById('name')?.focus({ preventScroll: true }); return; }
+    if (act === 'near') { const start = Number(b.dataset.start); await loadSlots(ymd(start)); if (state.slots?.includes(start)) { state.start = start; render('form-step'); document.getElementById('name')?.focus({ preventScroll: true }); } return; }
+    if (act === 'wait-open') { state.waiting = true; state.start = null; render('form-step'); document.getElementById('name')?.focus({ preventScroll: true }); return; }
     if (act === 'ics') return ics();
-    if (act === 'again') { Object.assign(state, { done: null, service: null, start: null, slots: null, date: null, resource: 'any', request: null }); return render(); }
+    if (act === 'again') { Object.assign(state, { done: null, waited: null, waiting: false, service: null, start: null, slots: null, date: null, resource: 'any', request: null }); return render(); }
   });
   app.addEventListener('input', (event) => {
     if (event.target.name === 'name') state.name = event.target.value;
@@ -155,8 +169,14 @@
     // The same request id is reused on a retry, so a double tap or a lost answer never books twice.
     state.request ||= (crypto.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-zA-Z0-9_-]/g, '');
     state.busy = true; render();
+    const full = digits.length === 10 && digits.startsWith('0') ? '+38' + digits : phone;
+    if (state.waiting && !state.start) {
+      try { await api('/wait', { token: cfg.token, website: v.website || '', name: v.name.trim(), phone: full, consent: true, service_id: state.service.id, resource_id: state.resource, date: state.date }); state.waited = { date: state.date }; state.waiting = false; }
+      catch (e) { state.error = e.message; }
+      state.busy = false; render(state.waited ? undefined : 'form-step'); if (state.waited) scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     try {
-      const full = digits.length === 10 && digits.startsWith('0') ? '+38' + digits : phone;
       const r = await api('/book', { token: cfg.token, website: v.website || '', request_id: state.request, name: v.name.trim(), phone: full, consent: true, service_id: state.service.id, resource_id: state.resource, start: state.start });
       state.done = r;
       parent.postMessage({ lomviko: 'booked' }, '*');

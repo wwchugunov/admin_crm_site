@@ -79,3 +79,23 @@ test('Deleting the account frees its booking address',async t=>{
  deletion.delete(f.user);
  assert.equal(f.owner.db.prepare('SELECT count(*) n FROM booking_pages').get().n,0);
 });
+test('A full day shows the nearest free times; the client can wait for that day instead',async t=>{
+ const f=await fixture(t);f.page.save(f.business,f.runtime,{slug:'studio-olena',enabled:true});
+ // Olena only, and only one hour that day.
+ f.store.set('work_start','10:00');f.store.set('work_end','11:00');f.store.deleteResource({id:f.iryna});
+ const first=f.store.slots(f.service,'any',f.date)[0];
+ assert.equal((await f.post('/b/studio-olena/book',f.booking({start:first}))).status,201);
+ const full=JSON.parse((await f.get(`/b/studio-olena/catalog?service_id=${f.service}&date=${f.date}`)).text);
+ assert.deepEqual(full.slots,[]);
+ assert.equal(full.nearest.length,3);assert(full.nearest.every(s=>s>first));
+ const open=JSON.parse((await f.get(`/b/studio-olena/catalog?service_id=${f.service}&date=${new Date(full.nearest[0]).toISOString().slice(0,10)}`)).text);
+ assert(!('nearest' in open),'a day with free times needs no hints');
+ const wait={token:f.token(),name:'Ліна',phone:'+380 63 111 22 33',consent:true,service_id:f.service,resource_id:'any',date:f.date};
+ assert.equal((await f.post('/b/studio-olena/wait',{...wait,token:f.token('studio-olena',100)})).status,400,'posted instantly');
+ assert.equal((await f.post('/b/studio-olena/wait',{...wait,consent:false})).status,400);
+ assert.equal((await f.post('/b/studio-olena/wait',{...wait,date:'2001-01-01'})).status,400);
+ assert.equal((await f.post('/b/studio-olena/wait',wait)).status,201);
+ assert.equal((await f.post('/b/studio-olena/wait',wait)).status,201,'a repeat keeps one entry');
+ const list=f.store.waitlist();
+ assert.equal(list.length,1);assert.equal(list[0].client_name,'Ліна');assert.equal(list[0].date,f.date);assert.equal(list[0].source,'page');assert.equal(list[0].telegram,false);
+});

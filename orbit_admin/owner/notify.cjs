@@ -22,7 +22,7 @@ class Notify{
    CREATE TABLE IF NOT EXISTS notify_cursor(business_id TEXT PRIMARY KEY,payment_at INTEGER NOT NULL);`);
   // The bot hands "start team-<code>" and bookings/cancellations made in the bot to this module.
   Telegram.onTeamLink=(telegram,code,chat)=>this.linked(telegram,code,chat);
-  Telegram.onEvent=(telegram,kind,id)=>{const b=this.businessOf(telegram);if(b)this.event(b,kind,id,'bot').catch(()=>{});};
+  Telegram.onEvent=(telegram,kind,id,extra)=>{const b=this.businessOf(telegram);if(b)this.event(b,kind,id,'bot',extra).catch(()=>{});};
  }
  prefs(businessId,userId){const row=this.db.prepare('SELECT prefs FROM notify_prefs WHERE business_id=? AND user_id=?').get(businessId,userId);return{...DEFAULTS,...(row?JSON.parse(row.prefs):{})};}
  botName(business,runtime){return this.accounts.botWorkers?.status(business)?.username||runtime.store.get('bot_username')||null;}
@@ -81,6 +81,7 @@ class Notify{
    lines.push([...by].map(([n,e])=>`• ${n} — ${e.n} (${clock(e.first,tz)}–${clock(e.last,tz)})`).join('\n'));
   }else lines.push('Сьогодні записів ще немає.');
   const gaps=this.freeWindows(store,today,tz,planned,now);if(gaps.length)lines.push('Вільні вікна: '+gaps.slice(0,5).join(' · '));
+  const waiting=store.waitlist().filter(w=>w.date===today);if(waiting.length)lines.push(`Лист очікування на сьогодні: ${waiting.map(w=>`${w.client_name}${w.phone?` (${w.phone})`:''} — ${w.service_name}`).slice(0,5).join(', ')}${waiting.length>5?` і ще ${waiting.length-5}`:''}`);
   const y=this.day(store,yesterday,tz),done=y.filter(a=>a.status==='completed'),noShow=y.filter(a=>a.status==='no_show').length;
   const paid=store.db.prepare('SELECT COALESCE(sum(amount),0) s FROM payments WHERE at>=? AND at<?').get(midnight(yesterday,tz),midnight(today,tz)).s;
   const fresh=store.db.prepare("SELECT count(*) n FROM (SELECT c.client_id,min(a.start) first FROM appointment_clients c JOIN appointments a ON a.id=c.appointment_id WHERE a.status='completed' GROUP BY c.client_id) WHERE first>=? AND first<?").get(midnight(yesterday,tz),midnight(today,tz)).n;
@@ -126,13 +127,17 @@ class Notify{
   if(rows.length)lines.push('По спеціалістах:\n'+rows.map(r=>`• ${r.name} — ${money(r.revenue,cur)}, візитів ${r.visits}, завантаження ${r.load}%`).join('\n'));
   return{subject:`Звіт за ${label}`,text:lines.join('\n\n'),period:first};
  }
- // Instant news. Bookings and cancellations come from the bot and the booking page.
- async event(business,kind,id,source){
+ // Instant news. Bookings, cancellations and moves come from the bot and the booking page.
+ async event(business,kind,id,source,extra={}){
   const runtime=this.accounts.businesses.get(business),store=runtime.store,tz=store.get('timezone')||'Europe/Kyiv',cur=store.get('currency')||'UAH';
   const a=store.visits('a.id=?',[String(id)])[0];if(!a)return;
   const when=`${dayName(a.start,tz)}, ${clock(a.start,tz)}`,who=`${a.client_name}${a.phone?` · ${a.phone}`:''}`;
-  const text=kind==='booking'?`🆕 Новий запис ${source==='bot'?'через Telegram-бота':'онлайн'}\n${who}\n${a.service_name} · ${a.resource_name}\n${when} · ${money(a.total,cur)}`:`❌ Клієнт скасував запис через бота\n${who}\n${a.service_name} · ${a.resource_name}\n${when}\nЧас знову вільний.`;
-  for(const m of this.team(business))if(m.prefs[kind==='booking'?'booking':'cancel'])await this.deliver(business,runtime,m,{subject:kind==='booking'?'Новий онлайн-запис':'Скасування запису',text,dedupe:`${kind}:${id}:${m.id}`});
+  const text=kind==='booking'?`🆕 Новий запис ${extra?.waitlist?'з листа очікування':source==='bot'?'через Telegram-бота':'онлайн'}\n${who}\n${a.service_name} · ${a.resource_name}\n${when} · ${money(a.total,cur)}`
+   :kind==='reschedule'?`🔁 Клієнт переніс запис через бота\n${who}\n${a.service_name} · ${a.resource_name}\nБуло: ${extra?.from?`${dayName(extra.from,tz)}, ${clock(extra.from,tz)}`:'—'}\nСтало: ${when}`
+   :`❌ Клієнт скасував запис через бота\n${who}\n${a.service_name} · ${a.resource_name}\n${when}\nЧас знову вільний.`;
+  const subject=kind==='booking'?'Новий онлайн-запис':kind==='reschedule'?'Перенесення запису':'Скасування запису';
+  // A move is a change made by the client, like a cancellation: the same switch covers both.
+  for(const m of this.team(business))if(m.prefs[kind==='booking'?'booking':'cancel'])await this.deliver(business,runtime,m,{subject,text,dedupe:`${kind}:${id}:${kind==='reschedule'?a.start+':':''}${m.id}`});
  }
  async test(business,user){
   const runtime=this.accounts.businesses.get(business),member=this.team(business).find(m=>m.id===user.id);

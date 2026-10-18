@@ -33,12 +33,43 @@ class WebsiteBooking {
       a.fail(400, 'Оберіть послугу і дату / Provide a public service_id and date in YYYY-MM-DD format');
     if (resourceId !== 'any' && !snapshot.resources.some(r => r.id === resourceId))
       a.fail(400, 'Такого спеціаліста немає / Unknown resource_id');
+    const slots = serviceId && date ? store.slots(serviceId, resourceId, date) : null;
     return {
       business: store.get('business'), currency: store.get('currency'), timezone: store.get('timezone'),
       services: services.map(({id, name, duration, price, capacity, required_resources}) => ({id, name, duration, price, capacity, required_resources})),
       resources: snapshot.resources.filter(r => !serviceId || store.canDo(serviceId, r.id)).map(({id, name}) => ({id, name})),
-      ...(serviceId && date ? { slots: store.slots(serviceId, resourceId, date) } : {})
+      // A full day also shows the next free times, so the client does not have to search day by day.
+      ...(slots ? { slots, ...(slots.length ? {} : { nearest: store.nearestSlots(serviceId, resourceId, date) }) } : {})
     };
+  }
+
+  // Name and phone checks shared by a booking and a place on the waiting list.
+  person(data) {
+    const a = this.accounts;
+    if (!data || Array.isArray(data) || typeof data !== 'object') a.fail(400, 'Некоректний запит / JSON object required');
+    if (data.consent !== true) a.fail(400, 'Потрібна згода на обробку даних для запису / Customer consent is required');
+    const name = a.string(data.name, 120);
+    if (typeof data.phone !== 'string' || data.phone.length > 40 || !/^[+\d\s().-]+$/.test(data.phone)) a.fail(400, 'Перевірте номер телефону / Invalid phone');
+    const phone = digits(data.phone);
+    if (phone.length < 7 || phone.length > 15) a.fail(400, 'Номер телефону має містити 7–15 цифр разом із кодом країни / Phone must contain 7–15 digits');
+    return { name, phone };
+  }
+
+  // A full day on the booking page: the client waits for a freed time; the team sees them in the app.
+  wait(business, store, data, address) {
+    const a = this.accounts;
+    this.limit(business.id, address);
+    const { name, phone } = this.person(data);
+    const catalogue = store.catalogue(), service = catalogue.services.find(s => s.web_visible && s.id === data.service_id);
+    if (!service) a.fail(400, 'Цієї послуги немає в онлайн-записі / Unknown or private service');
+    const resource = data.resource_id || 'any';
+    if (resource !== 'any' && !catalogue.resources.some(r => r.id === resource)) a.fail(400, 'Такого спеціаліста немає / Unknown resource_id');
+    return store.transaction(() => {
+      const client = store.db.prepare('SELECT id,phone FROM clients').all().find(c => digits(c.phone) === phone);
+      const clientId = client?.id || store.addClient({ name, phone: data.phone.trim() });
+      try { return store.addWait({ client_id: clientId, service_id: service.id, resource_id: resource, date: String(data.date || ''), source: 'page' }); }
+      catch { a.fail(400, 'Оберіть дату від сьогодні й не пізніше ніж за рік / Choose a date within the next year'); }
+    });
   }
 
   // Creates the visit; a repeated request_id returns the same visit instead of a duplicate.

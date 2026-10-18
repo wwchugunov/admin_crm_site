@@ -96,7 +96,7 @@ class BookingPage{
    const body=fs.readFileSync(path.join(STATIC,file[1]));
    res.writeHead(200,this.headers(FILES[file[1]],{'Cache-Control':'public, max-age=300','Access-Control-Allow-Origin':'*','Cross-Origin-Resource-Policy':'cross-origin'}));res.end(body);return true;
   }
-  const m=/^\/b\/([a-z0-9-]{3,40})(?:\/(logo|cover|catalog|book))?\/?$/.exec(route);
+  const m=/^\/b\/([a-z0-9-]{3,40})(?:\/(logo|cover|catalog|book|wait))?\/?$/.exec(route);
   const missing=()=>{this.fail(404,'Сторінку запису не знайдено або її вимкнено / Booking page not found');};
   if(!m)missing();
   const c=this.company(m[1]);
@@ -114,6 +114,13 @@ class BookingPage{
    const r=this.booking.create(c.business,c.store,{...data,request_id:data.request_id},req.clientAddress||req.socket.remoteAddress,'page');
    const a=c.store.db.prepare('SELECT a.start,a.end,s.name service FROM appointments a JOIN services s ON s.id=a.service_id WHERE a.id=?').get(r.appointment_id);
    reply(r.status,{ok:true,start:a?.start,end:a?.end,service:a?.service});return true;
+  }
+  if(m[2]==='wait'&&req.method==='POST'){
+   const data=req.parsedBody||{};
+   if(data.website)this.fail(400,'Некоректний запит / Invalid request');
+   if(!this.checkToken(m[1],data.token))this.fail(400,'Сторінка застаріла — оновіть її і спробуйте ще раз / The page is outdated, reload it');
+   this.booking.wait(c.business,c.store,data,req.clientAddress||req.socket.remoteAddress);
+   reply(201,{ok:true});return true;
   }
   this.fail(405,'Method not allowed');
  }
