@@ -547,7 +547,7 @@ function supportContact() {
     return "";
   }
 }
-async function supportModal(error = "", parent = "") {
+async function supportModal(error = "", parent = "", preset = {}) {
   let sent = null;
   const info = await window.orbit.call("support:info").catch(() => ({}));
   window.orbit
@@ -568,12 +568,12 @@ async function supportModal(error = "", parent = "") {
       idea: "supportTopicIdea",
       billing: "supportTopicBilling",
     },
-    chosen = error ? "problem" : "question";
+    chosen = preset.topic || (error ? "problem" : "question");
   modal(
     OrbitI18n.t("supportTitle"),
     `<p class="support-intro">${OrbitI18n.t("supportIntro")}</p>` +
       `<label>${OrbitI18n.t("supportTopic")}</label><div class="segmented pay-methods support-topics">${topics.map((t) => `<label><input type="radio" name="topic" value="${t}" ${t === chosen ? "checked" : ""}><span>${OrbitI18n.t(names[t])}</span></label>`).join("")}</div>` +
-      `<label for="field-message">${OrbitI18n.t("supportMessage")}</label><textarea id="field-message" name="message" rows="5" required minlength="5" maxlength="4000" placeholder="${escape(OrbitI18n.t("supportMessageHint"))}"></textarea>` +
+      `<label for="field-message">${OrbitI18n.t("supportMessage")}</label><textarea id="field-message" name="message" rows="5" required minlength="5" maxlength="4000" placeholder="${escape(OrbitI18n.t("supportMessageHint"))}">${escape(preset.message || "")}</textarea>` +
       `<div class="form-grid"><div>${field(OrbitI18n.t("supportEmail"), "email", "email", `required maxlength="254" value="${escape(info.email || "")}"`)}</div><div>${field(OrbitI18n.t("supportName"), "name", "text", `maxlength="120" value="${escape(info.name || "")}"`)}</div></div>` +
       `<label class="checkbox-line"><input name="attach" type="checkbox" checked>${OrbitI18n.t("supportAttach")}</label>` +
       `<p class="hint" id="support-direct">${supportContact() ? `${OrbitI18n.t("supportDirect")}: ${escape(supportContact())}` : ""}</p>`,
@@ -818,7 +818,7 @@ function loginModal() {
         "password",
         'required autocomplete="current-password"',
       ) +
-      `<p class="hint">${OrbitI18n.t("m296")}</p><button type="button" class="secondary" data-action="register">${OrbitI18n.t("registerFreeTrial")}</button>`,
+      `<p class="hint">${OrbitI18n.t("m296")} <button type="button" class="link-button" data-action="forgot-password">${OrbitI18n.t("forgotPassword")}</button></p><button type="button" class="secondary" data-action="register">${OrbitI18n.t("registerFreeTrial")}</button>`,
     async (v) => {
       await window.orbit.call("account:login", "", v.login, v.password);
       team = [];
@@ -826,6 +826,42 @@ function loginModal() {
       toast(OrbitI18n.t("m298"));
     },
     OrbitI18n.t("m036"),
+  );
+  modalNeedsConnection = false;
+}
+
+// Forgot password: email → six-digit code from the letter → new password, then straight into the workspace.
+function forgotPasswordModal() {
+  const known = $("#field-login")?.value || "";
+  closeModal();
+  modal(
+    OrbitI18n.t("forgotPasswordTitle"),
+    `<p class="hint">${OrbitI18n.t("forgotPasswordHint")}</p>` +
+      field(OrbitI18n.t("m294"), "email", "email", `required maxlength="254" autocomplete="username" value="${escape(known)}"`),
+    async (v) => {
+      await window.orbit.call("account:reset:start", v.email, OrbitI18n.language);
+      setTimeout(
+        () =>
+          modal(
+            OrbitI18n.t("forgotPasswordCodeTitle"),
+            `<p class="hint">${OrbitI18n.t("forgotPasswordCodeHint")}</p>` +
+              field(OrbitI18n.t("verificationCode"), "code", "text", 'required pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" maxlength="6"') +
+              field(OrbitI18n.t("forgotPasswordNew"), "password", "password", 'required minlength="12" maxlength="128" autocomplete="new-password"') +
+              field(OrbitI18n.t("registerPasswordAgain"), "password_again", "password", 'required minlength="12" maxlength="128" autocomplete="new-password"') +
+              `<p class="hint">${OrbitI18n.t("registerPasswordHint")}</p>`,
+            async (c) => {
+              if (c.password !== c.password_again) throw Error(OrbitI18n.t("registerPasswordMismatch"));
+              await window.orbit.call("account:reset:confirm", c.code, c.password);
+              team = [];
+              selectedLogo = undefined;
+              toast(OrbitI18n.t("forgotPasswordDone"));
+            },
+            OrbitI18n.t("forgotPasswordSave"),
+          ),
+        0,
+      );
+    },
+    OrbitI18n.t("sendCode"),
   );
   modalNeedsConnection = false;
 }

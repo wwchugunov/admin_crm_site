@@ -186,3 +186,11 @@ html.platform-mac[data-theme] aside {
 #business-selector:has(option:only-child) {
   display: none !important;
 }
+
+/* Subscription: the last week and after access ended. */
+html[data-theme] .subscription-banner {
+  border-left: 4px solid #e8590c;
+}
+html[data-theme] .subscription-banner.ended {
+  border-left-color: var(--danger, #c92a2a);
+}

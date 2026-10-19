@@ -75,6 +75,17 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
    const {key}=device(req,res,draft.email),fields={registration_id:draft.id,code:args[0]},signature=crypto.sign(null,Buffer.from(JSON.stringify(fields)),key).toString('base64url');
    await upstream(req,'/v1/register/confirm',{...fields,signature,language:args[1]==='en'?'en':'uk',version:VERSION});drafts.delete(draftKey(seed));return login(req,res,draft.email,draft.password);
   }
+  // Forgot password: a code to the account's email, then a new password and a fresh sign-in.
+  if(channel==='account:reset:start'){
+   const email=String(args[0]||'').trim().toLowerCase(),{seed}=device(req,res);
+   const result=await upstream(req,'/v1/password/reset/start',{email,language:args[1]==='en'?'en':'uk'});
+   for(const[k,d]of drafts)if(d.expires<Date.now())drafts.delete(k);if(drafts.size>5000)problem(429,'Спробуйте пізніше / Try again later');
+   drafts.set('reset:'+draftKey(seed),{id:result.reset_id,email,expires:Date.now()+15*60000});return {ok:true};
+  }
+  if(channel==='account:reset:confirm'){
+   const {seed}=device(req,res),draft=drafts.get('reset:'+draftKey(seed));if(!draft||draft.expires<Date.now())problem(400,'Надішліть код ще раз / Request a new code');
+   const[code,password]=args;const r=await upstream(req,'/v1/password/reset/confirm',{reset_id:draft.id,code:String(code||''),password});drafts.delete('reset:'+draftKey(seed));return login(req,res,r.login||draft.email,password);
+  }
   if(channel==='support:contact')return (await upstream(req,'/v1/info')).support||null;
   if(channel==='support:send'&&!cookies(req)[SESSION]){const d=args[0]||{};return upstream(req,'/public/support',{email:d.email,name:d.name,business:d.business,topic:d.topic,message:d.message,language:d.language,details:d.attach?details(req,null,d.error):''});}
   return undefined;

@@ -9,6 +9,7 @@ const {AdminAuth,totp,base32}=require('./admin-auth.cjs');
 const {PublicSite}=require('./public-site.cjs');
 const {Mailer}=require('./mail.cjs');
 const {Registration}=require('./registration.cjs');
+const {PasswordReset}=require('./password-reset.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
 const {Releases,version:stableVersion}=require('./releases.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
@@ -92,6 +93,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   }
   const accounts=new Accounts({store,directory:businessDirectory,body,fail,string,license,telegramFactory,updates});
   const registration=new Registration({store,accounts,mail,fail,string});
+  const reset=new PasswordReset({store,mail,fail,string,key:registration.key});
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
   const deletion=new AccountDeletion({store,accounts,fail});accounts.deletion=deletion;
   const retention=new Retention({store,accounts,mail});
@@ -154,7 +156,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if(req.method==='POST'&&route==='/admin/mail/test'){const c=mail.settings();if(!mail.configured())fail(400,'Configure SMTP first');mail.enqueue('test',c.fromEmail,req.parsedBody.language||'uk',{});return reply(201,{queued:true});}
         if(req.method==='POST'&&route==='/admin/mail/retry')return reply(200,mail.retry(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/mail/access'){if(!mail.accessReady())fail(400,'Configure SMTP and public website/API URLs first');const u=store.db.prepare('SELECT * FROM users WHERE id=?').get(req.parsedBody.user_id);if(!u)fail(404,'User not found');accounts.allowed(u);return reply(201,store.transaction(()=>{store.db.prepare('UPDATE invites SET expires=0 WHERE user_id=? AND used_at IS NULL').run(u.id);const invite=store.invite(u.id);mail.access(u,invite,u.stage==='trial'?'demo':'access',req.parsedBody.language);return{queued:true};}));}
-        if(req.method==='POST'&&route==='/admin/purchase'){const d=req.parsedBody;if(d.confirmed!==true)fail(400,'Confirm receipt of payment first');if(!mail.accessReady())fail(400,'Configure SMTP and public website/API URLs first');const reference=string(d.reference,120),u=store.db.prepare('SELECT * FROM users WHERE id=? AND account_id IS NULL').get(d.user_id),days=Number(d.days),seats=Number(d.max_devices);if(!u||u.stage==='blocked')fail(400,'Select an unblocked business owner');if(!Number.isInteger(days)||days<1||days>3650||!Number.isInteger(seats)||seats<1||seats>100)fail(400,'Invalid subscription period or device limit');const existing=store.db.prepare('SELECT * FROM purchases WHERE reference=?').get(reference);if(existing){if(existing.user_id!==u.id||existing.days!==days||existing.seats!==seats)fail(409,'Payment reference already used');return reply(200,{ok:true,repeated:true});}return reply(201,store.transaction(()=>{const expires=Math.max(Date.now(),u.stage==='active'?u.expires:0)+days*86400000;store.db.prepare("UPDATE users SET stage='active',expires=?,max_devices=? WHERE id=?").run(expires,seats,u.id);store.db.prepare('INSERT INTO purchases VALUES(?,?,?,?,?)').run(reference,u.id,days,seats,Date.now());store.db.prepare('UPDATE invites SET expires=0 WHERE user_id=? AND used_at IS NULL').run(u.id);const invite=store.invite(u.id);mail.access({...u,stage:'active',expires},invite,'purchase',d.language);store.event('purchase.confirmed',u.id);return{ok:true,queued:true};}));}
+        if(req.method==='POST'&&route==='/admin/purchase'){const d=req.parsedBody;if(d.confirmed!==true)fail(400,'Confirm receipt of payment first');if(!mail.accessReady())fail(400,'Configure SMTP and public website/API URLs first');const reference=string(d.reference,120),u=store.db.prepare('SELECT * FROM users WHERE id=? AND account_id IS NULL').get(d.user_id),days=Number(d.days),seats=Number(d.max_devices);if(!u||u.stage==='blocked')fail(400,'Select an unblocked business owner');if(!Number.isInteger(days)||days<1||days>3650||!Number.isInteger(seats)||seats<1||seats>100)fail(400,'Invalid subscription period or device limit');const existing=store.db.prepare('SELECT * FROM purchases WHERE reference=?').get(reference);if(existing){if(existing.user_id!==u.id||existing.days!==days||existing.seats!==seats)fail(409,'Payment reference already used');return reply(200,{ok:true,repeated:true});}return reply(201,store.transaction(()=>{// Paying early never loses days: the new period starts where the current trial or subscription ends.
+const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires:0)+days*86400000;store.db.prepare("UPDATE users SET stage='active',expires=?,max_devices=? WHERE id=?").run(expires,seats,u.id);store.db.prepare('INSERT INTO purchases VALUES(?,?,?,?,?)').run(reference,u.id,days,seats,Date.now());store.db.prepare('UPDATE invites SET expires=0 WHERE user_id=? AND used_at IS NULL').run(u.id);const invite=store.invite(u.id);mail.access({...u,stage:'active',expires},invite,'purchase',d.language,{days,reference});store.event('purchase.confirmed',u.id);return{ok:true,queued:true};}));}
         if(req.method==='POST'&&route==='/admin/site/draft')return reply(200,website.save(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/site/publish')return reply(200,website.publish(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/site/lead')return reply(200,website.updateLead(req.parsedBody));
@@ -204,6 +207,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       if(await monobank.handle(req,url,reply))return;
       if(await liqpay.handle(req,url,reply))return;
       if(await registration.handle(req,url,reply))return;
+      if(await reset.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
       if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true,support:support.contact() });
       if (req.method === 'POST' && route === '/v1/challenge') {
@@ -259,7 +263,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
       fail(404, OrbitI18n.t('m652'));
     } catch (error) { if(!error.status&&error.constructor===Error&&!error.code&&new URL(req.url,'http://localhost').pathname.startsWith('/v1/crm/'))error.status=400; if(!error.status&&!error.code?.startsWith?.('SQLITE_CONSTRAINT'))console.error('LOMVIKO request failed:',new URL(req.url,'http://localhost').pathname,error.stack||error.message); if([401,403,409,429].includes(error.status))website.reject(new URL(req.url,'http://localhost').pathname,error.status);if (!res.headersSent && !res.destroyed) reply(error.status || (error.code?.startsWith('SQLITE_CONSTRAINT')||[19,2067,1555].includes(error.errcode) ? 409 : 500), { error: error.status ? error.message : OrbitI18n.t('m689'),...(error.update?{update:error.update}:{}) }); else res.destroy(); }
   });
-  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup();if(now-(retention.last||0)>3600000){retention.last=now;try{retention.tick(now);}catch{console.error('LOMVIKO retention cycle failed');}} for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
+  const maintenance = setInterval(() => { const now = Date.now(); store.db.prepare('DELETE FROM requests WHERE at<?').run(now - 20*60000); store.db.prepare('DELETE FROM challenges WHERE expires<?').run(now);accounts.cleanup();registration.cleanup();reset.cleanup();administrator.cleanup();members.cleanup();website.cleanup();support.cleanup();if(now-(retention.last||0)>3600000){retention.last=now;try{retention.tick(now);}catch{console.error('LOMVIKO retention cycle failed');}} for (const [address, r] of rates) if (now - r.start > 60000) rates.delete(address); }, 60000); maintenance.unref();
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
   const notifyTimer=setInterval(()=>notify.tick().catch(()=>{}),60000);notifyTimer.unref();
   const payTimer=setInterval(()=>{monobank.poll().catch(()=>{});liqpay.poll().catch(()=>{});},180000);payTimer.unref();
@@ -290,7 +294,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
     await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
-  server.mail=mail;server.updates=updates;server.documents=documents;server.publishing=publishing;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
+  server.mail=mail;server.retention=retention;server.updates=updates;server.documents=documents;server.publishing=publishing;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
   server.requestTimeout = 15*60000; server.headersTimeout = 10000;
   return server;
 }

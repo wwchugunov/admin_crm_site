@@ -86,8 +86,7 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
         if (req.method === 'HEAD') return res.end();
         await pipeline(fs.createReadStream(filename),res);return;
       }
-      const download = /^\/public\/download\/(0|[1-9]\d{0,4})\.(0|[1-9]\d{0,4})\.(0|[1-9]\d{0,4})\/(mac|win)\/(x64|arm64)$/.test(route);
-      const allowed = (req.method === 'GET' && (route === '/public/site' || download)) || (req.method === 'POST' && ['/public/demo','/public/access'].includes(route));
+      const allowed = (req.method === 'GET' && route === '/public/site') || (req.method === 'POST' && ['/public/demo','/public/access'].includes(route));
       if (!allowed) return json(404,{error:'Not found'});
       let body;
       if (req.method === 'POST') {
@@ -98,19 +97,12 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
         const r=rates.get(ip)||{at:now,count:0};if(r.count>=5||(!rates.has(ip)&&rates.size>=10000))return json(429,{error:'Please try again later'});r.count++;rates.set(ip,r);
         const chunks=[];let length=0;for await(const chunk of req){length+=chunk.length;if(length>16384){json(413,{error:'Request too large'});return;}chunks.push(chunk);}body=Buffer.concat(chunks);try{JSON.parse(body.toString());}catch{return json(400,{error:'Invalid JSON'});}
       }
-      const abort = new AbortController(), timeout = setTimeout(()=>abort.abort(), download?15*60000:15000);
+      const abort = new AbortController(), timeout = setTimeout(()=>abort.abort(), 15000);
       const disconnect=()=>{if(!res.writableFinished)abort.abort();};res.once('close',disconnect);
       try {
         // No cookies, credentials, client headers, arbitrary paths, or redirects pass through.
         const response = await fetch(origin+route,{method:req.method,headers:body?{'Content-Type':'application/json'}:{},body,redirect:'error',signal:abort.signal});
-        const type = response.headers.get('content-type') || 'application/json; charset=utf-8';
-        if (!response.ok || !download) {
-          const payload = await response.json();return json(response.status,payload);
-        }
-        if (type !== 'application/octet-stream') throw Error('Unexpected download response');
-        const headers={'Content-Type':type};
-        for(const key of ['content-length','content-disposition'])if(response.headers.has(key))headers[key]=response.headers.get(key);
-        res.writeHead(200,headers);await pipeline(Readable.fromWeb(response.body),res);
+        const payload = await response.json();return json(response.status,payload);
       } finally { clearTimeout(timeout);res.off('close',disconnect); }
     } catch { if(!res.headersSent&&!res.destroyed)json(502,{error:'Service temporarily unavailable. Please try again later.'});else if(!res.destroyed)res.destroy(); }
   });

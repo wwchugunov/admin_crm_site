@@ -1565,8 +1565,8 @@
     "en": "App sign-in"
   },
   "m390": {
-    "uk": "Користувачі та події з’являться після видачі запрошень і підключення застосунків до сервера.",
-    "en": "Users and events appear after invitations and app connections."
+    "uk": "Тут поки порожньо.",
+    "en": "Nothing here yet."
   },
   "m391": {
     "uk": "Термін сплив",
@@ -1689,8 +1689,8 @@
     "en": "No devices yet"
   },
   "m421": {
-    "uk": "Відключення пристрою блокує доступ до сервера. При наступному зв’язку клієнт видалить ліцензію; без мережі вона діє щонайбільше 3 дні. Перевірка ліцензії обов’язкова лише у збірці з довіреним ключем.",
-    "en": "Revoking a device blocks server access. The license is removed on its next connection; offline it remains valid for up to 3 days. Enforcement requires a trusted publisher key."
+    "uk": "Браузери й телефони, з яких входили в LOMVIKO. Відключення одразу завершує вхід на цьому пристрої й звільняє місце в компанії.",
+    "en": "Browsers and phones used to sign in to LOMVIKO. Revoking ends the sign-in on that device at once and frees a seat in the company."
   },
   "m422": {
     "uk": "Власник видає персональне посилання конкретному користувачу. «Файл передано» — завершене передавання сервером, а не встановлення. Пересилання посилання змінює фактичного одержувача. Завантаження в обхід сервера не видно. Останні 500 подій.",
@@ -1985,8 +1985,8 @@
     "en": "Revoke this device?"
   },
   "m495": {
-    "uk": "Нові звернення до сервера буде заборонено. Видана офлайн-ліцензія може діяти до 3 днів.",
-    "en": "New server requests will be blocked. An issued offline license may remain valid for up to 3 days."
+    "uk": "Вхід на цьому пристрої одразу завершиться, місце в компанії звільниться.",
+    "en": "The sign-in on this device ends at once and its seat is freed."
   },
   "m496": {
     "uk": "Підключити сервер власника",
@@ -3083,7 +3083,7 @@
 "sitePriceNote":{"uk": "Умови пропозиції", "en": "Offer details"},
 "siteAbout":{"uk": "Про продукт", "en": "About the product"},
 "sitePrivacy":{"uk": "Згода на обробку заявки", "en": "Demo request consent"},
-"siteDraftHint":{"uk": "Зміни зберігаються в чернетці. Для відображення на сайті натисніть «Опублікувати». Нові релізи з розділу версій з’являються автоматично.", "en": "Changes stay in the draft until you publish. Releases from the versions section appear automatically."},
+"siteDraftHint":{"uk": "Зміни зберігаються в чернетці. Для відображення на сайті натисніть «Опублікувати».", "en": "Changes stay in the draft until you publish."},
 "siteAnnouncements":{"uk": "Анонси", "en": "Announcements"},
 "siteAnnouncementAdd":{"uk": "Додати анонс", "en": "Add announcement"},
 "siteAnnouncementEdit":{"uk": "Редагувати анонс", "en": "Edit announcement"},
@@ -3139,11 +3139,14 @@
 "mailStatusHint":{"uk": "«Accepted» означає прийняття SMTP-сервером, а не доставку до скриньки. Невизначений результат не повторюється автоматично, щоб уникнути дублів.", "en": "“Accepted” means the SMTP server accepted the message, not inbox delivery. Uncertain outcomes are not retried automatically to avoid duplicates."},
 "mailRetry":{"uk": "Повторити", "en": "Retry"},
 "mailResend":{"uk": "Надіслати новий доступ", "en": "Send new access key"},
+"mailTestSend":{"uk": "Надіслати", "en": "Send"},
+"trialEndingSoon":{"uk": "Доступ закінчується за 7 днів", "en": "Access ends within 7 days"},
+"trialEndingHint":{"uk": "Нагадування клієнтам ідуть автоматично", "en": "Clients get reminders automatically"},
 "mailResendHint":{"uk": "Попередні невикористані ключі буде відкликано. Клієнт отримає одноразовий ключ і посилання для встановлення пароля.", "en": "Previous unused keys will be revoked. The customer receives a one-time key and a password setup link."},
 "mailPurchase":{"uk": "Підтвердити покупку", "en": "Confirm purchase"},
 "mailPaymentReference":{"uk": "Номер платежу / замовлення", "en": "Payment / order reference"},
 "mailPaymentConfirm":{"uk": "Підтверджую, що оплату отримано", "en": "I confirm payment was received"},
-"mailPurchaseHint":{"uk": "Онлайн-оплату не підключено. Ця дія підтверджує оплату вручну, активує/подовжує ліцензію та надсилає доступ.", "en": "Online payments are not connected. This action confirms payment manually, activates or extends the license and emails access."},
+"mailPurchaseHint":{"uk": "Підтвердіть оплату, що надійшла на ваш рахунок. Доступ продовжиться від кінця поточного терміну (пробного чи оплаченого), клієнт отримає лист про оплату.", "en": "Confirm a payment that reached your account. Access is extended from the end of the current period (trial or paid) and the client gets a payment letter."},
 "mailQueued":{"uk": "Лист поставлено в чергу", "en": "Email queued"},
 "mailVerified":{"uk": "SMTP-з’єднання працює", "en": "SMTP connection verified"},
 "mailNotConfiguredDemo":{"uk": "Демо створено. Лист не поставлено в чергу: налаштуйте SMTP і публічні URL.", "en": "Demo created. No email queued: configure SMTP and public URLs."},

@@ -1,7 +1,7 @@
 {
   "_help": "Єдине місце для реквізитів і строків. Порожнє поле в документах підсвічується жовтим. Після змін: node marketing/legal/build.cjs",
   "draft": true,
-  "edition": "16.10.2026",
+  "edition": "19.10.2026",
   "executor": {
     "name": "ФОП Приклад Олександр Іванович (ПРИКЛАД — замінити)",
     "code": "0000000000 (ПРИКЛАД)",
@@ -27,6 +27,9 @@
     "log_months": 12,
     "support_keep_months": 12,
     "lead_months": 12,
-    "request_days": 30
-  }
+    "request_days": 30,
+    "price": "399",
+    "devices": 10
+  },
+  "app_url": "app.lomviko.com"
 }

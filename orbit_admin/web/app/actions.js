@@ -16,6 +16,13 @@ const actions = {
     render();
   },
   register: registrationModal,
+  "forgot-password": forgotPasswordModal,
+  // Renewal goes to the LOMVIKO team as a billing request; the reply brings the payment details.
+  "subscription-extend": () =>
+    supportModal("", "", {
+      topic: "billing",
+      message: OrbitI18n.t("subscriptionRequest").replace("{business}", data?.business || ""),
+    }),
   welcome: () => OrbitWelcome.start(),
   logo: async () => {
     const logo = await window.orbit.call("branding:select");

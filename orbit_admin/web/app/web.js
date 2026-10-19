@@ -109,7 +109,7 @@
       open(
         `${info.api}/public/documents/app-privacy/${language === "en" ? "en" : "uk"}`,
       ),
-    "legal:offer": () => open(`${info.api}/public/documents/site-offer/uk`),
+    "legal:offer": () => open(`${info.api}/public/documents/site-offer/${OrbitI18n.language === "en" ? "en" : "uk"}`),
     "notify:link": async () => {
       // Opened before the request so the browser does not treat it as a pop-up.
       const tab = window.open("about:blank", "_blank");

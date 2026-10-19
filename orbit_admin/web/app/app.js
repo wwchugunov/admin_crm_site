@@ -372,6 +372,7 @@ function render() {
   });
   $("#view").innerHTML =
     legalBanner() +
+    subscriptionBanner() +
     {
       dashboard: dashboardView,
       schedule: scheduleView,

@@ -277,6 +277,33 @@ async function loadLegal() {
   }
   if (legalState?.required && !$("#modal").open) render();
 }
+// How long the company can still work, as the owner sees it: in the account settings always,
+// and as a banner on every page in the last week and after access has ended.
+function subscriptionState() {
+  const sub = data?.subscription;
+  if (!sub || !sub.expires || data.mode !== "server") return null;
+  const left = sub.expires - Date.now(),
+    days = Math.max(0, Math.ceil(left / 86400000)),
+    until = new Date(sub.expires).toLocaleDateString(OrbitI18n.locale(), { day: "numeric", month: "long" });
+  return { trial: sub.stage === "trial", ended: left <= 0, days, until };
+}
+function subscriptionText(s) {
+  if (s.ended) return OrbitI18n.t("subscriptionEnded").replace("{date}", s.until);
+  return OrbitI18n.t(s.trial ? "subscriptionTrialLeft" : "subscriptionPaidLeft")
+    .replace("{date}", s.until)
+    .replace("{days}", String(s.days))
+    .replace("{unit}", dayUnit(s.days));
+}
+function dayUnit(n) {
+  if (OrbitI18n.language === "en") return n === 1 ? "day" : "days";
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? "день" : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? "дні" : "днів";
+}
+function subscriptionBanner() {
+  const s = subscriptionState();
+  if (!s || data.role === "staff" || (!s.ended && s.days > 7)) return "";
+  return `<section class="setup-banner subscription-banner${s.ended ? " ended" : ""}"><div><strong>${escape(subscriptionText(s))}</strong><p>${OrbitI18n.t(s.ended ? "subscriptionEndedHint" : "subscriptionSoonHint")}</p></div><div class="setup-actions"><button class="primary" data-action="subscription-extend">${OrbitI18n.t("subscriptionExtend")}</button></div></section>`;
+}
 function legalBanner() {
   if (!legalState?.required || data?.mode !== "server") return "";
   return `<section class="setup-banner legal-banner"><div><strong>${OrbitI18n.t(legalState.updated ? "legalBannerTitle" : "legalBannerTitleFirst")}</strong><p>${OrbitI18n.t(legalState.updated ? "legalBannerUpdated" : "legalBannerFirst")}</p><p class="legal-links"><button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOfferTitle")}</button> · <button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button></p></div><div class="setup-actions"><button class="primary" data-action="legal-accept">${OrbitI18n.t("legalAccept")}</button></div></section>`;
@@ -688,7 +715,14 @@ function settingsAccount() {
             escape(data.account?.name || OrbitI18n.t("accountTitle")),
             `<span class="badge">${OrbitI18n.t("m255")}</span>`,
             OrbitI18n.t("m257"),
-          )
+          ) +
+          (subscriptionState() && data.role !== "staff"
+            ? settingRow(
+                OrbitI18n.t("subscriptionTitle"),
+                `<button type="button" class="primary" data-action="subscription-extend">${OrbitI18n.t("subscriptionExtend")}</button>`,
+                `${escape(subscriptionText(subscriptionState()))}. ${OrbitI18n.t("subscriptionPriceHint")}`,
+              )
+            : "")
         : settingRow(
             OrbitI18n.t("m256"),
             `<button type="button" class="primary" data-action="login">${OrbitI18n.t("m036")}</button>`,
@@ -744,7 +778,7 @@ function settingsAbout() {
     "",
       settingRow(
         OrbitI18n.t("legalDocuments"),
-        `<button type="button" class="secondary" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button>`,
+        `<button type="button" class="secondary" data-action="offer">${OrbitI18n.t("legalOfferTitle")}</button> <button type="button" class="secondary" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button>`,
         OrbitI18n.t("legalDocumentsHint"),
       ),
   )}`;

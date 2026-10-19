@@ -1,6 +1,6 @@
 services:
   landing:
-    image: lomviko-landing:1.2.0
+    image: lomviko-landing:1.2.1
     build:
       context: ${CH_LANDING_CONTEXT:-../../ch_landing}
       dockerfile: deploy/Dockerfile
@@ -42,7 +42,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:2.0.0
+    image: lomviko-platform:2.0.1
     pull_policy: never
     command: [node, web/server.cjs]
     restart: unless-stopped
@@ -70,7 +70,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # LOMVIKO in the browser: the company workspace (former desktop app).
   app-web:
-    image: lomviko-platform:2.0.0
+    image: lomviko-platform:2.0.1
     pull_policy: never
     command: [node, web/app-server.cjs]
     restart: unless-stopped
@@ -97,7 +97,7 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   site-admin:
-    image: lomviko-site-admin:0.1.1
+    image: lomviko-site-admin:0.1.2
     build:
       context: ${CH_SITE_ADMIN_CONTEXT:-../../landing_admin}
       dockerfile: deploy/Dockerfile
@@ -111,6 +111,7 @@ services:
       HOST: 0.0.0.0
       PORT: '4547'
       CH_API_URL: http://orbit:4545
+      CH_PUBLIC_API_URL: https://${ORBIT_DOMAIN:?Set ORBIT_DOMAIN}
       CH_ADMIN_ORIGIN: https://${CH_SITE_ADMIN_DOMAIN:?Set CH_SITE_ADMIN_DOMAIN}
     expose: ['4547']
     depends_on: {orbit: {condition: service_healthy}}
@@ -124,7 +125,7 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   release-init:
-    image: lomviko-platform:2.0.0
+    image: lomviko-platform:2.0.1
     profiles: [setup]
     user: '0:0'
     read_only: true
