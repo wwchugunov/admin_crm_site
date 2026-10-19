@@ -3,6 +3,8 @@ document.documentElement.classList.add('js');
 
 const SITE_URL = 'https://lomviko.com';
 const CONTACT_EMAIL = 'info@lomviko.com';
+// LOMVIKO itself runs in the browser here; the landing only leads to it.
+const APP_URL = 'https://app.lomviko.com';
 const icons = {
   calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   send: '<path d="m21 4-18 7 6 2m12-9-3 16-9-7m12-9-12 9v6l3-4"/>',
@@ -33,18 +35,18 @@ const translations = {
   uk: {
     meta: {
       title: 'LOMVIKO — CRM для салонів, клінік і студій: онлайн-запис, нагадування, оплати',
-      description: 'Клієнти записуються самі — через Telegram-бота або вашу сторінку запису 24/7. Нагадування, онлайн-оплата, розклад команди й фінанси в одному застосунку для macOS і Windows. 30 днів безкоштовно.',
+      description: 'Клієнти записуються самі — через Telegram-бота або вашу сторінку запису 24/7. Нагадування, онлайн-оплата, розклад команди й фінанси в одному сервісі — з комп’ютера чи телефона, без встановлення. 30 днів безкоштовно.',
       ogTitle: 'LOMVIKO — клієнти записуються самі',
       ogDescription: 'Онлайн-запис 24/7, нагадування, оплата за посиланням, розклад команди й фінанси — в одному застосунку. 30 днів безкоштовно, без картки.',
       ogAlt: 'LOMVIKO — CRM для бізнесу за записом',
       locale: 'uk_UA', alternate: 'en_US',
     },
-    skip: 'До вмісту', navLabel: 'Навігація', navFeatures: 'Можливості', navHow: 'Як це працює', navCalc: 'Калькулятор', navBusiness: 'Для кого', navFaq: 'Питання', navDownload: 'Завантажити', navPrice: 'Ціна',
+    skip: 'До вмісту', navLabel: 'Навігація', navFeatures: 'Можливості', navHow: 'Як це працює', navCalc: 'Калькулятор', navBusiness: 'Для кого', navFaq: 'Питання', navDownload: 'Увійти', haveAccount: 'Вже є акаунт?', navPrice: 'Ціна',
     ctaDemo: 'Отримати демо', ctaDownload: 'Завантажити', ctaTrial: 'Спробувати безкоштовно', ctaShort: 'Спробувати', stickyText: '30 днів безкоштовно · без картки', seeHow: 'Як це працює',
     heroEyebrow: 'CRM для салонів, клінік, студій і СТО',
     heroTitle: ['Клієнти записуються самі.', 'Ви — працюєте.'],
-    heroDescription: 'Онлайн-запис через Telegram і вашу сторінку 24/7, нагадування проти неявок, оплата за посиланням, розклад команди й фінанси — в одному застосунку. Замість зошита, п’яти чатів і таблиць.',
-    trustOne: '30 днів — усі функції', trustTwo: 'Без банківської картки', trustThree: 'macOS і Windows',
+    heroDescription: 'Онлайн-запис через Telegram і вашу сторінку 24/7, нагадування проти неявок, оплата за посиланням, розклад команди й фінанси — в одному сервісі. Замість зошита, п’яти чатів і таблиць.',
+    trustOne: '30 днів — усі функції', trustTwo: 'Без банківської картки', trustThree: 'Браузер і телефон — без встановлення',
     marqueeLabel: 'Для бізнесу, який працює за записом',
     marquee: ['Салони краси', 'Барбершопи', 'Манікюр і педикюр', 'Косметологія', 'Масаж і SPA', 'Стоматологія', 'Приватні клініки', 'Психологи', 'Фітнес і йога', 'Танцювальні студії', 'Репетитори', 'Тату-студії', 'Автосервіси', 'Фотостудії', 'Грумінг'],
     whyKicker: 'Навіщо', whyTitle: ['Хаос у чатах —', 'у минулому.'], whyIntro: 'Знайомо? Ось що змінюється з першого дня.',
@@ -68,9 +70,9 @@ const translations = {
       [1, 'chart', 'Фінанси без таблиць', 'Виручка, матеріали, повернення й завантаженість — за будь-який період і по кожному спеціалісту.'],
       [1, 'users', 'Команда на зв’язку', 'Кожен отримує в Telegram план на день і нові онлайн-записи, власник — тижневі й місячні звіти.'],
       [2, 'lock', 'Ролі, доступи й кілька бізнесів', 'Власник, адміністратор і майстер бачать лише своє, фінанси — тільки за дозволом. Кілька компаній — один вхід.'],
-      [1, 'download', 'Ваші дані — ваші', 'Зашифровані копії на вашому Google Drive і експорт усієї бази будь-коли.'],
+      [1, 'download', 'Ваші дані — ваші', 'Експорт усієї бази в JSON, CSV або зашифрований файл — будь-коли.'],
     ],
-    replaceTitle: ['Один застосунок', 'замість усього цього.'], replaceIntro: 'Не потрібно платити за окремі сервіси запису, нагадувань і звітів — і зводити їх між собою.',
+    replaceTitle: ['Один сервіс', 'замість усього цього.'], replaceIntro: 'Не потрібно платити за окремі сервіси запису, нагадувань і звітів — і зводити їх між собою.',
     pageTitle: ['Своя сторінка запису.', 'Без сайту.'],
     pageIntro: 'Клієнт відкриває посилання з Instagram чи Google Карт, обирає послугу, майстра й вільний час, залишає ім’я і телефон — і запис уже у вашому розкладі. Без реєстрації і без застосунків.',
     pagePoints: ['Посилання для шапки Instagram і Google Карт', 'QR-код на ресепшн, дзеркала й візитки', 'Кнопка «Записатися» для Tilda, Wix, WordPress, Хорошоп', 'Ваші логотип, обкладинка й колір', 'Лише справді вільний час — без подвійних записів'],
@@ -88,7 +90,7 @@ const translations = {
       { tab: 'Запис без переписки', tag: 'Telegram-бот', title: 'Клієнт записується. Ви працюєте.', body: 'Послугу, майстра й час клієнт обирає сам — удень чи о третій ночі. Бот працює на сервері, навіть коли застосунок закритий, і сам нагадає про візит.', foot: 'Спробуйте записатися самі — праворуч.', bot: { hint: 'Спробуйте самі', hello: 'Вітаємо! 👋 На яку послугу вас записати?', services: ['Манікюр', 'Стрижка', 'Масаж'], when: 'Чудово! Оберіть зручний час сьогодні:', times: ['11:00', '12:30', '15:00'], done: (s, t) => `Готово! ${s}, сьогодні о ${t}. Нагадаю за 24 і за 2 години ✓`, crm: 'Запис уже в розкладі LOMVIKO', again: 'Почати спочатку' } },
       { tab: 'Куди пішов робочий день', tag: 'Результати', title: 'День завершився. Цифри — залишились.', body: 'Внесли оплату — вона вже в обліку. Виручка, завантаженість і популярні послуги за будь-який період — без таблиць і калькулятора.', foot: 'Фінанси бачать лише ті, кому ви дозволили.', chart: { label: 'Виручка за тиждень', value: '86 400 грн', delta: '+18% до минулого тижня', days: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'] } },
     ],
-    peekKicker: 'Продукт', peekTitle: ['Відкрили. Побачили день.', 'До роботи.'], peekBody: 'Розклад, клієнти й оплати поруч. Не потрібно згадувати, в якому чаті домовлялися.', peekCaption: 'Справжній інтерфейс застосунку. На зображенні — демонстраційні дані.', peekAlt: 'Інтерфейс LOMVIKO: розклад на день із записами клієнтів',
+    peekKicker: 'Продукт', peekTitle: ['Відкрили. Побачили день.', 'До роботи.'], peekBody: 'Розклад, клієнти й оплати поруч. Не потрібно згадувати, в якому чаті домовлялися.', peekCaption: 'Справжній інтерфейс LOMVIKO. На зображенні — демонстраційні дані.', peekAlt: 'Інтерфейс LOMVIKO: розклад на день із записами клієнтів',
     businessKicker: 'Для кого', businessTitle: ['Не потрібно підлаштовуватися', 'під CRM.'], segmentsLabel: 'Тип бізнесу',
     segments: {
       beauty: ['Краса', 'Від першого запису до постійного клієнта', 'Майстри, послуги й тривалість — у спільному розкладі. Клієнт обирає зручний час сам.', ['Майстер на вибір або будь-хто вільний', 'Нагадування зменшують кількість неявок', 'Історія візитів і нотатки по кожному клієнту'], ['Салони', 'Барбершопи', 'Нігтьові студії', 'Косметологи', 'Брови та вії']],
@@ -98,59 +100,59 @@ const translations = {
     },
     trustKicker: 'Україна', trustTitle: ['Створено для роботи', 'в Україні.'], trustIntro: 'Українською мовою, у гривні, з українськими банками — і з урахуванням того, що світло буває не завжди.',
     trust: [
-      ['bolt', 'Блекаут не зупиняє запис', 'Бот і сторінка запису працюють на сервері. Поки у вас немає світла, клієнти й далі записуються, а збережений розклад відкривається без інтернету.'],
+      ['bolt', 'Блекаут не зупиняє запис', 'Бот і сторінка запису працюють на сервері. Поки у вас немає світла, клієнти й далі записуються, а розклад відкривається з телефона через мобільний інтернет.'],
       ['coin', 'Гривня й ваші банки', 'Оплата через monobank і LiqPay: картка будь-якого банку, Apple Pay, Google Pay, Приват24. Гроші — напряму на ваш рахунок.'],
       ['shield', 'Без подвійних записів', 'Бот, сторінка запису й адміністратор пишуть в один розклад. Зайнятий час ніхто не займе вдруге.'],
-      ['lock', 'Шифровані копії щогодини', 'Поки застосунок відкритий — повна копія бази щогодини на вашому Google Drive, зашифрована AES-256. Ключ — тільки у вас.'],
+      ['lock', 'Дані під захистом', 'Вхід за паролем, зашифроване з’єднання, кожна дія підписана. Експорт усієї бази — будь-коли, одним натисканням.'],
       ['users', 'Ролі та права', 'Власник, адміністратор і майстер бачать лише своє. Фінанси — тільки за дозволом.'],
-      ['chat', 'Підтримка в застосунку', 'Питання чи ідея — пишете прямо з LOMVIKO українською. Відповідь приходить на пошту і в розділ «Підтримка».'],
+      ['chat', 'Підтримка всередині LOMVIKO', 'Питання чи ідея — пишете прямо з LOMVIKO українською. Відповідь приходить на пошту і в розділ «Підтримка».'],
     ],
     statsLabel: 'LOMVIKO у цифрах',
-    stats: [['30', 'днів безкоштовно — з усіма функціями й без картки'], ['24/7', 'приймаються записи, навіть коли комп’ютер вимкнено'], ['×2', 'нагадування клієнту — за 24 і за 2 години до візиту'], ['3', 'способи записатися: Telegram, посилання і кнопка на сайті']],
-    demoKicker: 'Старт', stepOne: 'Завантажте LOMVIKO для macOS або Windows.', stepTwo: 'Натисніть «Спробувати місяць безкоштовно» і підтвердіть email кодом із листа.', stepThree: 'Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.',
-    priceTitle: ['30 днів безкоштовно.', 'Усі функції.'], priceNote: 'Без картки й без дзвінків менеджера. Встановіть застосунок, зареєструйтеся — і приймайте перші онлайн-записи вже сьогодні.',
-    planKicker: 'Пробний період', planPer: 'грн · 30 днів', planList: ['Усі функції без обмежень тарифу', 'Telegram-бот, сторінка запису й нагадування', 'Онлайн-оплата через monobank або LiqPay', 'Уся команда — на кількох комп’ютерах'], planNote: 'Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.',
+    stats: [['30', 'днів безкоштовно — з усіма функціями й без картки'], ['24/7', 'приймаються записи — бот і сторінка запису не сплять'], ['×2', 'нагадування клієнту — за 24 і за 2 години до візиту'], ['3', 'способи записатися: Telegram, посилання і кнопка на сайті']],
+    demoKicker: 'Старт', stepOne: 'Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.', stepTwo: 'Вкажіть назву бізнесу, email і пароль, підтвердьте email кодом із листа.', stepThree: 'Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.',
+    priceTitle: ['399 грн на місяць.', 'Перші 30 днів — безкоштовно.'], priceNote: 'Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.',
+    planKicker: 'Один тариф · усі функції', planPer: 'грн / місяць за компанію', planList: ['30 днів безкоштовно, без картки', 'Telegram-бот, сторінка запису й нагадування', 'Онлайн-оплата через monobank або LiqPay', 'Уся команда — з комп’ютера чи телефона'], planNote: 'Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.',
     faq: [
-      ['Скільки це коштує?', 'Перші 30 днів — безкоштовно, з усіма функціями й без картки. Вартість тарифу залежить від кількості пристроїв і компаній; її вказують у рахунку перед оплатою.'],
+      ['Скільки це коштує?', '399 грн на місяць за компанію — усі функції, без доплат за бота, сторінку запису чи нагадування. Перші 30 днів — безкоштовно й без картки.'],
       ['Що буде після пробного періоду?', 'Нічого не зникне. Без оплати зміни зупиняються, але переглядати й експортувати дані можна ще 30 днів.'],
       ['Чи підійде моєму бізнесу?', 'Так, якщо ви працюєте за записом: салони, барбершопи, клініки, масаж, студії, репетитори, СТО. Підтримуються групові заняття, кабінети й обладнання.'],
       ['Чи потрібен свій сайт?', 'Ні. Ви отримуєте власну сторінку запису з логотипом і QR-кодом. Якщо сайт є — кнопка «Записатися» додається одним рядком коду (Tilda, Wix, WordPress, Хорошоп).'],
-      ['Бот працює, коли комп’ютер вимкнено?', 'Так. Бот, сторінка запису й нагадування працюють на сервері LOMVIKO цілодобово, незалежно від застосунку.'],
+      ['Бот працює, коли комп’ютер вимкнено?', 'Так. Бот, сторінка запису й нагадування працюють на сервері LOMVIKO цілодобово — вмикати нічого не треба.'],
       ['Як приймати оплату онлайн?', 'Підключіть свій monobank або LiqPay. Клієнт платить за посиланням чи QR-кодом, гроші надходять прямо на ваш рахунок, а візит позначається оплаченим.'],
-      ['Чи потрібен інтернет?', 'Так, для створення та зміни записів. Без мережі збережений розклад можна переглядати.'],
-      ['Чи можна забрати всі свої дані?', 'Так. Експорт усієї бази й зашифровані резервні копії на вашому Google Drive — будь-коли.'],
-      ['Як з вами зв’язатися?', 'Напишіть на info@lomviko.com або прямо із застосунку: розділ «Підтримка». Відповідь прийде на пошту.'],
+      ['Що потрібно встановити?', 'Нічого. LOMVIKO працює в браузері на комп’ютері, планшеті й телефоні. На телефоні додайте іконку на головний екран — і відкривайте як застосунок.'],
+      ['Чи можна забрати всі свої дані?', 'Так. Експорт усієї бази в JSON, CSV або зашифрований файл — будь-коли.'],
+      ['Як з вами зв’язатися?', 'Напишіть на info@lomviko.com або прямо з LOMVIKO: розділ «Підтримка». Відповідь прийде на пошту.'],
     ],
     formTitle: 'Заявка на демо', formName: 'Ваше ім’я', formBusiness: 'Назва бізнесу', formMessage: 'Що для вас найважливіше?', formSubmit: 'Надіслати заявку',
-    offTitle: 'Почніть уже сьогодні', offBody: 'Завантажте LOMVIKO для macOS або Windows. Онлайн-заявки відкриються найближчим часом.', offBodyMail: 'Напишіть нам — покажемо LOMVIKO і підготуємо доступ для вашого бізнесу.', writeUs: 'Написати нам', askTitle: 'Залишилися питання?', askBody: 'Напишіть нам — відповімо українською і підкажемо, як налаштувати LOMVIKO під ваш бізнес.',
+    offTitle: 'Почніть уже сьогодні', offBody: 'Спробуйте LOMVIKO безкоштовно — прямо в браузері, без встановлення.', offBodyMail: 'Напишіть нам — покажемо LOMVIKO і підготуємо доступ для вашого бізнесу.', writeUs: 'Написати нам', askTitle: 'Залишилися питання?', askBody: 'Напишіть нам — відповімо українською і підкажемо, як налаштувати LOMVIKO під ваш бізнес.',
     downloadsKicker: 'Завантаження', downloadsTitle: ['Почніть', 'за п’ять хвилин.'], downloadHint: 'Після встановлення натисніть «Спробувати місяць безкоштовно» — 30 днів з усіма функціями, без картки.',
     downloadSafety: 'Оновлюєте LOMVIKO? Спочатку створіть резервну копію в застосунку. Встановлення нової версії зберігає ваші дані.',
     download: 'Завантажити', macSub: 'Apple Silicon та Intel', winSub: 'Windows 10 і 11', integrity: 'Контрольна сума SHA-256', noRelease: 'Скоро. Слідкуйте за оновленнями на цій сторінці.',
     newsKicker: 'Оновлення', newsTitle: 'Що нового',
     faqKicker: 'Питання', faqTitle: ['Перед', 'початком.'],
-    finalTitle: ['Перший онлайн-запис —', 'вже сьогодні.'], finalBody: 'Встановіть LOMVIKO, зареєструйтеся за дві хвилини й 30 днів користуйтеся всім безкоштовно.', finalWord: 'РИТМ',
-    footerTagline: 'CRM для бізнесу, що працює за записом.', footerMade: 'macOS · Windows · Українська · English',
+    finalTitle: ['Перший онлайн-запис —', 'вже сьогодні.'], finalBody: 'Зареєструйтеся за дві хвилини прямо в браузері й 30 днів користуйтеся всім безкоштовно.', finalWord: 'РИТМ',
+    footerTagline: 'CRM для бізнесу, що працює за записом.', footerMade: 'Комп’ютер · Телефон · Українська · English',
     legalLabel: 'Документи', docPrivacy: 'Політика конфіденційності', docOffer: 'Публічна оферта', docPresentation: 'Презентація', privacyLink: 'Політика конфіденційності',
     deckTitle: ['Покажіть LOMVIKO', 'своїй команді.'], deckCover: ['Ваш день —', 'в ідеальному ритмі.'], deckBody: 'Коротка презентація: можливості, сценарії роботи, безпека даних і запуск. Зручно переслати партнеру чи власнику бізнесу.', deckButton: 'Відкрити презентацію',
     sending: 'Надсилаємо…', success: 'Дякуємо! Заявку отримано. Зв’яжемося за вказаним email.', error: 'Не вдалося надіслати заявку. Спробуйте пізніше.', rate: 'Забагато спроб. Спробуйте пізніше.',
-    unavailable: 'Сервіс тимчасово недоступний. Завантаження з’являться після відновлення зв’язку.', waiting: 'Перевіряємо доступні версії…',
+    unavailable: 'Сервіс тимчасово недоступний. Спробуйте трохи пізніше.', waiting: 'Перевіряємо доступні версії…',
     board: { boardTitle: 'Розклад · сьогодні', boardDate: 'Четвер, 14 жовтня', statBookings: 'Записів', statRevenue: 'Виручка', statRevenueValue: '24 600 грн', statLoad: 'Завантаженість', memberOne: 'Олена', memberTwo: 'Максим', memberThree: 'Ірина', memberFour: 'Софія', bkOne: 'Фарбування', bkOneClient: 'Ірина К.', bkTwo: 'Стрижка', bkTwoClient: 'Дмитро', bkThree: 'Масаж спини', bkThreeClient: 'Олег', bkFour: 'SPA-догляд', bkFourClient: 'Марія', bkFive: 'Манікюр', bkFiveClient: 'Вікторія', bkSix: 'Манікюр + покриття', bkSixClient: 'Анна · Telegram', bkSeven: 'Корекція брів', bkSevenClient: 'Катерина', bkEight: 'Догляд за обличчям', bkEightClient: 'Юлія', toastBooking: 'Новий запис через Telegram', toastBookingDetail: 'Анна · Манікюр · 11:00', toastReminder: 'Нагадування надіслано', toastReminderDetail: 'Ігор · завтра о 10:00', boardNote: 'Демонстрація сценарію · вигадані дані' },
   },
   en: {
     meta: {
       title: 'LOMVIKO — booking CRM for salons, clinics and studios: online booking, reminders, payments',
-      description: 'Clients book themselves — through a Telegram bot or your own booking page, 24/7. Reminders, online payments, a team schedule and finances in one app for macOS and Windows. Free for 30 days.',
+      description: 'Clients book themselves — through a Telegram bot or your own booking page, 24/7. Reminders, online payments, a team schedule and finances in one service — on a computer or a phone, nothing to install. Free for 30 days.',
       ogTitle: 'LOMVIKO — clients book themselves',
       ogDescription: '24/7 online booking, reminders, payment links, a team schedule and finances — in one app. Free for 30 days, no card needed.',
       ogAlt: 'LOMVIKO — booking CRM for service businesses',
       locale: 'en_US', alternate: 'uk_UA',
     },
-    skip: 'Skip to content', navLabel: 'Navigation', navFeatures: 'Features', navHow: 'How it works', navCalc: 'Calculator', navBusiness: 'Who it’s for', navFaq: 'FAQ', navDownload: 'Download', navPrice: 'Pricing',
+    skip: 'Skip to content', navLabel: 'Navigation', navFeatures: 'Features', navHow: 'How it works', navCalc: 'Calculator', navBusiness: 'Who it’s for', navFaq: 'FAQ', navDownload: 'Sign in', haveAccount: 'Already have an account?', navPrice: 'Pricing',
     ctaDemo: 'Get a demo', ctaDownload: 'Download', ctaTrial: 'Try it free', ctaShort: 'Try free', stickyText: '30 days free · no card', seeHow: 'See how it works',
     heroEyebrow: 'The CRM for salons, clinics, studios and car services',
     heroTitle: ['Clients book themselves.', 'You do the work.'],
-    heroDescription: '24/7 online booking through Telegram and your own page, reminders against no-shows, payment links, a team schedule and finances — in one app. Instead of a notebook, five chats and spreadsheets.',
-    trustOne: '30 days, every feature', trustTwo: 'No card needed', trustThree: 'macOS and Windows',
+    heroDescription: '24/7 online booking through Telegram and your own page, reminders against no-shows, payment links, a team schedule and finances — in one service. Instead of a notebook, five chats and spreadsheets.',
+    trustOne: '30 days, every feature', trustTwo: 'No card needed', trustThree: 'Browser and phone — nothing to install',
     marqueeLabel: 'For businesses that run on appointments',
     marquee: ['Beauty salons', 'Barbershops', 'Nail studios', 'Cosmetology', 'Massage & spa', 'Dental clinics', 'Private clinics', 'Therapists', 'Fitness & yoga', 'Dance studios', 'Tutors', 'Tattoo studios', 'Car service', 'Photo studios', 'Pet grooming'],
     whyKicker: 'Why', whyTitle: ['Chaos in chats is', 'a thing of the past.'], whyIntro: 'Sound familiar? Here’s what changes from day one.',
@@ -174,9 +176,9 @@ const translations = {
       [1, 'chart', 'Finances without spreadsheets', 'Revenue, materials, refunds and workload — for any period and per specialist.'],
       [1, 'users', 'A team in sync', 'Everyone gets their day plan and new online bookings in Telegram; the owner gets weekly and monthly reports.'],
       [2, 'lock', 'Roles, access and several businesses', 'Owner, admin and specialist see only their part; finances by permission only. Several companies — one login.'],
-      [1, 'download', 'Your data is yours', 'Encrypted backups on your Google Drive and a full database export anytime.'],
+      [1, 'download', 'Your data is yours', 'Export the whole database as JSON, CSV or an encrypted file — anytime.'],
     ],
-    replaceTitle: ['One app', 'instead of all this.'], replaceIntro: 'No separate subscriptions for booking, reminders and reports — and no stitching them together.',
+    replaceTitle: ['One service', 'instead of all this.'], replaceIntro: 'No separate subscriptions for booking, reminders and reports — and no stitching them together.',
     pageTitle: ['Your own booking page.', 'No website needed.'],
     pageIntro: 'A client opens the link from Instagram or Google Maps, picks a service, specialist and free time, leaves a name and phone — and the booking is already in your schedule. No sign-up, no apps.',
     pagePoints: ['A link for your Instagram bio and Google Maps', 'A QR code for the front desk, mirrors and business cards', 'A “Book now” button for Tilda, Wix or WordPress', 'Your logo, cover and colour', 'Only truly free time — no double bookings'],
@@ -194,7 +196,7 @@ const translations = {
       { tab: 'Booking without the back-and-forth', tag: 'Telegram bot', title: 'Clients book. You work.', body: 'Clients choose the service, specialist and time themselves — at noon or at 3 a.m. The bot runs on the server even when the app is closed, and sends reminders on its own.', foot: 'Try booking yourself — on the right.', bot: { hint: 'Try it yourself', hello: 'Hi there! 👋 Which service would you like to book?', services: ['Manicure', 'Haircut', 'Massage'], when: 'Great! Pick a time that suits you today:', times: ['11:00', '12:30', '15:00'], done: (s, t) => `Done! ${s}, today at ${t}. I’ll remind you 24 and 2 hours before ✓`, crm: 'The booking is already in LOMVIKO', again: 'Start over' } },
       { tab: 'Where the workday went', tag: 'Results', title: 'The day is over. The numbers stay.', body: 'Record a payment and it’s already in your books. Revenue, workload and top services for any period — no spreadsheets or calculators.', foot: 'Only people you allow can see finances.', chart: { label: 'Revenue this week', value: 'UAH 86,400', delta: '+18% vs last week', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
     ],
-    peekKicker: 'Product', peekTitle: ['Open it. See your day.', 'Get to work.'], peekBody: 'Schedule, clients and payments side by side. No need to remember which chat you agreed in.', peekCaption: 'The real app interface. The image shows illustrative demo data.', peekAlt: 'LOMVIKO interface: a daily schedule with client appointments',
+    peekKicker: 'Product', peekTitle: ['Open it. See your day.', 'Get to work.'], peekBody: 'Schedule, clients and payments side by side. No need to remember which chat you agreed in.', peekCaption: 'The real LOMVIKO interface. The image shows illustrative demo data.', peekAlt: 'LOMVIKO interface: a daily schedule with client appointments',
     businessKicker: 'Who it’s for', businessTitle: ['Your CRM should fit', 'the way you work.'], segmentsLabel: 'Business type',
     segments: {
       beauty: ['Beauty', 'From the first booking to a loyal client', 'Specialists, services and durations in one shared schedule. Clients pick a convenient time themselves.', ['A chosen specialist or anyone available', 'Reminders reduce no-shows', 'Visit history and notes for every client'], ['Salons', 'Barbershops', 'Nail studios', 'Cosmetologists', 'Brows & lashes']],
@@ -204,42 +206,42 @@ const translations = {
     },
     trustKicker: 'Ukraine', trustTitle: ['Built for work', 'in Ukraine.'], trustIntro: 'In Ukrainian, in hryvnias, with Ukrainian banks — and built for the days when the power goes out.',
     trust: [
-      ['bolt', 'Blackouts don’t stop bookings', 'The bot and booking page run on the server. While your power is out, clients keep booking, and the saved schedule opens offline.'],
+      ['bolt', 'Blackouts don’t stop bookings', 'The bot and booking page run on the server. While your power is out, clients keep booking, and your schedule opens on your phone over mobile data.'],
       ['coin', 'Hryvnias and your banks', 'Payments via monobank and LiqPay: any bank card, Apple Pay, Google Pay, Privat24. Money goes straight to your account.'],
       ['shield', 'No double bookings', 'The bot, booking page and front desk write to one schedule. A taken slot can’t be taken twice.'],
-      ['lock', 'Hourly encrypted backups', 'While the app is open — a full database copy every hour on your Google Drive, encrypted with AES-256. Only you hold the key.'],
+      ['lock', 'Your data is protected', 'Password sign-in, an encrypted connection and every action signed. Export the whole database anytime, in one click.'],
       ['users', 'Roles & permissions', 'Owner, admin and specialist see only their part. Finances by permission only.'],
-      ['chat', 'Support inside the app', 'A question or an idea — write straight from LOMVIKO. Replies arrive by email and in the Support section.'],
+      ['chat', 'Support inside LOMVIKO', 'A question or an idea — write straight from LOMVIKO. Replies arrive by email and in the Support section.'],
     ],
     statsLabel: 'LOMVIKO in numbers',
-    stats: [['30', 'days free — every feature, no card needed'], ['24/7', 'bookings come in even when your computer is off'], ['×2', 'client reminders — 24 hours and 2 hours before the visit'], ['3', 'ways to book: Telegram, a link and a button on your site']],
-    demoKicker: 'Get started', stepOne: 'Download LOMVIKO for macOS or Windows.', stepTwo: 'Click “Try all features free for a month” and confirm your email with the code we send.', stepThree: 'Add services and your team, share your booking link — clients book themselves.',
-    priceTitle: ['Free for 30 days.', 'Every feature.'], priceNote: 'No card and no sales calls. Install the app, sign up — and take your first online bookings today.',
-    planKicker: 'Free trial', planPer: 'UAH · 30 days', planList: ['Every feature, no plan limits', 'Telegram bot, booking page and reminders', 'Online payments via monobank or LiqPay', 'The whole team, on several computers'], planNote: 'After the trial your data stays: you can view and export it for another 30 days.',
+    stats: [['30', 'days free — every feature, no card needed'], ['24/7', 'bookings come in — the bot and booking page never sleep'], ['×2', 'client reminders — 24 hours and 2 hours before the visit'], ['3', 'ways to book: Telegram, a link and a button on your site']],
+    demoKicker: 'Get started', stepOne: 'Click “Try it free” — LOMVIKO opens in your browser, nothing to install.', stepTwo: 'Enter your business name, email and password, then confirm your email with the code we send.', stepThree: 'Add services and your team, share your booking link — clients book themselves.',
+    priceTitle: ['UAH 399 a month.', 'The first 30 days are free.'], priceNote: 'No card and no sales calls. Sign up right in your browser — and take your first online bookings today.',
+    planKicker: 'One plan · every feature', planPer: 'UAH / month per company', planList: ['30 days free, no card needed', 'Telegram bot, booking page and reminders', 'Online payments via monobank or LiqPay', 'The whole team, on a computer or a phone'], planNote: 'After the trial your data stays: you can view and export it for another 30 days.',
     faq: [
-      ['How much does it cost?', 'The first 30 days are free, with every feature and no card. The plan price depends on the number of devices and companies; it is stated in the invoice before you pay.'],
+      ['How much does it cost?', 'UAH 399 a month per company — every feature, no extra fees for the bot, booking page or reminders. The first 30 days are free, no card needed.'],
       ['What happens after the trial?', 'Nothing is lost. Without payment, editing stops, but you can view and export your data for another 30 days.'],
       ['Will it fit my business?', 'Yes, if you work by appointment: salons, barbershops, clinics, massage, studios, tutors, car services. Group classes, rooms and equipment are supported.'],
       ['Do I need my own website?', 'No. You get your own booking page with your logo and a QR code. If you have a site, the “Book now” button is one line of code (Tilda, Wix, WordPress).'],
-      ['Does the bot work when my computer is off?', 'Yes. The bot, booking page and reminders run on the LOMVIKO server around the clock, independently of the app.'],
+      ['Does the bot work when my computer is off?', 'Yes. The bot, booking page and reminders run on the LOMVIKO server around the clock — nothing to keep switched on.'],
       ['How do I take payments online?', 'Connect your monobank or LiqPay. The client pays by link or QR code, the money goes straight to your account and the visit is marked paid.'],
-      ['Do I need internet access?', 'Yes, to create and change bookings. Offline, you can view the saved schedule.'],
-      ['Can I take all my data with me?', 'Yes. A full database export and encrypted backups on your Google Drive — anytime.'],
-      ['How do I reach you?', 'Write to info@lomviko.com or straight from the app in the Support section. We reply by email.'],
+      ['What do I need to install?', 'Nothing. LOMVIKO runs in the browser on a computer, tablet or phone. On a phone, add the icon to your home screen and open it like an app.'],
+      ['Can I take all my data with me?', 'Yes. Export the whole database as JSON, CSV or an encrypted file — anytime.'],
+      ['How do I reach you?', 'Write to info@lomviko.com or straight from LOMVIKO in the Support section. We reply by email.'],
     ],
     formTitle: 'Request a demo', formName: 'Your name', formBusiness: 'Business name', formMessage: 'What matters most to you?', formSubmit: 'Send request',
-    offTitle: 'Start today', offBody: 'Download LOMVIKO for macOS or Windows. Online requests will open soon.', offBodyMail: 'Write to us — we’ll show you LOMVIKO and prepare access for your business.', writeUs: 'Write to us', askTitle: 'Still have questions?', askBody: 'Write to us — we’ll reply and help you set LOMVIKO up for your business.',
+    offTitle: 'Start today', offBody: 'Try LOMVIKO free — right in your browser, nothing to install.', offBodyMail: 'Write to us — we’ll show you LOMVIKO and prepare access for your business.', writeUs: 'Write to us', askTitle: 'Still have questions?', askBody: 'Write to us — we’ll reply and help you set LOMVIKO up for your business.',
     downloadsKicker: 'Download', downloadsTitle: ['Get started', 'in five minutes.'], downloadHint: 'After installing, click “Try all features free for a month” — 30 days with every feature, no card.',
     downloadSafety: 'Updating LOMVIKO? Create a backup in the app first. Installing a new version keeps your data.',
     download: 'Download', macSub: 'Apple Silicon and Intel', winSub: 'Windows 10 and 11', integrity: 'SHA-256 checksum', noRelease: 'Coming soon. Check back on this page.',
     newsKicker: 'Updates', newsTitle: 'What’s new',
     faqKicker: 'FAQ', faqTitle: ['Before', 'you start.'],
-    finalTitle: ['Your first online booking —', 'today.'], finalBody: 'Install LOMVIKO, sign up in two minutes and use everything free for 30 days.', finalWord: 'RHYTHM',
-    footerTagline: 'The CRM for appointment-based businesses.', footerMade: 'macOS · Windows · Українська · English',
+    finalTitle: ['Your first online booking —', 'today.'], finalBody: 'Sign up in two minutes right in your browser and use everything free for 30 days.', finalWord: 'RHYTHM',
+    footerTagline: 'The CRM for appointment-based businesses.', footerMade: 'Computer · Phone · Українська · English',
     legalLabel: 'Documents', docPrivacy: 'Privacy policy', docOffer: 'Public offer', docPresentation: 'Presentation', privacyLink: 'Privacy policy',
     deckTitle: ['Show LOMVIKO', 'to your team.'], deckCover: ['Your day —', 'in perfect rhythm.'], deckBody: 'A short presentation: features, everyday scenarios, data security and getting started. Easy to forward to a partner or the business owner.', deckButton: 'Open the presentation',
     sending: 'Sending…', success: 'Thank you! We received your request and will contact you by email.', error: 'We could not send your request. Please try again later.', rate: 'Too many attempts. Please try again later.',
-    unavailable: 'The service is temporarily unavailable. Downloads will return when the connection is restored.', waiting: 'Checking available versions…',
+    unavailable: 'The service is temporarily unavailable. Please try again a little later.', waiting: 'Checking available versions…',
     board: { boardTitle: 'Schedule · today', boardDate: 'Thursday, 14 October', statBookings: 'Bookings', statRevenue: 'Revenue', statRevenueValue: 'UAH 24,600', statLoad: 'Utilisation', memberOne: 'Olena', memberTwo: 'Max', memberThree: 'Iryna', memberFour: 'Sofia', bkOne: 'Colouring', bkOneClient: 'Iryna K.', bkTwo: 'Haircut', bkTwoClient: 'Dmytro', bkThree: 'Back massage', bkThreeClient: 'Oleh', bkFour: 'Spa care', bkFourClient: 'Maria', bkFive: 'Manicure', bkFiveClient: 'Victoria', bkSix: 'Manicure + gel', bkSixClient: 'Anna · Telegram', bkSeven: 'Brow shaping', bkSevenClient: 'Kateryna', bkEight: 'Facial care', bkEightClient: 'Julia', toastBooking: 'New booking via Telegram', toastBookingDetail: 'Anna · Manicure · 11:00', toastReminder: 'Reminder sent', toastReminderDetail: 'Ihor · tomorrow at 10:00', boardNote: 'Scenario demo · fictional data' },
   },
 };
@@ -455,6 +457,8 @@ $('#calc-form').addEventListener('submit', (e) => e.preventDefault());
 
 /* Live data: downloads, news, demo availability */
 function ctas() {
+  $$('[data-cta]').forEach((a) => { a.href = APP_URL + '/?start=register'; });
+  $$('[data-login]').forEach((a) => { a.href = APP_URL + '/'; });
   // Self-service trial is the main path; the demo request form is an extra when the admin enables it.
   const demo = Boolean(site?.demoAvailable);
   $$('[data-cta-label]').forEach((label) => { label.textContent = t('ctaTrial'); });
@@ -467,17 +471,6 @@ function ctas() {
   footerMail.hidden = !mail;
   if (mail) { footerMail.textContent = mail; footerMail.href = 'mailto:' + mail; }
   $$('[data-mail]').forEach((a) => { a.textContent = mail; a.href = 'mailto:' + mail; });
-}
-function downloads() {
-  $('#service-status').textContent = loadFailed ? t('unavailable') : site ? '' : t('waiting');
-  const archLabel = (p, a) => (a === 'arm64' ? (p === 'mac' ? 'Apple Silicon' : 'ARM64') : p === 'mac' ? 'Intel' : 'x64');
-  $('#download-grid').innerHTML = ['mac', 'win'].map((p) => {
-    const releases = (site?.releases || []).filter((r) => r.platform === p).sort((a, b) => (a.arch === 'arm64' ? -1 : 1) - (b.arch === 'arm64' ? -1 : 1));
-    const builds = releases.length
-      ? releases.map((r) => `<div class="build"><a class="btn ${releases[0] === r ? 'btn-light' : 'btn-ghost'}" href="${esc(r.path)}"><span>${esc(t('download'))} · ${esc(archLabel(p, r.arch))}</span>${svg('download')}</a><div class="build-meta"><span>v${esc(r.version)} · ${(Number(r.size) / 1024 / 1024).toFixed(1)} MB</span></div>${r.sha256 ? `<details><summary class="build-meta">${esc(t('integrity'))}</summary><code>SHA-256: ${esc(r.sha256)}</code>${r.notes && language === 'uk' ? `<p>${esc(r.notes)}</p>` : ''}</details>` : ''}</div>`).join('')
-      : `<p class="soon">${esc(t('noRelease'))}</p>`;
-    return `<article class="download-card glass reveal"><header><span class="card-icon">${svg(p === 'mac' ? 'laptop' : 'monitor')}</span><div><h3>${p === 'mac' ? 'macOS' : 'Windows'}</h3><p>${esc(t(p === 'mac' ? 'macSub' : 'winSub'))}</p></div></header>${builds}</article>`;
-  }).join('');
 }
 function news() {
   const items = site?.announcements || [];
@@ -500,7 +493,7 @@ function legal() {
 }
 
 function render() {
-  meta(); staticText(); lists(); storyTabs(); renderStory(); renderSegments(); calc(); ctas(); downloads(); news(); legal();
+  meta(); staticText(); lists(); storyTabs(); renderStory(); renderSegments(); calc(); ctas(); news(); legal();
   $('#year').textContent = new Date().getFullYear();
   document.dispatchEvent(new CustomEvent('lomviko:render'));
 }
@@ -528,7 +521,7 @@ $('#demo-form').addEventListener('submit', async (e) => {
   finally { submit.removeAttribute('aria-busy'); submit.disabled = !site?.demoAvailable; }
 });
 
-// Phones: a slim trial bar appears after the hero and hides near the download buttons.
+// Phones: a slim trial bar appears after the hero and hides near the other trial buttons.
 const sticky = $('#sticky-cta');
 if ('IntersectionObserver' in window) {
   const seen = new Set();
@@ -536,7 +529,7 @@ if ('IntersectionObserver' in window) {
     for (const e of entries) e.isIntersecting ? seen.add(e.target) : seen.delete(e.target);
     sticky.hidden = seen.size > 0;
   });
-  ['.hero', '#start', '#downloads', '.final'].forEach((s) => watch.observe($(s)));
+  ['.hero', '#start', '.final'].forEach((s) => watch.observe($(s)));
 }
 
 render();

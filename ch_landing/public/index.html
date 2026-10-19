@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!--meta:start-->
 <title>LOMVIKO — CRM для салонів, клінік і студій: онлайн-запис, нагадування, оплати</title>
-<meta name="description" content="Клієнти записуються самі — через Telegram-бота або вашу сторінку запису 24/7. Нагадування, онлайн-оплата, розклад команди й фінанси в одному застосунку для macOS і Windows. 30 днів безкоштовно.">
+<meta name="description" content="Клієнти записуються самі — через Telegram-бота або вашу сторінку запису 24/7. Нагадування, онлайн-оплата, розклад команди й фінанси в одному сервісі — з комп’ютера чи телефона, без встановлення. 30 днів безкоштовно.">
 <link rel="canonical" href="https://lomviko.com/">
 <meta property="og:locale" content="uk_UA">
 <meta property="og:locale:alternate" content="en_US">
@@ -39,7 +39,7 @@
 <link rel="preload" href="/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/cormorant-garamond-cyrillic-500-italic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lomviko.com/#organization","name":"LOMVIKO","url":"https://lomviko.com/","logo":"https://lomviko.com/assets/icon-512.png"},{"@type":"WebSite","@id":"https://lomviko.com/#website","url":"https://lomviko.com/","name":"LOMVIKO","inLanguage":["uk","en"],"publisher":{"@id":"https://lomviko.com/#organization"}},{"@type":"SoftwareApplication","name":"LOMVIKO","url":"https://lomviko.com/","applicationCategory":"BusinessApplication","operatingSystem":"macOS, Windows","inLanguage":["uk","en"],"description":"CRM для бізнесу за записом: онлайн-запис через Telegram 24/7, нагадування клієнтам, спільний розклад команди, клієнтська база та фінансові звіти.","publisher":{"@id":"https://lomviko.com/#organization"}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lomviko.com/#organization","name":"LOMVIKO","url":"https://lomviko.com/","logo":"https://lomviko.com/assets/icon-512.png"},{"@type":"WebSite","@id":"https://lomviko.com/#website","url":"https://lomviko.com/","name":"LOMVIKO","inLanguage":["uk","en"],"publisher":{"@id":"https://lomviko.com/#organization"}},{"@type":"SoftwareApplication","name":"LOMVIKO","url":"https://lomviko.com/","applicationCategory":"BusinessApplication","operatingSystem":"Web, iOS, Android, macOS, Windows","inLanguage":["uk","en"],"description":"CRM для бізнесу за записом: онлайн-запис через Telegram 24/7, нагадування клієнтам, спільний розклад команди, клієнтська база та фінансові звіти.","publisher":{"@id":"https://lomviko.com/#organization"}}]}</script>
 <script src="/app.js" defer></script>
 <script src="/motion.js" defer></script>
 </head>
@@ -62,7 +62,8 @@
         <button type="button" data-lang="uk" aria-pressed="true">UA</button>
         <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-      <a class="btn btn-light btn-sm" href="#downloads" data-cta><span data-cta-short>Спробувати</span></a>
+      <a class="btn btn-ghost btn-sm header-login" href="https://app.lomviko.com/" data-login data-t="navDownload">Увійти</a>
+      <a class="btn btn-light btn-sm" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-short>Спробувати</span></a>
     </div>
   </div>
 </header>
@@ -88,13 +89,14 @@
       <h1 id="hero-title">Клієнти записуються самі. <em>Ви — працюєте.</em></h1>
       <p id="hero-description" class="lead">Клієнти записуються самі через Telegram, нагадування приходять вчасно, а розклад, оплати й команда — в одному вікні. LOMVIKO бере рутину на себе, щоб ви займалися своєю справою.</p>
       <div class="hero-actions">
-        <a class="btn btn-light" href="#downloads" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+        <a class="btn btn-light" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
         <a class="btn btn-ghost" href="#how" data-t="seeHow">Як це працює</a>
       </div>
+      <p class="hero-login"><span data-t="haveAccount">Вже є акаунт?</span> <a href="https://app.lomviko.com/" data-login data-t="navDownload">Увійти</a></p>
       <ul class="hero-trust">
         <li data-t="trustOne">30 днів — усі функції</li>
         <li data-t="trustTwo">Без банківської картки</li>
-        <li data-t="trustThree">macOS і Windows</li>
+        <li data-t="trustThree">Браузер і телефон — без встановлення</li>
       </ul>
     </div>
 
@@ -205,7 +207,7 @@
           <small id="calc-year"></small>
         </div>
         <p class="calc-note" data-t="calcNote">Це оцінка за вашими числами. Частку повернутих візитів ви задаєте самі. Бот нагадує клієнту за 24 і за 2 години до візиту.</p>
-        <a class="btn btn-light btn-block" href="#downloads" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+        <a class="btn btn-light btn-block" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
       </div>
     </div>
   </section>
@@ -299,10 +301,10 @@
 
   <section id="start" class="wrap section demo">
     <div class="demo-copy">
-      <h2 id="site-price">30 днів безкоштовно. <em>Усі функції.</em></h2>
+      <h2 id="site-price">399 грн на місяць. <em>Перші 30 днів — безкоштовно.</em></h2>
       <p class="section-intro" id="site-price-note">Без картки й без дзвінків менеджера. Встановіть застосунок, зареєструйтеся — і приймайте перші онлайн-записи вже сьогодні.</p>
       <ol class="steps">
-        <li><span>01</span><span data-t="stepOne">Завантажте LOMVIKO для macOS або Windows.</span></li>
+        <li><span>01</span><span data-t="stepOne">Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.</span></li>
         <li><span>02</span><span data-t="stepTwo">Натисніть «Спробувати місяць безкоштовно» і підтвердіть email кодом із листа.</span></li>
         <li><span>03</span><span data-t="stepThree">Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.</span></li>
       </ol>
@@ -310,9 +312,9 @@
     <div class="demo-side">
       <div class="glass plan reveal">
         <p class="plan-kicker" data-t="planKicker">Пробний період</p>
-        <p class="plan-price"><strong>0</strong><span data-t="planPer">грн · 30 днів</span></p>
+        <p class="plan-price"><strong>399</strong><span data-t="planPer">грн / місяць за компанію</span></p>
         <ul class="plan-list" id="plan-list"></ul>
-        <a class="btn btn-light btn-block" href="#downloads" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+        <a class="btn btn-light btn-block" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
         <p class="plan-note" data-t="planNote">Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.</p>
         <a class="btn btn-ghost btn-block" id="demo-fallback-mail" hidden data-t="writeUs">Написати нам</a>
       </div>
@@ -332,16 +334,6 @@
         <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
       </form>
     </div>
-  </section>
-
-  <section id="downloads" class="wrap section">
-    <header class="section-head">
-      <h2 data-h="downloadsTitle">Почніть <em>за п’ять хвилин.</em></h2>
-      <p class="section-intro" data-t="downloadHint">Після встановлення натисніть «Спробувати місяць безкоштовно» — 30 днів з усіма функціями, без картки.</p>
-    </header>
-    <p id="service-status" class="service-status" role="status"></p>
-    <div id="download-grid" class="downloads"></div>
-    <p class="footnote" data-t="downloadSafety">Оновлюєте LOMVIKO? Спочатку створіть резервну копію в застосунку. Встановлення нової версії зберігає ваші дані.</p>
   </section>
 
   <section id="news" class="wrap section" hidden>
@@ -364,12 +356,12 @@
     <h2 data-h="finalTitle">Перший онлайн-запис — <em>вже сьогодні.</em></h2>
     <p class="section-intro" data-t="finalBody">Встановіть LOMVIKO, зареєструйтеся за дві хвилини й 30 днів користуйтеся всім безкоштовно.</p>
     <div class="hero-actions">
-      <a class="btn btn-light" href="#downloads" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+      <a class="btn btn-light" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
     </div>
   </section>
 </main>
 
-<div class="sticky-cta" id="sticky-cta" hidden><span data-t="stickyText">30 днів безкоштовно · без картки</span><a class="btn btn-light btn-sm" href="#downloads" data-cta><span data-cta-short>Спробувати</span></a></div>
+<div class="sticky-cta" id="sticky-cta" hidden><span data-t="stickyText">30 днів безкоштовно · без картки</span><a class="btn btn-light btn-sm" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-short>Спробувати</span></a></div>
 
 <footer class="footer">
   <div class="wrap footer-inner">
@@ -381,12 +373,12 @@
       <a href="#features" data-t="navFeatures">Можливості</a>
       <a href="#how" data-t="navHow">Як це працює</a>
       <a href="#start" data-t="navPrice">Ціна</a>
-      <a href="#downloads" data-t="navDownload">Завантажити</a>
+      <a href="https://app.lomviko.com/" data-login data-t="navDownload">Увійти</a>
       <a href="#faq" data-t="navFaq">Питання</a>
     </nav>
     <a id="contact-email" class="footer-mail" hidden></a>
   </div>
-  <div class="wrap footer-base"><span>© <span id="year">2026</span> LOMVIKO</span><nav class="footer-legal" id="footer-legal" aria-label="Документи" data-t-label="legalLabel"></nav><span data-t="footerMade">macOS · Windows · Українська · English</span></div>
+  <div class="wrap footer-base"><span>© <span id="year">2026</span> LOMVIKO</span><nav class="footer-legal" id="footer-legal" aria-label="Документи" data-t-label="legalLabel"></nav><span data-t="footerMade">Комп’ютер · Телефон · Українська · English</span></div>
   <div class="footer-giant" aria-hidden="true">LOMVIKO</div>
 </footer>
 </body>

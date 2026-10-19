@@ -71,7 +71,7 @@ class Registration {
     const userId=this.store.transaction(()=>{
       const device=hash(crypto.createPublicKey(pending.public_key).export({type:'spki',format:'der'}));
       if(this.db.prepare('SELECT device FROM trial_consumptions WHERE device=? OR email_hash=?').get(device,hash(pending.email)))this.fail(409,'Trial already used');
-      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:30,max_devices:2,password_hash:pending.password_hash});
+      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:30,max_devices:10,password_hash:pending.password_hash});
       this.accounts.addBusiness(id,pending.business);
       this.db.prepare('INSERT INTO trial_consumptions VALUES(?,?,?)').run(device,hash(pending.email),Date.now());
       this.db.prepare('DELETE FROM registration_pending WHERE id=?').run(pending.id);

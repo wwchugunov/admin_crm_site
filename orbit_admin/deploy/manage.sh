@@ -4,7 +4,7 @@ deploy_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$deploy_directory"
 if [ ! -f .env ]; then
   (umask 077; cp .env.example .env)
-  echo "Created deploy/.env. Set your four domains, then run this command again."
+  echo "Created deploy/.env. Set your five domains, then run this command again."
   exit 2
 fi
 compose() { docker compose --env-file .env -f compose.yaml -f compose.website.yaml "$@"; }
@@ -15,7 +15,7 @@ case "${1:-start}" in
     compose build
     trap 'rm -f .preflight-config.tmp' EXIT HUP INT TERM
     (umask 077; compose config --format json > .preflight-config.tmp)
-    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node lomviko-platform:1.3.3 tools/deployment-preflight.cjs < .preflight-config.tmp
+    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node lomviko-platform:2.0.0 tools/deployment-preflight.cjs < .preflight-config.tmp
     rm -f .preflight-config.tmp
     compose run --rm --no-deps release-init
     compose up -d --wait --wait-timeout 180

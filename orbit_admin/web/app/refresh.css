@@ -1,0 +1,2554 @@
+/* LOMVIKO workspace theme. Loaded last; rules use html[data-theme] so they
+   apply to both themes with the same weight as the older dark-theme rules. */
+@font-face {
+  font-family: Onest;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/onest-cyrillic-wght-normal.woff2) format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: Onest;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/onest-latin-wght-normal.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF;
+}
+
+:root {
+  --canvas: #f4f5f7;
+  --surface: #ffffff;
+  --sidebar: #fbfbfc;
+  --ink: #16181d;
+  --muted: #5f6573;
+  --line: #e5e7ec;
+  --accent: #5048e5;
+  --accent-strong: #4038c8;
+  --accent-soft: #eef0ff;
+  --on-accent: #ffffff;
+  --field: #ffffff;
+  --hover: #f2f3f6;
+  --focus: #5048e559;
+  --elevation: 0 1px 2px #1018280a, 0 8px 24px #1018280d;
+  --c-confirmed: #5048e5;
+  --c-completed: #64748b;
+  --c-cancelled: #e11d48;
+  --c-noshow: #d97706;
+  font-family:
+    Onest,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+}
+html[data-theme="dark"] {
+  --canvas: #0f1115;
+  --surface: #171a20;
+  --sidebar: #13161b;
+  --ink: #eceef2;
+  --muted: #a3a9b5;
+  --line: #272b34;
+  --accent: #6b64f5;
+  --accent-strong: #7d77ff;
+  --accent-soft: #23234a;
+  --field: #12151a;
+  --hover: #1e222a;
+  --focus: #8b85ff66;
+  --elevation: 0 1px 2px #0006, 0 10px 30px #0005;
+  --c-confirmed: #8b85ff;
+  --c-completed: #8a94a6;
+  --c-cancelled: #fb7185;
+  --c-noshow: #fbbf24;
+}
+html[data-theme] body {
+  font-family:
+    Onest,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--canvas);
+}
+
+/* Sidebar */
+html[data-theme] aside {
+  background: var(--sidebar);
+  border-right: 1px solid var(--line);
+  color: var(--ink);
+  padding: 22px 14px 16px;
+}
+html[data-theme] .brand {
+  padding: 4px 10px 0;
+  margin: 0;
+}
+html[data-theme] .wordmark {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.42em;
+  color: var(--ink);
+}
+html[data-theme] .workspace {
+  margin: 22px 0 18px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: none;
+}
+html[data-theme] .workspace strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+html[data-theme] .workspace small {
+  color: var(--muted);
+  font-size: 12px;
+}
+html[data-theme] .workspace-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 9px;
+  font-weight: 700;
+}
+html[data-theme] .nav-label {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  margin: 0 10px 8px;
+}
+html[data-theme] .nav {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 2px;
+}
+html[data-theme] .nav span[data-i18n] {
+  font-size: 14px;
+}
+html[data-theme] .nav:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+html[data-theme] .nav.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: none;
+}
+html[data-theme] .nav.active svg {
+  color: var(--accent);
+}
+html[data-theme] .sidebar-bottom {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+html[data-theme] .sidebar-bottom p,
+html[data-theme] .version {
+  color: var(--muted);
+  font-size: 12px;
+}
+html[data-theme] aside .secondary {
+  width: 100%;
+}
+html[data-theme] .local-pill {
+  background: var(--hover);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-size: 12px;
+}
+
+/* Page heading */
+html[data-theme] .content {
+  padding: 0 28px 32px;
+}
+html[data-theme] .page-heading {
+  padding: 22px 0 18px;
+  margin-bottom: 18px;
+  border-bottom: 0;
+}
+html[data-theme] .page-heading h1,
+html[data-theme] h1 {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+html[data-theme] .page-heading p {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Buttons and fields */
+html[data-theme] .primary,
+html[data-theme] .secondary,
+html[data-theme] .danger {
+  min-height: 38px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+html[data-theme] .primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid transparent;
+  box-shadow:
+    0 1px 2px #1018281a,
+    inset 0 1px 0 #ffffff24;
+}
+html[data-theme] .primary:hover {
+  background: var(--accent-strong);
+}
+html[data-theme] .secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px #1018280a;
+}
+html[data-theme] .secondary:hover {
+  background: var(--hover);
+}
+html[data-theme] .danger {
+  background: transparent;
+  color: var(--c-cancelled);
+  border: 1px solid color-mix(in srgb, var(--c-cancelled) 40%, transparent);
+}
+html[data-theme] .danger:hover {
+  background: color-mix(in srgb, var(--c-cancelled) 10%, transparent);
+}
+html[data-theme] .primary:disabled,
+html[data-theme] .secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+html[data-theme] .icon-button {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 18px;
+}
+html[data-theme] .icon-button:hover {
+  background: var(--hover);
+}
+html[data-theme] label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+html[data-theme] input,
+html[data-theme] select,
+html[data-theme] textarea {
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  min-height: 40px;
+}
+html[data-theme] input:focus,
+html[data-theme] select:focus,
+html[data-theme] textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+html[data-theme] .hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+html[data-theme] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+html[data-theme] .link-button {
+  color: var(--accent);
+}
+
+/* Cards, panels, stats */
+html[data-theme] .panel,
+html[data-theme] .card,
+html[data-theme] .stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--elevation);
+}
+html[data-theme] .stat::before,
+html[data-theme] .stat::after {
+  display: none;
+}
+html[data-theme] .stats {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+html[data-theme] .stat {
+  padding: 16px 18px;
+}
+html[data-theme] .stat-top {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+html[data-theme] .stat-icon {
+  display: none;
+}
+html[data-theme] .stat-number {
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 6px 0 2px;
+}
+html[data-theme] .stat-number small {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+}
+html[data-theme] .stat-foot {
+  font-size: 12px;
+  color: var(--muted);
+}
+html[data-theme] .panel-head h2,
+html[data-theme] .card h2 {
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--ink);
+}
+html[data-theme] .badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-confirmed) 12%, transparent);
+  color: var(--c-confirmed);
+}
+html[data-theme] .badge.completed {
+  background: color-mix(in srgb, var(--c-completed) 14%, transparent);
+  color: var(--c-completed);
+}
+html[data-theme] .badge.cancelled {
+  background: color-mix(in srgb, var(--c-cancelled) 12%, transparent);
+  color: var(--c-cancelled);
+}
+html[data-theme] .badge.no_show {
+  background: color-mix(in srgb, var(--c-noshow) 14%, transparent);
+  color: var(--c-noshow);
+}
+html[data-theme] .table th {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+html[data-theme] .table td {
+  font-size: 14px;
+}
+html[data-theme] .empty strong {
+  font-size: 16px;
+  color: var(--ink);
+}
+html[data-theme] .empty p {
+  font-size: 14px;
+  color: var(--muted);
+}
+html[data-theme] .license-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 12px 2px 0;
+}
+
+/* Setup banner (replaces modals that used to open on every start) */
+.setup-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin: 0 0 18px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: linear-gradient(120deg, var(--accent-soft), var(--surface) 70%);
+}
+.setup-banner strong {
+  font-size: 16px;
+  color: var(--ink);
+}
+.setup-banner p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  max-width: 640px;
+}
+.setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Schedule */
+html[data-theme] .schedule-layout {
+  display: block;
+}
+.schedule-panel {
+  padding: 0;
+  overflow: hidden;
+}
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.schedule-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.schedule-title h2::first-letter {
+  text-transform: uppercase;
+}
+.schedule-title span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.schedule-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+html[data-theme] .schedule-controls .date-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+html[data-theme] .schedule-controls .calendar-field input {
+  width: 132px;
+}
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--hover);
+  border: 1px solid var(--line);
+}
+.segmented button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px #1018281f;
+}
+html[data-theme] .week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+html[data-theme] .week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  min-height: 0;
+  box-shadow: none;
+}
+html[data-theme] .week-day span {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+html[data-theme] .week-day strong {
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--ink);
+}
+html[data-theme] .week-day small {
+  min-height: 18px;
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+html[data-theme] .week-day small:empty {
+  background: transparent;
+}
+html[data-theme] .week-day:hover {
+  background: var(--hover);
+}
+html[data-theme] .week-day.today strong {
+  color: var(--accent);
+}
+html[data-theme] .week-day.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffffcc;
+}
+html[data-theme] .week-day.selected strong {
+  color: #fff;
+}
+html[data-theme] .week-day.selected small {
+  background: #ffffff2e;
+  color: #fff;
+}
+
+/* Day grid */
+.day-grid {
+  --hour: 72px;
+  padding: 0 0 4px;
+}
+.day-grid-head {
+  display: grid;
+  grid-template-columns: 64px repeat(var(--columns, 1), minmax(170px, 1fr));
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 2;
+}
+.grid-resource {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-left: 1px solid var(--line);
+}
+.grid-resource strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.grid-resource small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.grid-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+.day-grid-scroll {
+  max-height: calc(100vh - 360px);
+  min-height: 360px;
+  overflow: auto;
+}
+.day-grid-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px repeat(var(--columns, 1), minmax(170px, 1fr));
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--line) 0 1px,
+    transparent 1px calc(var(--hour) / 2)
+  );
+  background-position: 64px 0;
+  background-size: calc(100% - 64px) 100%;
+  background-repeat: no-repeat;
+}
+.grid-times {
+  position: relative;
+}
+.grid-times span {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.grid-times span:first-child {
+  transform: translateY(2px);
+}
+.grid-column {
+  position: relative;
+  border-left: 1px solid var(--line);
+  cursor: copy;
+}
+.grid-column:hover {
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
+}
+.grid-event {
+  --tone: var(--c-confirmed);
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 10px;
+  overflow: hidden;
+  text-align: left;
+  border: 0;
+  border-left: 3px solid var(--tone);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tone) 12%, var(--surface));
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 2px #10182814;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.grid-event:hover {
+  box-shadow: 0 6px 18px #1018282e;
+  transform: translateY(-1px);
+  z-index: 1;
+}
+.grid-event.completed {
+  --tone: var(--c-completed);
+  background: color-mix(in srgb, var(--tone) 10%, var(--surface));
+  color: var(--muted);
+}
+.grid-event-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tone);
+  font-variant-numeric: tabular-nums;
+}
+.grid-event strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.grid-event small {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.grid-event.compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.grid-event.compact small {
+  display: none;
+}
+.grid-now {
+  position: absolute;
+  left: 64px;
+  right: 0;
+  height: 2px;
+  background: var(--c-cancelled);
+  z-index: 1;
+  pointer-events: none;
+}
+.grid-now::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-cancelled);
+}
+.grid-hover {
+  position: absolute;
+  height: calc(var(--hour) / 4);
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px dashed var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: calc(var(--hour) / 4 - 2px);
+  pointer-events: none;
+  z-index: 1;
+}
+.grid-hint {
+  margin: 0;
+  padding: 10px 18px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+/* List view */
+html[data-theme] .agenda-labels {
+  font-size: 12px;
+  color: var(--muted);
+}
+html[data-theme] .appointment {
+  border-radius: 12px;
+}
+
+/* Modal and booking form */
+html[data-theme] dialog#modal {
+  width: min(600px, calc(100vw - 32px));
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 30px 80px #10182840;
+  padding: 24px 26px;
+}
+html[data-theme] dialog#modal::backdrop {
+  background: #0f111580;
+  backdrop-filter: blur(4px);
+}
+html[data-theme] .modal-heading h2 {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+html[data-theme] #modal .form-grid {
+  gap: 0 14px;
+}
+.chip-group {
+  border: 0;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip-group legend {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.chip {
+  position: relative;
+  display: inline-flex;
+  margin: 0;
+  cursor: pointer;
+}
+.chip input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.chip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+/* The tick always takes its place and the weight never changes, so choosing a day does not move the row. */
+.chip span::before {
+  content: "✓";
+  font-weight: 700;
+  opacity: 0;
+}
+.chip input:checked + span {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.chip input:checked + span::before {
+  opacity: 1;
+}
+.chip input:focus-visible + span {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+.booking-when-hint.warn {
+  color: var(--c-noshow);
+  font-weight: 600;
+}
+.welcome-skip {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  color: var(--muted);
+}
+.appointment-card dl {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px 16px;
+  margin: 16px 0 6px;
+}
+.appointment-card dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.appointment-card dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Calendar picker */
+html[data-theme] .calendar-popup {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px #10182833;
+  padding: 14px;
+}
+html[data-theme] .calendar-grid span {
+  font-size: 12px;
+  color: var(--muted);
+}
+html[data-theme] .calendar-grid button {
+  min-height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink);
+  box-shadow: none;
+}
+html[data-theme] .calendar-grid button:hover:not(:disabled) {
+  background: var(--hover);
+}
+html[data-theme] .calendar-grid button.today {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+html[data-theme] .calendar-grid button.selected,
+html[data-theme] .calendar-grid button.selected:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+html[data-theme] .calendar-grid button:disabled {
+  opacity: 0.35;
+}
+html[data-theme] .calendar-field > button {
+  min-width: 40px;
+  font-size: 0;
+  position: relative;
+}
+html[data-theme] .calendar-field > button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Toast */
+html[data-theme] #toast {
+  background: var(--ink);
+  color: var(--surface);
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 12px 30px #10182840;
+}
+html[data-theme] #toast.error {
+  background: var(--c-cancelled);
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  html[data-theme] .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Refinements after the first review */
+html[data-theme] .schedule-stats .stat,
+html[data-theme] .schedule-stats .stat:nth-child(n) {
+  border-top: 1px solid var(--line);
+}
+html[data-theme] .stat-number small {
+  display: inline;
+  margin-left: 4px;
+}
+html[data-theme] aside .secondary,
+html[data-theme] aside select {
+  width: 100%;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+html[data-theme] aside .secondary:hover {
+  background: var(--hover);
+}
+html[data-theme] .connection-corner {
+  bottom: 12px;
+  right: 16px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  box-shadow: var(--elevation);
+}
+html[data-theme] .week-day.today strong {
+  text-decoration: none;
+}
+html[data-theme] div:has(> label.chip) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Business details: what is due, paid, and the client's history. */
+html[data-theme] .connection-corner {
+  display: none;
+}
+.appointment-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+html[data-theme] .badge.due {
+  background: color-mix(in srgb, var(--c-noshow) 14%, transparent);
+  color: var(--c-noshow);
+}
+html[data-theme] .badge.paid {
+  background: color-mix(in srgb, #16a34a 13%, transparent);
+  color: #15803d;
+}
+html[data-theme="dark"] .badge.paid {
+  color: #4ade80;
+}
+html[data-theme] .stat.due {
+  border-top: 3px solid var(--c-noshow);
+}
+html[data-theme] .stat.due .stat-number {
+  color: var(--c-noshow);
+}
+html[data-theme] .due-panel {
+  margin-bottom: 18px;
+}
+html[data-theme] tr.clickable {
+  cursor: pointer;
+}
+html[data-theme] tr.clickable:hover td {
+  background: var(--hover);
+}
+.danger-note {
+  margin: 4px 0 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-cancelled) 10%, transparent);
+  color: var(--c-cancelled);
+  line-height: 1.55;
+}
+.pay-methods {
+  display: flex;
+  width: 100%;
+}
+.pay-methods label {
+  flex: 1;
+  margin: 0;
+}
+.pay-methods input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.pay-methods span {
+  display: block;
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+.pay-methods input:checked + span {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px #1018281f;
+}
+.pay-methods input:focus-visible + span {
+  outline: 2px solid var(--focus);
+}
+.client-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.client-figures div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.client-figures span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.client-figures strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+}
+.client-figures .due strong {
+  color: var(--c-noshow);
+}
+.client-next {
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+.client-next strong {
+  color: var(--ink);
+}
+.client-history {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.client-history li + li {
+  border-top: 1px solid var(--line);
+}
+.history-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto auto;
+  white-space: nowrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.history-row:hover {
+  background: var(--hover);
+}
+.history-row > span:first-child {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── App shell ────────────────────────────────────────────────────────────
+   Desktop-app density instead of a web page: a 52px toolbar that also drags
+   the window, a compact source list, flat panels and native cursors. */
+html[data-theme] body {
+  height: 100vh;
+  overflow: hidden;
+  font-size: 13px;
+}
+html[data-theme] main {
+  height: 100vh;
+  overflow: auto;
+  background: var(--canvas);
+}
+html[data-theme] .content {
+  padding: 0;
+  max-width: none;
+}
+html[data-theme] #view {
+  padding: 18px 20px 28px;
+}
+html[data-theme] .app-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 52px;
+  padding: 0 16px 0 20px;
+  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-bottom: 1px solid var(--line);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+html[data-theme] .app-toolbar h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+html[data-theme] .app-toolbar button,
+html[data-theme] .app-toolbar input,
+html[data-theme] .app-toolbar select {
+  -webkit-app-region: no-drag;
+}
+html[data-theme] .heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+html[data-theme] .toolbar-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+}
+html[data-theme] .toolbar-icon:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+html[data-theme] #layout-help,
+html[data-theme] #update-notice,
+html[data-theme] #connection-notice {
+  margin: 14px 20px 0;
+}
+
+/* Source list */
+html[data-theme] aside {
+  width: 216px;
+  padding: 14px 10px 12px;
+  user-select: none;
+}
+html[data-theme] main {
+  margin-left: 216px;
+  width: calc(100% - 216px);
+}
+html.platform-mac[data-theme] aside {
+  padding-top: 46px;
+  -webkit-app-region: drag;
+}
+html.platform-mac[data-theme]
+  aside
+  :is(button, select, input, a, nav, .workspace) {
+  -webkit-app-region: no-drag;
+}
+html[data-theme] .brand {
+  padding: 2px 8px 0;
+}
+html[data-theme] .wordmark {
+  font-size: 12px;
+  letter-spacing: 0.38em;
+}
+html[data-theme] .workspace {
+  margin: 14px 0 12px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  gap: 9px;
+}
+html[data-theme] .workspace-icon {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  border-radius: 7px;
+}
+html[data-theme] .workspace strong {
+  font-size: 13px;
+}
+html[data-theme] .workspace small {
+  font-size: 11px;
+  margin-top: 1px;
+}
+html[data-theme] .nav-label {
+  font-size: 10.5px;
+  margin: 0 8px 4px;
+}
+html[data-theme] .nav,
+html[data-theme] aside nav .nav {
+  min-height: 0;
+  height: 32px;
+  padding: 0 8px;
+  gap: 9px;
+  border-radius: 7px;
+  margin-bottom: 1px;
+  font-size: 13px;
+}
+html[data-theme] .nav span[data-i18n] {
+  font-size: 13px;
+}
+html[data-theme] .nav svg {
+  width: 17px;
+  height: 17px;
+}
+html[data-theme] .nav span:first-child {
+  min-width: 17px;
+  font-size: 17px;
+  display: grid;
+  place-items: center;
+}
+html[data-theme] .desktop-controls {
+  gap: 6px;
+  margin-top: 12px;
+}
+html[data-theme] .sidebar-bottom {
+  padding: 10px 8px 0;
+}
+html[data-theme] #storage-note,
+html[data-theme] .sidebar-bottom .offline-dot {
+  display: none;
+}
+html[data-theme] #storage-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Flat surfaces, tighter type */
+html[data-theme] .panel,
+html[data-theme] .card,
+html[data-theme] .stat {
+  border-radius: 10px;
+  box-shadow: none;
+}
+html[data-theme] .card {
+  padding: 18px;
+}
+html[data-theme] .card h2,
+html[data-theme] .panel-head h2 {
+  font-size: 14px;
+  font-weight: 650;
+}
+html[data-theme] .panel-head {
+  padding: 12px 16px;
+}
+html[data-theme] .stats {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+html[data-theme] .stat {
+  padding: 12px 14px;
+}
+html[data-theme] .stat-top {
+  font-size: 12px;
+}
+html[data-theme] .stat-number {
+  font-size: 22px;
+  line-height: 1.4;
+}
+html[data-theme] .stat-foot {
+  font-size: 11.5px;
+}
+html[data-theme] .grid-2 {
+  gap: 14px;
+}
+html[data-theme] .table th {
+  font-size: 11px;
+  padding: 9px 14px;
+  user-select: none;
+}
+html[data-theme] .table td {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+html[data-theme] :is(.primary, .secondary, .danger) {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 7px;
+  user-select: none;
+}
+html[data-theme] button {
+  cursor: default;
+}
+html[data-theme] :is(input, select):not([type="checkbox"]):not([type="radio"]) {
+  min-height: 32px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+html[data-theme] .list-toolbar {
+  margin-bottom: 12px;
+}
+html[data-theme] .callout {
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+html[data-theme] dialog {
+  border-radius: 12px;
+}
+html[data-theme] .modal-heading h2 {
+  font-size: 16px;
+}
+
+/* Settings rows */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.setting-row:first-of-type {
+  border-top: 0;
+}
+.setting-row > :first-child {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+}
+html[data-theme] .setting-row select {
+  width: 180px;
+}
+/* Read-only dialogs (cards) need a single Close button. */
+#modal.readonly #cancel-modal {
+  display: none;
+}
+/* Compact week strip: one line per day. */
+html[data-theme] .week-strip {
+  padding: 8px 12px;
+  gap: 4px;
+}
+html[data-theme] .week-day {
+  flex-direction: row;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 8px;
+}
+html[data-theme] .week-day strong {
+  font-size: 14px;
+}
+html[data-theme] .week-day small {
+  min-width: 18px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 10.5px;
+}
+html[data-theme] .grid-2 {
+  align-items: start;
+}
+html[data-theme] .table th {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── v2: calm native look ──────────────────────────────────────────────
+   Warm neutral greys (not blue-tinted), a dimmed sidebar so content leads,
+   accent colour only for the main action and the current selection. */
+html[data-theme="light"],
+html[data-theme] {
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --sidebar: #f6f5f3;
+  --ink: #1d1c1a;
+  --muted: #6d6b66;
+  --line: #e9e7e3;
+  --hover: #f0efec;
+  --selected: #e8e6e2;
+  --accent: #5a54d6;
+  --accent-strong: #4b45c4;
+  --accent-soft: #eeedfb;
+  --field: #ffffff;
+  --focus: #5a54d655;
+}
+html[data-theme="dark"] {
+  --canvas: #1b1b1a;
+  --surface: #1b1b1a;
+  --sidebar: #161615;
+  --ink: #ebeae7;
+  --muted: #9a9892;
+  --line: #2d2c2a;
+  --hover: #252523;
+  --selected: #2e2d2b;
+  --accent: #7a74ec;
+  --accent-strong: #8b86f2;
+  --accent-soft: #2a2950;
+  --field: #212120;
+  --focus: #7a74ec66;
+}
+html[data-theme] main {
+  background: var(--canvas);
+}
+html[data-theme] .app-toolbar {
+  background: var(--canvas);
+  backdrop-filter: none;
+}
+
+/* Sidebar: quieter than the content. */
+html[data-theme] aside {
+  background: var(--sidebar);
+  border-right-color: var(--line);
+}
+html[data-theme] .workspace {
+  background: transparent;
+  border-color: transparent;
+}
+/* The company name is a label, not a button: no hover highlight. */
+html[data-theme] .workspace,
+html[data-theme] .workspace:hover {
+  background: transparent;
+  cursor: default;
+  user-select: none;
+}
+html[data-theme] .nav,
+html[data-theme] aside nav .nav {
+  color: var(--muted);
+  font-weight: 500;
+}
+html[data-theme] .nav svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+html[data-theme] .nav:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+html[data-theme] .nav.active {
+  background: var(--selected);
+  color: var(--ink);
+  font-weight: 600;
+}
+html[data-theme] .nav.active svg {
+  color: var(--ink);
+  opacity: 1;
+}
+html[data-theme] .nav-label {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 500;
+}
+html[data-theme] .version {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Focus rings only for keyboard navigation; never after a mouse click. */
+html:not(.keyboard-nav) :is(button, a, summary, [tabindex], select):focus,
+html:not(.keyboard-nav) :is(button, a, summary, [tabindex]):focus-visible {
+  outline: none !important;
+  box-shadow: none;
+}
+html:not(.keyboard-nav) :is(.chip, .pay-methods) input:focus + span,
+html:not(.keyboard-nav) :is(.chip, .pay-methods) input:focus-visible + span {
+  outline: none;
+  box-shadow: none;
+}
+html[data-theme] :is(input, textarea):focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+/* Native cursors and selection: only content text is selectable. */
+html[data-theme] :is(button, .nav, .week-day, .chip, label, th, .segmented) {
+  cursor: default;
+  user-select: none;
+}
+html[data-theme] a[href] {
+  cursor: pointer;
+}
+
+/* Buttons: neutral by default, accent only for the primary action. */
+html[data-theme] .secondary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: none;
+}
+html[data-theme] .secondary:hover {
+  background: var(--hover);
+}
+html[data-theme] .primary {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  box-shadow: none;
+}
+html[data-theme] .primary:hover {
+  background: var(--accent-strong);
+}
+html[data-theme] .danger {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--c-cancelled) 40%, var(--line));
+  color: var(--c-cancelled);
+}
+html[data-theme] .segmented {
+  background: var(--hover);
+  border-color: transparent;
+}
+
+/* Schedule: the calendar fills the window, like a calendar app. */
+html[data-theme] .schedule-panel {
+  border: 0;
+  border-radius: 0;
+  margin: -18px -20px -28px;
+  background: var(--canvas);
+}
+html[data-theme] .schedule-toolbar {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--line);
+}
+html[data-theme] .schedule-title h2 {
+  font-size: 15px;
+}
+html[data-theme] .schedule-title span {
+  font-size: 12px;
+  color: var(--muted);
+}
+html[data-theme] .week-strip {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 6px 20px;
+}
+html[data-theme] .week-day.selected {
+  background: var(--accent);
+  color: #fff;
+}
+html[data-theme] .day-grid-scroll {
+  max-height: calc(100vh - 52px - 58px - 47px - 56px);
+  min-height: 320px;
+}
+html[data-theme] .setup-banner {
+  margin-bottom: 14px;
+}
+
+/* Settings: section list on the left, grouped rows on the right. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 680px);
+  gap: 28px;
+  align-items: start;
+}
+.settings-nav {
+  position: sticky;
+  top: 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.settings-nav button {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+}
+.settings-nav button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.settings-nav button[aria-current="page"] {
+  background: var(--selected);
+  color: var(--ink);
+  font-weight: 600;
+}
+.settings-pane > h2 {
+  margin: 2px 0 18px;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.settings-group {
+  margin-bottom: 22px;
+}
+.settings-group h3 {
+  margin: 0 0 8px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.group-box {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+  background: var(--surface);
+}
+html[data-theme] .group-box .setting-row {
+  min-height: 48px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+html[data-theme] .group-box .setting-row:first-child {
+  border-top: 0;
+}
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.setting-label > span,
+.setting-label label {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.setting-label small {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.setting-value {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.mono-inline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.group-note {
+  margin: 6px 2px 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.settings-form {
+  padding: 4px 0 14px;
+}
+.settings-form label {
+  margin-top: 12px;
+}
+.about-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 4px 0 20px;
+}
+.about-head .wordmark {
+  font-size: 18px;
+  letter-spacing: 0.4em;
+  font-weight: 650;
+}
+.about-head strong {
+  color: var(--muted);
+  font-weight: 500;
+}
+html[data-theme] .setting-label label {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+}
+/* Account and connection sit at the bottom of the sidebar, next to the version. */
+html[data-theme] .desktop-controls {
+  margin-top: auto;
+  padding: 0 2px;
+}
+html[data-theme] .sidebar-bottom {
+  margin-top: 8px;
+}
+html[data-theme] .desktop-controls .secondary {
+  height: 30px;
+  font-weight: 500;
+}
+/* Dashboard period: a plain toolbar row with a segmented control. */
+html[data-theme] .dashboard-toolbar {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+html[data-theme] .period-buttons {
+  display: inline-flex;
+  padding: 3px;
+  gap: 0;
+  border-radius: 9px;
+  background: var(--hover);
+  border: 0;
+}
+html[data-theme] .period-buttons button {
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  box-shadow: none;
+}
+html[data-theme] .period-buttons button:is([aria-pressed="true"], .active) {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px #0000001f;
+}
+/* Update progress */
+.update-progress {
+  display: grid;
+  gap: 10px;
+  padding: 6px 0 4px;
+}
+.update-progress p {
+  margin: 0;
+}
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--hover);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.progress-fill.indeterminate {
+  width: 35% !important;
+  animation: progress-slide 1.2s ease-in-out infinite;
+}
+@keyframes progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(290%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill.indeterminate {
+    animation: none;
+  }
+}
+/* Staff schedules, absences and editing */
+html[data-theme] .chip.off span {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.row-buttons {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.catalog-row small {
+  display: block;
+  color: var(--muted);
+}
+.form-section {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.form-grid.three {
+  grid-template-columns: 1fr 1fr 1.4fr;
+}
+.absence-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.absence-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+.absence-list li + li {
+  border-top: 1px solid var(--line);
+}
+html[data-theme] .danger-link {
+  color: var(--c-cancelled);
+}
+html[data-theme] .staff-report {
+  margin-bottom: 14px;
+}
+html[data-theme] .week-day small:empty {
+  display: none;
+}
+.form-grid.three > div > label:first-child {
+  margin-top: 12px;
+}
+.chip[hidden] {
+  display: none !important;
+}
+/* monobank payment link */
+html[data-theme] .badge.waiting {
+  background: color-mix(in srgb, #2563eb 12%, transparent);
+  color: #1d4ed8;
+}
+html[data-theme="dark"] .badge.waiting {
+  color: #93c5fd;
+}
+.pay-link {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+}
+.pay-qr {
+  width: 220px;
+  height: 220px;
+  border-radius: 10px;
+  border: 1px solid var(--line, #e5e5e5);
+  image-rendering: pixelated;
+}
+.pay-url {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.pay-url input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.pay-sent {
+  margin: 0;
+  color: #15803d;
+}
+.pay-state {
+  margin: 0;
+  font-weight: 600;
+}
+.pay-state.done {
+  color: #15803d;
+}
+html[data-theme="dark"] .pay-sent,
+html[data-theme="dark"] .pay-state.done {
+  color: #4ade80;
+}
+/* Support */
+.toast-help {
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.support-intro {
+  margin: 0 0 12px;
+  line-height: 1.55;
+  color: var(--muted, #555);
+}
+#modal-fields textarea#field-message {
+  width: 100%;
+  resize: vertical;
+}
+.help-link {
+  display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted, #666);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.help-link:hover {
+  color: var(--text, #111);
+  text-decoration: underline;
+}
+/* My requests */
+.help-link.has-unread::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #e5484d;
+  vertical-align: middle;
+}
+.support-heading {
+  margin: 22px 0 10px;
+  font-size: 15px;
+}
+.support-requests {
+  display: grid;
+  gap: 6px;
+}
+.support-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #e5e5e5);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.support-row:hover {
+  background: var(--hover, #f5f5f5);
+}
+.support-row.unread {
+  border-color: #5b5bd6;
+}
+.support-row-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted, #666);
+}
+.support-new {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5484d;
+}
+html[data-theme] .badge.support-status.waiting {
+  background: color-mix(in srgb, #2563eb 12%, transparent);
+  color: #2563eb;
+}
+html[data-theme] .badge.support-status.solved {
+  background: color-mix(in srgb, #16a34a 13%, transparent);
+  color: #15803d;
+}
+html[data-theme] .badge.support-status.closed {
+  background: var(--hover, #eee);
+  color: var(--muted, #666);
+}
+.support-thread {
+  display: grid;
+  gap: 10px;
+  max-height: 46vh;
+  overflow: auto;
+  margin: 10px 0 14px;
+  padding: 2px;
+}
+.support-msg {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--hover, #f2f2f4);
+}
+.support-msg.client {
+  justify-self: end;
+  background: color-mix(in srgb, #5b5bd6 12%, transparent);
+}
+.support-meta {
+  margin-bottom: 3px;
+  font-size: 11px;
+  color: var(--muted, #666);
+}
+.support-body {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+.support-rate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+#modal-fields textarea#field-text {
+  width: 100%;
+  resize: vertical;
+}
+
+/* Offer and privacy acceptance */
+#modal-fields label.legal-accept {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+html[data-theme] #modal-fields label.legal-accept input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 0;
+}
+.legal-accept .link-button {
+  padding: 0;
+}
+.legal-links {
+  margin: 6px 0 0;
+}
+/* Integrations: compact rows in the settings style; long notes fold under "Детальніше". */
+/* Groups sit side by side on wide screens, so the page uses the whole width instead of one narrow column. */
+.integrations {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 600px), 1fr));
+  gap: 4px 24px;
+  align-items: start;
+}
+.integration-row + .integration-row {
+  border-top: 1px solid var(--line);
+}
+html[data-theme] .group-box .integration-row .setting-row {
+  border-top: 0;
+  padding: 12px 0 6px;
+}
+.integration-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.integration-icon.small,
+html[data-theme="dark"] .integration-icon.small {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+.integration-main .setting-label > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.integration-main .badge {
+  font-size: 11px;
+  font-weight: 500;
+}
+/* When the buttons do not fit next to the text, they move below it instead of squeezing the name. */
+html[data-theme] .group-box .integration-row .setting-row {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+.integration-main {
+  flex: 1 1 260px;
+}
+.integration-row .setting-control {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.integration-more {
+  margin: 0 0 10px 46px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.integration-more summary {
+  cursor: pointer;
+  width: max-content;
+  font-size: 11.5px;
+}
+.integration-more summary:hover {
+  color: var(--ink);
+}
+.integration-more p {
+  margin: 6px 0 0;
+  max-width: 65ch;
+}
+@media (max-width: 760px) {
+  .integration-row .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .integration-row .setting-control {
+    justify-content: flex-start;
+  }
+}
+/* Checkboxes and radio buttons are not text fields: no field height, padding or focus glow around them.
+   A neat ring appears only when moving with the keyboard. */
+html[data-theme] input:is([type="checkbox"], [type="radio"]) {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  flex: none;
+  border: 0;
+  box-shadow: none;
+  accent-color: var(--accent);
+}
+html[data-theme] input:is([type="checkbox"], [type="radio"]):focus {
+  box-shadow: none;
+  outline: none;
+}
+html.keyboard-nav input:is([type="checkbox"], [type="radio"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Online booking settings */
+.booking-address {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.booking-address span {
+  display: flex;
+  align-items: center;
+  padding: 0 4px 0 10px;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+html[data-theme] .booking-address input {
+  border: 0;
+  border-radius: 0;
+  padding-left: 0;
+  min-width: 0;
+  flex: 1;
+  box-shadow: none;
+}
+.booking-styles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.booking-style {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+.booking-style input,
+.booking-swatch input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.booking-style-sample {
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px;
+  height: 64px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  align-content: start;
+}
+.booking-style-sample i {
+  height: 12px;
+  border-radius: 4px;
+  background: var(--accent);
+  opacity: 0.8;
+}
+.booking-style-sample b {
+  height: 6px;
+  width: 70%;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.6;
+}
+.booking-style-sample em {
+  height: 6px;
+  width: 45%;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.3;
+}
+.booking-style-minimal .booking-style-sample {
+  background: #f6f6f7;
+  color: #18181b;
+}
+.booking-style-warm .booking-style-sample {
+  background: #f5eee5;
+  color: #3a2e26;
+  border-radius: 14px;
+}
+.booking-style-lux .booking-style-sample {
+  background: #0d0d0f;
+  color: #f2eee6;
+  border-radius: 3px;
+}
+.booking-style-lux .booking-style-sample i {
+  background: #c9a45c;
+}
+.booking-style-bright .booking-style-sample {
+  background: color-mix(in srgb, var(--accent) 18%, #fff);
+  color: #141418;
+  border-radius: 16px;
+}
+.booking-style input:checked + .booking-style-sample {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.booking-style input:focus-visible + .booking-style-sample {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.booking-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.booking-swatch {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+.booking-swatch span {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.booking-swatch input:checked + span {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.booking-swatch.custom input[type="color"] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.booking-swatch.custom:has(input:checked) input[type="color"] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.booking-image-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.booking-logo-preview {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+.booking-cover-preview {
+  width: 120px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+.booking-share-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 14px 0 4px;
+}
+.booking-share-row .pay-qr {
+  width: 132px;
+  height: 132px;
+  margin: 0;
+  flex: none;
+}
+.booking-share-row p {
+  margin: 0 0 6px;
+}
+.booking-embed {
+  width: 100%;
+  max-width: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: none;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+/* The app's security rules forbid inline colours, so the palette lives here (same order as BOOKING_COLORS). */
+.booking-swatch.swatch-0 span {
+  background: #5b5bd6;
+}
+.booking-swatch.swatch-1 span {
+  background: #d6336c;
+}
+.booking-swatch.swatch-2 span {
+  background: #c9a45c;
+}
+.booking-swatch.swatch-3 span {
+  background: #2f9e77;
+}
+.booking-swatch.swatch-4 span {
+  background: #e8590c;
+}
+.booking-swatch.swatch-5 span {
+  background: #1c7ed6;
+}
+.booking-swatch.swatch-6 span {
+  background: #212529;
+}
+.hint.warning {
+  color: var(--danger, #c92a2a);
+}
+@media (max-width: 560px) {
+  .booking-styles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Choice chips keep their hidden input over the whole chip, so the full chip is clickable. */
+html[data-theme] .chip input:is([type="checkbox"], [type="radio"]) {
+  width: auto;
+  height: auto;
+  inset: 0;
+}
+/* Short visits (45–59 min) keep all three lines without overlapping. */
+.grid-event.short {
+  gap: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.grid-event.short > * {
+  line-height: 1.2;
+}
+/* The client pressed "I'll come" in the reminder. */
+html[data-theme] .badge.coming {
+  background: color-mix(in srgb, #16a34a 13%, transparent);
+  color: #15803d;
+}
+html[data-theme="dark"] .badge.coming {
+  color: #4ade80;
+}
+.grid-coming {
+  font-style: normal;
+  color: #16a34a;
+}
+html[data-theme="dark"] .grid-coming {
+  color: #4ade80;
+}
+/* Waiting list and "Not seen lately". */
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.wait-day {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.wait-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.wait-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.wait-row .sub,
+.lapsed-table .sub {
+  color: var(--muted);
+  font-size: 12px;
+}
+.wait-row .row-actions,
+.lapsed-table .row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.wait-add {
+  margin: 18px 0 0;
+  padding: 12px 14px 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.wait-add legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+.lapsed-note {
+  margin: 0;
+  padding: 14px 16px 10px;
+}
+.lapsed-table .row-actions {
+  justify-content: flex-end;
+}
+.inline-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.inline-number input {
+  width: 64px;
+  min-height: 28px;
+  padding: 2px 6px;
+}
+/* More about the client: important notes, tags, details. */
+.client-alert {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #f59f00 14%, transparent);
+  color: #9a5b00;
+  font-size: 13px;
+}
+html[data-theme="dark"] .client-alert {
+  color: #ffc35a;
+}
+.visit-alert {
+  display: block;
+  color: #b06d00;
+}
+span.visit-alert {
+  display: inline;
+}
+html[data-theme="dark"] .visit-alert {
+  color: #ffc35a;
+}
+.grid-alert {
+  color: #d97706;
+}
+.client-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 0;
+}
+.client-card .client-tags {
+  margin: 0 0 10px;
+}
+.tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+.client-details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.client-details dt {
+  color: var(--muted);
+}
+.client-details dd {
+  margin: 0;
+}
+.client-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}

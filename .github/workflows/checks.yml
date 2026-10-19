@@ -22,4 +22,5 @@ jobs:
           ORBIT_WEBSITE_DOMAIN: lomviko.com
           CH_APP_ADMIN_DOMAIN: admin.lomviko.com
           CH_SITE_ADMIN_DOMAIN: site-admin.lomviko.com
+          CH_WEB_APP_DOMAIN: app.lomviko.com
         run: docker compose -f orbit_admin/deploy/compose.yaml -f orbit_admin/deploy/compose.website.yaml config --format json | node orbit_admin/deploy/preflight.cjs

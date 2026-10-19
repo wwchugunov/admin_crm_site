@@ -598,3 +598,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--go
   .marquee-track{animation:none;flex-wrap:wrap;width:auto;justify-content:center}
   .board{transform:none}
 }
+/* "Увійти" for people who already have an account; phones keep only the trial button. */
+@media (max-width:560px){.header-login{display:none}}
+.hero-login{margin:14px 0 0;font-size:14px;color:var(--text-2)}.hero-login a{color:inherit;text-decoration:underline;text-underline-offset:3px}

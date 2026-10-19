@@ -1,6 +1,6 @@
 services:
   landing:
-    image: lomviko-landing:1.1.3
+    image: lomviko-landing:1.2.0
     build:
       context: ${CH_LANDING_CONTEXT:-../../ch_landing}
       dockerfile: deploy/Dockerfile
@@ -32,6 +32,7 @@ services:
     environment:
       CH_APP_ADMIN_DOMAIN: ${CH_APP_ADMIN_DOMAIN:?Set CH_APP_ADMIN_DOMAIN in deploy/.env}
       CH_SITE_ADMIN_DOMAIN: ${CH_SITE_ADMIN_DOMAIN:?Set CH_SITE_ADMIN_DOMAIN in deploy/.env}
+      CH_WEB_APP_DOMAIN: ${CH_WEB_APP_DOMAIN:?Set CH_WEB_APP_DOMAIN in deploy/.env}
       ORBIT_WEBSITE_DOMAIN: ${ORBIT_WEBSITE_DOMAIN:?Set ORBIT_WEBSITE_DOMAIN in deploy/.env}
     volumes:
       - ./Caddyfile.website:/etc/caddy/Caddyfile:ro,Z
@@ -41,7 +42,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:1.3.3
+    image: lomviko-platform:2.0.0
     pull_policy: never
     command: [node, web/server.cjs]
     restart: unless-stopped
@@ -60,6 +61,34 @@ services:
     depends_on: {orbit: {condition: service_healthy}}
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:4548/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  # LOMVIKO in the browser: the company workspace (former desktop app).
+  app-web:
+    image: lomviko-platform:2.0.0
+    pull_policy: never
+    command: [node, web/app-server.cjs]
+    restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    environment:
+      HOST: 0.0.0.0
+      PORT: '4549'
+      CH_PUBLIC_API_URL: https://${ORBIT_DOMAIN:?Set ORBIT_DOMAIN}
+      CH_API_URL: http://orbit:4545
+      CH_WEB_APP_ORIGIN: https://${CH_WEB_APP_DOMAIN:?Set CH_WEB_APP_DOMAIN}
+    expose: ['4549']
+    depends_on: {orbit: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4549/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -95,7 +124,7 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   release-init:
-    image: lomviko-platform:1.3.3
+    image: lomviko-platform:2.0.0
     profiles: [setup]
     user: '0:0'
     read_only: true
