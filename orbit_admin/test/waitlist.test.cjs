@@ -144,3 +144,14 @@ test('Visit rhythm: the usual gap between visits and upcoming visits per client'
  assert.throws(()=>f.store.setLapsedDays(3),/від 7 до 365/);
  f.store.setLapsedDays(45);assert.equal(f.store.snapshot().lapsed_days,45);
 });
+
+test('An offer tapped after its time has passed books nothing and the bot still answers',async t=>{
+ const f=await fixture(t),anna=f.client('Анна',101);
+ const today=kyiv(Date.now()),w=f.store.addWait({client_id:anna,service_id:f.service,date:today});
+ const past=Date.now()-30*60000;
+ assert.throws(()=>f.store.takeWait(w,past,anna));
+ await f.press(101,`wl:${w}:${past}`);
+ assert.match(f.sent.at(-1).text,/уже забрали/);
+ assert.equal(f.store.db.prepare('SELECT count(*) n FROM appointments').get().n,0);
+ assert.equal(f.store.db.prepare('SELECT status FROM waitlist WHERE id=?').get(w).status,'waiting');
+});

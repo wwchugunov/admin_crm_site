@@ -44,6 +44,63 @@ function text(value, max = 500) {
     throw Error(OrbitI18n.t("m533"));
   return value.trim();
 }
+// Where a client came from; bookings from the page and the bot are marked by themselves.
+const SOURCES = [
+  "instagram",
+  "google",
+  "referral",
+  "street",
+  "ads",
+  "page",
+  "telegram",
+  "other",
+];
+const EXTRAS = [
+  "birthday",
+  "email",
+  "source",
+  "alert",
+  "tags",
+  "vehicle",
+  "plate",
+];
+// Optional client details; a field left out of an update keeps its value (older apps send none).
+function clientExtras(data, old = {}) {
+  const out = {};
+  for (const key of EXTRAS) {
+    const raw = data[key] === undefined ? old[key] : data[key];
+    out[key] = String(raw ?? "").trim();
+  }
+  if (out.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(out.birthday))
+    throw Error(OrbitI18n.t("clientBirthdayInvalid"));
+  if (
+    out.birthday &&
+    (out.birthday < "1900-01-01" ||
+      out.birthday > new Date().toISOString().slice(0, 10))
+  )
+    throw Error(OrbitI18n.t("clientBirthdayInvalid"));
+  if (
+    out.email &&
+    (out.email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email))
+  )
+    throw Error(OrbitI18n.t("clientEmailInvalid"));
+  if (out.source && !SOURCES.includes(out.source)) out.source = "other";
+  out.alert = out.alert.slice(0, 500);
+  out.tags = [
+    ...new Set(
+      out.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+    ),
+  ]
+    .slice(0, 10)
+    .map((t) => t.slice(0, 30))
+    .join(", ");
+  out.vehicle = out.vehicle.slice(0, 80);
+  out.plate = out.plate.toUpperCase().replace(/\s+/g, " ").slice(0, 20);
+  return out;
+}
 function cents(value) {
   const amount = Math.round(Number(value) * 100);
   if (!Number.isSafeInteger(amount) || amount < 0 || amount > 1e10)
@@ -127,6 +184,14 @@ class Store {
       ["appointments", "client_confirmed", "INTEGER NOT NULL DEFAULT 0"],
       // When the company bot last invited a client who had not come for a while.
       ["clients", "invited_at", "INTEGER"],
+      // More about the client: all optional.
+      ["clients", "birthday", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "email", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "source", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "alert", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "tags", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "vehicle", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "plate", "TEXT NOT NULL DEFAULT ''"],
     ]) {
       if (
         !this.db
@@ -336,10 +401,11 @@ class Store {
     }
   }
   addClient(data) {
-    const id = randomUUID();
+    const id = randomUUID(),
+      extra = clientExtras(data);
     this.db
       .prepare(
-        "INSERT INTO clients(id,name,phone,notes,link_code) VALUES(?,?,?,?,?)",
+        `INSERT INTO clients(id,name,phone,notes,link_code,${EXTRAS.join(",")}) VALUES(?,?,?,?,?${",?".repeat(EXTRAS.length)})`,
       )
       .run(
         id,
@@ -347,6 +413,7 @@ class Store {
         String(data.phone || "").slice(0, 40),
         String(data.notes || "").slice(0, 2000),
         randomBytes(24).toString("base64url"),
+        ...EXTRAS.map((k) => extra[k]),
       );
     this.audit("client.created", id);
     return id;
@@ -668,9 +735,14 @@ class Store {
     );
   }
   businessDay(ms) {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: this.get("timezone") || "Europe/Kyiv",
-    }).format(ms);
+    // Creating a formatter is slow; keep one per time zone.
+    const zone = this.get("timezone") || "Europe/Kyiv";
+    if (this.dayFormat?.zone !== zone)
+      this.dayFormat = {
+        zone,
+        format: new Intl.DateTimeFormat("en-CA", { timeZone: zone }),
+      };
+    return this.dayFormat.format.format(ms);
   }
   serviceStaff(serviceId) {
     return this.db
@@ -763,18 +835,21 @@ class Store {
       .run(text(data.id));
   }
   updateClient(data) {
-    const id = text(data.id);
-    if (
-      !this.db
-        .prepare("UPDATE clients SET name=?,phone=?,notes=? WHERE id=?")
-        .run(
-          text(data.name, 120),
-          String(data.phone || "").slice(0, 40),
-          String(data.notes || "").slice(0, 2000),
-          id,
-        ).changes
-    )
-      throw Error(OrbitI18n.t("clientMissing"));
+    const id = text(data.id),
+      old = this.db.prepare("SELECT * FROM clients WHERE id=?").get(id);
+    if (!old) throw Error(OrbitI18n.t("clientMissing"));
+    const extra = clientExtras(data, old);
+    this.db
+      .prepare(
+        `UPDATE clients SET name=?,phone=?,notes=?,${EXTRAS.map((k) => `${k}=?`).join(",")} WHERE id=?`,
+      )
+      .run(
+        text(data.name, 120),
+        String(data.phone || "").slice(0, 40),
+        String(data.notes || "").slice(0, 2000),
+        ...EXTRAS.map((k) => extra[k]),
+        id,
+      );
     this.audit("client.updated", id);
   }
   // A client with visits is anonymised (visits stay in the books); one without is removed.
@@ -791,7 +866,7 @@ class Store {
       if (used)
         this.db
           .prepare(
-            "UPDATE clients SET name=?,phone='',notes='',chat_id=NULL,link_code=? WHERE id=?",
+            "UPDATE clients SET name=?,phone='',notes='',chat_id=NULL,link_code=?,birthday='',email='',source='',alert='',tags='',vehicle='',plate='' WHERE id=?",
           )
           .run(
             OrbitI18n.t("clientDeletedName"),
@@ -857,7 +932,7 @@ class Store {
       loaded_from: from,
       clients: this.db
         .prepare(
-          "SELECT id,name,phone,notes,chat_id,invited_at FROM clients ORDER BY name",
+          "SELECT id,name,phone,notes,chat_id,invited_at,birthday,email,source,alert,tags,vehicle,plate FROM clients ORDER BY name",
         )
         .all()
         .map((c) => {
@@ -992,7 +1067,11 @@ class Store {
             ...columns.map(
               (c) =>
                 row[c] ??
-                (c === "archived" || c === "client_confirmed" ? 0 : null),
+                (c === "archived" || c === "client_confirmed"
+                  ? 0
+                  : EXTRAS.includes(c)
+                    ? ""
+                    : null),
             ),
           );
       }
@@ -1021,16 +1100,36 @@ class Store {
     const day = zonedTime(date, this.get("work_start"), this.get("timezone")),
       close = zonedTime(date, this.get("work_end"), this.get("timezone")),
       result = [];
+    // The same rule as availableResources(), but people and their busy times are read once per day
+    // instead of once per half hour.
+    const automatic =
+      resourceId == null || resourceId === "" || resourceId === "any";
+    const staff = this.db
+      .prepare("SELECT id FROM resources WHERE archived=0 ORDER BY name,id")
+      .all()
+      .map((r) => r.id)
+      .filter((id) => this.canDo(serviceId, id) && this.worksOn(id, date));
+    if (!automatic && !staff.includes(resourceId)) return [];
+    const busy = new Map(staff.map((id) => [id, []]));
+    for (const row of this.db
+      .prepare(
+        "SELECT r.resource_id,a.start,a.end FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE a.status='confirmed' AND a.start<? AND a.end>?",
+      )
+      .all(close, day))
+      busy.get(row.resource_id)?.push([row.start, row.end]);
+    const order = automatic
+      ? staff
+      : [resourceId, ...staff.filter((id) => id !== resourceId)];
     for (
       let start = day;
       start + service.duration * 60000 <= close;
       start += 1800000
     ) {
       if (start <= Date.now()) continue;
-      if (
-        this.availableResources(serviceId, resourceId, start).length >=
-        service.required_resources
-      )
+      const end = start + service.duration * 60000,
+        free = (id) => !busy.get(id).some(([s, e]) => s < end && e > start);
+      if (!automatic && !free(resourceId)) continue;
+      if (order.filter(free).length >= service.required_resources)
         result.push(start);
     }
     return result;
@@ -1341,7 +1440,10 @@ class Store {
   // Times freed since a person joined the list, for people the bot can write to. Each time is
   // offered to everyone waiting for that day at once, and to each person only once.
   waitOffers() {
-    const out = [];
+    const out = [],
+      look = `${this.revision()}:${this.businessDay(Date.now())}`;
+    if (this.offersLook === look) return out;
+    this.offersLook = look;
     for (const w of this.db
       .prepare(
         "SELECT w.*,c.chat_id FROM waitlist w JOIN clients c ON c.id=w.client_id WHERE w.status='waiting' AND w.date>=? AND c.chat_id IS NOT NULL",
@@ -1377,8 +1479,11 @@ class Store {
         .get(text(waitId), text(clientId));
       if (!w) throw Error(OrbitI18n.t("waitMissing"));
       start = Number(start);
+      // A time offered earlier may have passed by the time the person taps it.
       const resources =
-        Number.isSafeInteger(start) && this.businessDay(start) === w.date
+        Number.isSafeInteger(start) &&
+        start > Date.now() &&
+        this.businessDay(start) === w.date
           ? this.availableResources(w.service_id, w.resource_id || "any", start)
           : [];
       if (!resources.length) throw Error(OrbitI18n.t("m541"));
@@ -1452,4 +1557,4 @@ class Store {
     });
   }
 }
-module.exports = { Store, zonedTime };
+module.exports = { Store, zonedTime, CLIENT_SOURCES: SOURCES };

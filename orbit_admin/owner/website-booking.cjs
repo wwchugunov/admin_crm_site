@@ -66,7 +66,7 @@ class WebsiteBooking {
     if (resource !== 'any' && !catalogue.resources.some(r => r.id === resource)) a.fail(400, 'Такого спеціаліста немає / Unknown resource_id');
     return store.transaction(() => {
       const client = store.db.prepare('SELECT id,phone FROM clients').all().find(c => digits(c.phone) === phone);
-      const clientId = client?.id || store.addClient({ name, phone: data.phone.trim() });
+      const clientId = client?.id || store.addClient({ name, phone: data.phone.trim(), source: 'page' });
       try { return store.addWait({ client_id: clientId, service_id: service.id, resource_id: resource, date: String(data.date || ''), source: 'page' }); }
       catch { a.fail(400, 'Оберіть дату від сьогодні й не пізніше ніж за рік / Choose a date within the next year'); }
     });
@@ -111,7 +111,7 @@ class WebsiteBooking {
       if (free.length < service.required_resources) a.fail(409, 'Цей час щойно зайняли. Оберіть інший / This slot is no longer available.');
       // A public request may reuse a client but may never rename it or expose its record.
       const client = store.db.prepare('SELECT id,phone FROM clients').all().find(c => digits(c.phone) === phone);
-      const clientId = client?.id || store.addClient({name, phone:data.phone.trim()});
+      const clientId = client?.id || store.addClient({name, phone:data.phone.trim(), source:'page'});
       let id;
       try { id = store.book({client_id:clientId, service_id:service.id, resource_ids:free, start, people_count:people}); }
       catch { a.fail(409, 'Не вдалося записати на цей час. Оберіть інший / The booking could not be reserved.'); }

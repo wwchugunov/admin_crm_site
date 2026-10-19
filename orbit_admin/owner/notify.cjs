@@ -81,6 +81,10 @@ class Notify{
    lines.push([...by].map(([n,e])=>`• ${n} — ${e.n} (${clock(e.first,tz)}–${clock(e.last,tz)})`).join('\n'));
   }else lines.push('Сьогодні записів ще немає.');
   const gaps=this.freeWindows(store,today,tz,planned,now);if(gaps.length)lines.push('Вільні вікна: '+gaps.slice(0,5).join(' · '));
+  // Birthdays today (29 February is greeted on the 28th in other years).
+  const md=today.slice(5),leap=new Date(Date.UTC(Number(today.slice(0,4)),1,29)).getUTCMonth()===1,days=md==='02-28'&&!leap?['02-28','02-29']:[md];
+  const born=store.db.prepare(`SELECT name,phone FROM clients WHERE substr(birthday,6) IN (${days.map(()=>'?').join(',')}) ORDER BY name`).all(...days);
+  if(born.length)lines.push(`🎂 День народження: ${born.slice(0,5).map(c=>`${c.name}${c.phone?` (${c.phone})`:''}`).join(', ')}${born.length>5?` і ще ${born.length-5}`:''}`);
   const waiting=store.waitlist().filter(w=>w.date===today);if(waiting.length)lines.push(`Лист очікування на сьогодні: ${waiting.map(w=>`${w.client_name}${w.phone?` (${w.phone})`:''} — ${w.service_name}`).slice(0,5).join(', ')}${waiting.length>5?` і ще ${waiting.length-5}`:''}`);
   const y=this.day(store,yesterday,tz),done=y.filter(a=>a.status==='completed'),noShow=y.filter(a=>a.status==='no_show').length;
   const paid=store.db.prepare('SELECT COALESCE(sum(amount),0) s FROM payments WHERE at>=? AND at<?').get(midnight(yesterday,tz),midnight(today,tz)).s;
