@@ -188,7 +188,8 @@ function bookingSlots() {
     workTo = clockMinutes(data.work_end, 1080);
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
   const workDay = (data.work_days || [1, 2, 3, 4, 5, 6, 7]).includes(weekday);
-  const now = date === businessDate(Date.now()) ? dayMinutes(Date.now()) : -1;
+  const today = businessDate(Date.now()),
+    now = date === today ? dayMinutes(Date.now()) : date < today ? 1440 : -1;
   const ignore = $("#field-ignore")?.value;
   const busy = data.appointments.filter(
     (a) =>
@@ -242,6 +243,7 @@ function setupBookingTime(preferred) {
   function hint(slots, workDay, workFrom, workTo) {
     const current = slots.find((s) => s.value === select.value),
       box = $("#booking-when-hint");
+    if (!box) return;
     const range = `${String(Math.floor(workFrom / 60)).padStart(2, "0")}:${String(workFrom % 60).padStart(2, "0")}–${String(Math.floor(workTo / 60)).padStart(2, "0")}:${String(workTo % 60).padStart(2, "0")}`;
     box.className = "hint booking-when-hint";
     if (!slots.some((s) => !s.past)) {
@@ -362,12 +364,14 @@ function appointmentModal(id) {
     ],
     ...(a.notes ? [[OrbitI18n.t("m282"), a.notes]] : []),
   ];
-  const open = status === "confirmed";
+  const open = status === "confirmed",
+    // Finishing a visit or marking a no-show only makes sense once it has started.
+    started = open && a.start <= Date.now();
   const buttons = [
-    open &&
+    started &&
       !staff &&
       due > 0 && ["complete-pay", OrbitI18n.t("apptCompletePay"), "primary"],
-    open && [
+    started && [
       "complete",
       OrbitI18n.t("m167"),
       !staff && due > 0 ? "secondary" : "primary",
@@ -392,7 +396,7 @@ function appointmentModal(id) {
       (openPayLink(a.id)
         ? ["mono-show", OrbitI18n.t("payShow"), "secondary"]
         : ["mono-invoice", OrbitI18n.t("payInvoice"), "secondary"]),
-    open && ["no-show", OrbitI18n.t("m003"), "secondary"],
+    started && ["no-show", OrbitI18n.t("m003"), "secondary"],
     open && ["cancel-booking", OrbitI18n.t("apptCancel"), "danger"],
   ].filter(Boolean);
   const client = a.clients?.[0]?.id || a.client_id;
@@ -434,6 +438,7 @@ function paymentModal(a, complete) {
         .join("")}</div>`,
     async (v) => {
       const amount = Number(v.amount);
+      if (!amount && !complete) throw Error(OrbitI18n.t("m548"));
       if (amount)
         await window.orbit.call("payment:add", {
           amount,

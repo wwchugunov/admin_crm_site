@@ -1,7 +1,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
 const {signRequest,signDigest}=require('./request-proof.cjs');
-const siteRoutes={ 'owner:site:save':'/admin/site/draft','owner:site:publish':'/admin/site/publish','owner:site:lead':'/admin/site/lead','owner:site:lead:delete':'/admin/site/lead/delete','owner:site:export':'/admin/site/export','owner:release:withdraw':'/admin/releases/withdraw','owner:admin:account':'/admin/account'};
-const productRoutes={'owner:user:add':'/admin/users','owner:user:update':'/admin/user','owner:password':'/admin/password','owner:business:add':'/admin/business','owner:invite':'/admin/invite','owner:revoke':'/admin/revoke','owner:demo':'/admin/demo','owner:key:revoke':'/admin/invite/revoke','owner:policy':'/admin/policy','owner:export':'/admin/export','owner:mail:settings':'/admin/mail/settings','owner:mail:verify':'/admin/mail/verify','owner:mail:test':'/admin/mail/test','owner:mail:retry':'/admin/mail/retry','owner:mail:access':'/admin/mail/access','owner:purchase':'/admin/purchase'};
+const siteRoutes={ 'owner:site:save':'/admin/site/draft','owner:site:publish':'/admin/site/publish','owner:site:lead':'/admin/site/lead','owner:site:lead:delete':'/admin/site/lead/delete','owner:site:export':'/admin/site/export','owner:admin:account':'/admin/account'};
+const productRoutes={'owner:user:add':'/admin/users','owner:user:update':'/admin/user','owner:password':'/admin/password','owner:business:add':'/admin/business','owner:invite':'/admin/invite','owner:revoke':'/admin/revoke','owner:demo':'/admin/demo','owner:key:revoke':'/admin/invite/revoke','owner:export':'/admin/export','owner:mail:settings':'/admin/mail/settings','owner:mail:verify':'/admin/mail/verify','owner:mail:test':'/admin/mail/test','owner:mail:retry':'/admin/mail/retry','owner:mail:access':'/admin/mail/access','owner:purchase':'/admin/purchase'};
 // Panel sessions slide with activity (30 minutes idle) and end 12 hours after sign-in.
 const IDLE=30*60000,MAX=12*3600000;
 function problem(status,message){throw Object.assign(Error(message),{status});}
@@ -32,16 +32,6 @@ function createAdminServer({apiUrl,origin,profile='landing',publicDirectory=path
     const s=getSession(req);
     if(req.method==='POST'&&url.pathname==='/web/logout'){for(const[k,v]of sessions)if(v===s)sessions.delete(k);res.setHeader('Set-Cookie',`${cookie}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});}
     if(req.method==='GET'&&url.pathname==='/web/session')return reply(200,{ok:true});
-    if(req.method==='PUT'&&url.pathname==='/web/upload'){
-     const version=url.searchParams.get('version'),platform=url.searchParams.get('platform'),arch=url.searchParams.get('arch');if(!/^\d+\.\d+\.\d+$/.test(version||'')||!['mac','win'].includes(platform)||!['x64','arm64'].includes(arch))problem(400,'Invalid release');
-     const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'ch-admin-upload-')),file=path.join(temporary,'installer');let size=0;const hash=crypto.createHash('sha256'),handle=await fs.promises.open(file,'wx',0o600);
-     try{try{for await(const b of req){size+=b.length;if(size>512*1024*1024)problem(413,'Installer exceeds 512 MiB');hash.update(b);await handle.write(b);}}finally{await handle.close();}if(!size)problem(400,'Empty installer');
-      const route=`/admin/releases/file?version=${version}&platform=${platform}&arch=${arch}`,stream=fs.createReadStream(file);let response;
-      try{response=await fetch(api.origin+route,{method:'PUT',headers:{Authorization:'Bearer '+s.token,'Content-Type':'application/octet-stream','Content-Length':String(size),...signDigest('PUT',route,hash.digest('hex'),s.token,s.key)},body:stream,duplex:'half',redirect:'error',signal:AbortSignal.timeout(900000)});}finally{stream.destroy();}
-      const result=await response.json();if(!response.ok)problem(response.status,result.error||'Upload rejected');
-      await upstream(s,'/admin/releases/register',{version,platform,arch,notes:url.searchParams.get('notes')||''});return reply(200,{ok:true});
-     }finally{fs.rmSync(temporary,{recursive:true,force:true});}
-    }
     if(req.method==='PUT'&&url.pathname==='/web/document'){
      const q=url.searchParams,meta={kind:ownDocument(q.get('kind')),language:q.get('language')||'',title:q.get('title')||'',filename:q.get('filename')||'',activate:q.get('activate')==='0'?'0':'1'};
      const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'ch-admin-document-')),file=path.join(temporary,'document');let size=0;const hash=crypto.createHash('sha256'),handle=await fs.promises.open(file,'wx',0o600);

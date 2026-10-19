@@ -1,4 +1,5 @@
 const crypto=require('node:crypto');
+// A 'failure' invoice stays payable at the bank (the client may retry the card), so it is withdrawn like an open one.
 const OrbitI18n=require('../src/ui/i18n.js');
 // monobank acquiring with the company's own token. The client pays on the monobank page and the money
 // goes straight to the company's account; LOMVIKO only creates the invoice and records the result.
@@ -31,9 +32,10 @@ class Monobank{
   if(!a)this.fail(404,OrbitI18n.t('m551'));return a;
  }
  // Removes unpaid invoices of the visit at the bank, so only the newest link can be paid.
+ // A 'failure' invoice stays payable at the bank (the client may retry the card), so it is withdrawn like an open one.
  async removeOpen(runtime,token,appointmentId){
-  for(const link of runtime.store.db.prepare(`SELECT * FROM payment_links WHERE appointment_id=? AND provider='monobank' AND status IN ('created','processing','hold')`).all(appointmentId)){
-   try{await this.api(token,'POST','/api/merchant/invoice/remove',{invoiceId:link.invoice_id});runtime.store.db.prepare("UPDATE payment_links SET status='removed' WHERE id=? AND status IN ('created','processing','hold')").run(link.id);}
+  for(const link of runtime.store.db.prepare(`SELECT * FROM payment_links WHERE appointment_id=? AND provider='monobank' AND status IN ('created','processing','hold','failure')`).all(appointmentId)){
+   try{await this.api(token,'POST','/api/merchant/invoice/remove',{invoiceId:link.invoice_id});runtime.store.db.prepare("UPDATE payment_links SET status='removed' WHERE id=? AND status IN ('created','processing','hold','failure')").run(link.id);}
    catch{await this.check(runtime,token,link).catch(()=>{});}
   }
  }
@@ -69,7 +71,7 @@ class Monobank{
  async reconcile(runtime,appointmentId){
   const token=runtime.vault.get('monobank');if(!token)return;
   const a=runtime.store.db.prepare('SELECT a.status,a.total,COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0) paid FROM appointments a WHERE a.id=?').get(String(appointmentId||''));if(!a)return;
-  const due=a.total-a.paid,stale=runtime.store.db.prepare(`SELECT id FROM payment_links WHERE appointment_id=? AND provider='monobank' AND status IN ('created','processing','hold') AND (amount>? OR ?)`).get(String(appointmentId),Math.max(due,0),a.status==='cancelled'?1:0);
+  const due=a.total-a.paid,stale=runtime.store.db.prepare(`SELECT id FROM payment_links WHERE appointment_id=? AND provider='monobank' AND status IN ('created','processing','hold','failure') AND (amount>? OR ?)`).get(String(appointmentId),Math.max(due,0),a.status==='cancelled'?1:0);
   if(stale)await this.removeOpen(runtime,token,String(appointmentId));
  }
  async cancel(runtime,data){
@@ -107,7 +109,7 @@ class Monobank{
   if(this.polling)return this.polling;
   this.polling=(async()=>{for(const runtime of this.accounts.businesses.instances.values()){
    const token=runtime.vault.get('monobank');if(!token)continue;
-   const links=runtime.store.db.prepare(`SELECT * FROM payment_links WHERE provider='monobank' AND status IN ('created','processing','hold') AND created_at>? ORDER BY created_at LIMIT 20`).all(Date.now()-(VALIDITY+86400)*1000);
+   const links=runtime.store.db.prepare(`SELECT * FROM payment_links WHERE provider='monobank' AND status IN ('created','processing','hold','failure') AND created_at>? ORDER BY created_at LIMIT 20`).all(Date.now()-(VALIDITY+86400)*1000);
    for(const link of links)await this.check(runtime,token,link).catch(()=>{});
    for(const id of new Set(links.map(l=>l.appointment_id)))await this.reconcile(runtime,id).catch(()=>{});
   }})().finally(()=>{this.polling=null;});

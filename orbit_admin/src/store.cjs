@@ -898,6 +898,16 @@ class Store {
   status(id, status) {
     if (!["completed", "cancelled", "no_show"].includes(status))
       throw Error(OrbitI18n.t("m544"));
+    // A client cannot miss a visit that has not started yet.
+    if (
+      status === "no_show" &&
+      this.db
+        .prepare("SELECT start FROM appointments WHERE id=?")
+        .get(text(id))?.start > Date.now()
+    )
+      throw Error(
+        "Візит ще не почався — відмітити неявку можна після його початку / The visit has not started yet",
+      );
     if (
       !this.db
         .prepare(

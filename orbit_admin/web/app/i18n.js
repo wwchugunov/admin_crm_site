@@ -237,6 +237,7 @@
     registerPasswordHint: { uk: "Пароль — щонайменше 12 символів.", en: "The password needs at least 12 characters." },
     registerPasswordMismatch: { uk: "Паролі не збігаються", en: "The passwords do not match" },
     forgotPassword: { uk: "Забули пароль?", en: "Forgot password?" },
+    goCatalog: { uk: "Додати послуги й спеціалістів", en: "Add services and staff" },
     subscriptionTitle: { uk: "Підписка", en: "Subscription" },
     subscriptionTrialLeft: { uk: "Пробний період до {date}: залишилось {days} {unit}", en: "Free trial until {date}: {days} {unit} left" },
     subscriptionPaidLeft: { uk: "Оплачено до {date}: залишилось {days} {unit}", en: "Paid until {date}: {days} {unit} left" },

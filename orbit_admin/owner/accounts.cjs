@@ -22,6 +22,8 @@ class Accounts {
   account(user){if(!user)return null;return user.account_id?this.db.prepare('SELECT * FROM users WHERE id=?').get(user.account_id):user;}
   // After access ends the owner can still sign in, view and export data for 30 days (offer, p. 5.2).
   readable(user){const a=this.account(user);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires+30*86400000<=Date.now())this.fail(403,OrbitI18n.t('m682'));return a;}
+  // A phone typed by staff must look like a phone, and one number belongs to one client card.
+  clientPhone(store,data){const phone=String(data?.phone||'').trim();if(!phone)return data;const digits=phone.replace(/\D/g,'');if(!/^\+?[\d\s()-]+$/.test(phone)||digits.length<7||digits.length>15)this.fail(400,'Перевірте номер телефону, наприклад +380 67 123 45 67 / Check the phone number');const same=store.db.prepare('SELECT id,name,phone FROM clients WHERE id<>?').all(String(data.id||'')).find(c=>c.phone&&c.phone.replace(/\D/g,'').slice(-9)===digits.slice(-9));if(same)this.fail(409,`Цей телефон уже є в картці «${same.name}» / This phone already belongs to ${same.name}`);return data;}
   allowed(user){const a=this.account(user);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires<=Date.now())this.fail(403,OrbitI18n.t('m640'));return a;}
   setPassword(userId,password){const encoded=passwordHash(password);if(!this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,userId).changes)this.fail(404,OrbitI18n.t('m641'));this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(userId);this.store.event('password.changed',userId);}
   addBusiness(userId,name){const user=this.db.prepare('SELECT * FROM users WHERE id=?').get(userId);if(!user)this.fail(404,OrbitI18n.t('m641'));const account=this.account(user),id=crypto.randomUUID();this.db.prepare('INSERT INTO businesses VALUES(?,?,?)').run(id,this.string(name,120),account.id);this.db.prepare("INSERT INTO memberships VALUES(?,?,'owner')").run(userId,id);this.store.event('business.created',userId,null,'',name);return id;}
@@ -43,7 +45,9 @@ class Accounts {
       if(!['x64','arm64'].includes(data.arch||'x64'))this.fail(400,'Unsupported architecture');
       this.store.transaction(()=>{const existing=this.db.prepare('SELECT * FROM devices WHERE id=?').get(device);if(existing&&existing.user_id!==user.id)this.fail(403,OrbitI18n.t('m650'));let seats=this.db.prepare('SELECT count(*) n FROM devices d JOIN users u ON u.id=d.user_id WHERE COALESCE(u.account_id,u.id)=? AND d.revoked=0').get(account.id).n;
       // A browser is cheap to lose (private window, cleared cookies): its seat goes to the person's newest browser.
-      if((!existing||existing.revoked)&&seats>=account.max_devices&&platform==='web'){const old=this.db.prepare("SELECT id FROM devices WHERE user_id=? AND platform='web' AND revoked=0 ORDER BY last_seen LIMIT 1").get(user.id);if(old){this.db.prepare('UPDATE devices SET revoked=1 WHERE id=?').run(old.id);this.db.prepare('DELETE FROM sessions WHERE device_id=?').run(old.id);this.store.event('device.replaced',user.id,old.id,platform);seats--;}}
+      // Someone with no browser yet takes the oldest browser of whoever holds the most, so one person's
+      // many windows never lock a colleague out and everyone keeps at least one.
+      if((!existing||existing.revoked)&&seats>=account.max_devices&&platform==='web'){const old=this.db.prepare("SELECT id FROM devices WHERE user_id=? AND platform='web' AND revoked=0 ORDER BY last_seen LIMIT 1").get(user.id)||this.db.prepare("SELECT d.id FROM devices d JOIN users u ON u.id=d.user_id WHERE COALESCE(u.account_id,u.id)=? AND d.platform='web' AND d.revoked=0 AND d.user_id=(SELECT d2.user_id FROM devices d2 JOIN users u2 ON u2.id=d2.user_id WHERE COALESCE(u2.account_id,u2.id)=? AND d2.platform='web' AND d2.revoked=0 GROUP BY d2.user_id HAVING count(*)>1 ORDER BY count(*) DESC LIMIT 1) ORDER BY d.last_seen LIMIT 1").get(account.id,account.id);if(old){this.db.prepare('UPDATE devices SET revoked=1 WHERE id=?').run(old.id);this.db.prepare('DELETE FROM sessions WHERE device_id=?').run(old.id);this.store.event('device.replaced',user.id,old.id,platform);seats--;}}
       if((!existing||existing.revoked)&&seats>=account.max_devices)this.fail(403,OrbitI18n.t('m651'));
       // A revoked device is signed out at once; signing in again with the current password takes a free seat back.
       if(existing?.revoked){this.db.prepare('UPDATE devices SET revoked=0 WHERE id=?').run(device);this.store.event('device.reactivated',user.id,device,platform,buildVersion);}if(!existing){this.db.prepare('INSERT INTO devices VALUES(?,?,?,?,?,?,?,0)').run(device,user.id,challenge.public_key,platform,buildVersion,Date.now(),Date.now());this.store.event('device.activated',user.id,device,platform,buildVersion);}else this.db.prepare('UPDATE devices SET last_seen=?,version=?,platform=? WHERE id=?').run(Date.now(),buildVersion,platform,device);this.db.prepare('INSERT INTO sessions VALUES(?,?,?,?)').run(hash(token),user.id,device,Date.now()+7*86400000);this.db.prepare('DELETE FROM login_challenges WHERE id=?').run(challenge.id);this.store.event('user.login',user.id,device,platform);});
@@ -60,7 +64,7 @@ class Accounts {
       if(req.method==='GET'&&route==='/v1/crm/export'){reply(200,store.export());return true;}
       if(req.method==='GET'&&route==='/v1/crm/users'){reply(200,this.db.prepare('SELECT u.id,u.name,u.email,u.stage,m.role FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.business_id=?').all(ctx.business.id));return true;}
       if(req.method!=='POST')this.fail(404,OrbitI18n.t('m652'));const data=await this.body(req);let value;
-      if(route==='/v1/crm/client')value=store.addClient(data);
+      if(route==='/v1/crm/client')value=store.addClient(this.clientPhone(store,data));
       else if(route==='/v1/crm/book'){if(ctx.business.role==='staff'){delete data.total;delete data.cost;}value=store.book(data);}
       else if(route==='/v1/crm/status'){value=store.status(data.id,data.status);this.monobank?.reconcile(ctx.runtime,data.id).catch(()=>{});this.liqpay?.reconcile(ctx.runtime,data.id).catch(()=>{});}
       else if(route==='/v1/crm/reschedule')value=store.reschedule(data);
@@ -77,7 +81,7 @@ class Accounts {
       else if(route==='/v1/crm/resource/update')value=store.updateResource(data);
       else if(route==='/v1/crm/absence')value=store.addAbsence(data);
       else if(route==='/v1/crm/absence/delete')value=store.deleteAbsence(data);
-      else if(route==='/v1/crm/client/update')value=store.updateClient(data);
+      else if(route==='/v1/crm/client/update')value=store.updateClient(this.clientPhone(store,data));
       else if(route==='/v1/crm/client/delete')value=store.deleteClient(data);
       else if(route==='/v1/crm/visit/update'){value=store.updateVisit(data);this.monobank?.reconcile(ctx.runtime,data.id).catch(()=>{});this.liqpay?.reconcile(ctx.runtime,data.id).catch(()=>{});}
       else if(route==='/v1/crm/payment'){value=store.payment(data);this.monobank?.reconcile(ctx.runtime,data.appointment_id).catch(()=>{});this.liqpay?.reconcile(ctx.runtime,data.appointment_id).catch(()=>{});}

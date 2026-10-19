@@ -205,7 +205,7 @@ function scheduleAppointment(a) {
     .map((t) => `<small class="visit-alert">⚠ ${escape(t)}</small>`)
     .join(
       "",
-    )}</div></div><div class="appointment-resource"><span>${escape(a.resource_name)}</span><strong>${money(a.price)} <small>${escape(data.currency)}</small></strong></div><div class="appointment-status"><span class="badge ${status}">${statuses[a.status] || escape(a.status)}</span>${comingBadge(a)}<div class="appointment-actions">${data.role !== "staff" ? `<button class="secondary" data-action="payment" data-id="${a.id}">${OrbitI18n.t("m166")}</button>` : ""}${a.status === "confirmed" ? `<button class="secondary finish-button" data-action="complete" data-id="${a.id}">${OrbitI18n.t("m167")}</button><details class="appointment-menu"><summary aria-label="${OrbitI18n.t("bookingActions")}">•••</summary><div><button data-action="cancel-booking" data-id="${a.id}">${OrbitI18n.t("m168")}</button><button data-action="no-show" data-id="${a.id}">${OrbitI18n.t("m003")}</button></div></details>` : ""}</div></div></article>`;
+    )}</div></div><div class="appointment-resource"><span>${escape(a.resource_name)}</span><strong>${money(a.price)} <small>${escape(data.currency)}</small></strong></div><div class="appointment-status"><span class="badge ${status}">${statuses[a.status] || escape(a.status)}</span>${comingBadge(a)}<div class="appointment-actions">${data.role !== "staff" ? `<button class="secondary" data-action="payment" data-id="${a.id}">${OrbitI18n.t("m166")}</button>` : ""}${a.status === "confirmed" ? `${a.start <= Date.now() ? `<button class="secondary finish-button" data-action="complete" data-id="${a.id}">${OrbitI18n.t("m167")}</button>` : `<button class="secondary" data-action="appointment-open" data-id="${a.id}">${OrbitI18n.t("apptMove")}</button>`}<details class="appointment-menu"><summary aria-label="${OrbitI18n.t("bookingActions")}">•••</summary><div><button data-action="cancel-booking" data-id="${a.id}">${OrbitI18n.t("m168")}</button>${a.start <= Date.now() ? `<button data-action="no-show" data-id="${a.id}">${OrbitI18n.t("m003")}</button>` : ""}</div></details>` : ""}</div></div></article>`;
 }
 // Minutes since midnight in the business time zone.
 function dayMinutes(value) {
@@ -333,7 +333,7 @@ function dayGrid(rows) {
     return empty(
       OrbitI18n.t("m172"),
       OrbitI18n.t("bookingSetupRequired"),
-      `<button class="primary" data-action="go-catalog">${OrbitI18n.t("m006")}</button>`,
+      `<button class="primary" data-action="go-catalog">${OrbitI18n.t("goCatalog")}</button>`,
     );
   const visible = rows.filter(
     (a) => !["cancelled", "no_show"].includes(a.status),

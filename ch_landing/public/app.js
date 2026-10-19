@@ -35,7 +35,7 @@ const translations = {
   uk: {
     meta: {
       title: 'LOMVIKO — CRM для салонів, клінік і студій: онлайн-запис, нагадування, оплати',
-      description: 'Клієнти записуються самі — через Telegram-бота або вашу сторінку запису 24/7. Нагадування, онлайн-оплата, розклад команди й фінанси в одному сервісі — з комп’ютера чи телефона, без встановлення. 30 днів безкоштовно.',
+      description: 'CRM для салонів, барбершопів, СТО й студій: онлайн-запис 24/7 через Telegram і вашу сторінку, нагадування, оплата monobank і ПриватБанк. 30 днів безкоштовно.',
       ogTitle: 'LOMVIKO — клієнти записуються самі',
       ogDescription: 'Онлайн-запис 24/7, нагадування, оплата за посиланням, розклад команди й фінанси — в одному застосунку. 30 днів безкоштовно, без картки.',
       ogAlt: 'LOMVIKO — CRM для бізнесу за записом',
@@ -140,7 +140,7 @@ const translations = {
   en: {
     meta: {
       title: 'LOMVIKO — booking CRM for salons, clinics and studios: online booking, reminders, payments',
-      description: 'Clients book themselves — through a Telegram bot or your own booking page, 24/7. Reminders, online payments, a team schedule and finances in one service — on a computer or a phone, nothing to install. Free for 30 days.',
+      description: 'Booking CRM for salons, barbershops, repair shops and studios: 24/7 online booking via Telegram and your own page, reminders, payments. Free for 30 days.',
       ogTitle: 'LOMVIKO — clients book themselves',
       ogDescription: '24/7 online booking, reminders, payment links, a team schedule and finances — in one app. Free for 30 days, no card needed.',
       ogAlt: 'LOMVIKO — booking CRM for service businesses',

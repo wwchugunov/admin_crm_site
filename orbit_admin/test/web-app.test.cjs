@@ -56,6 +56,17 @@ test('Web app: owner and staff share one browser; a new browser takes the oldest
  assert.equal(f.owner.db.prepare("SELECT count(*) n FROM events WHERE event='device.replaced'").get().n,1);
  await owner.call('snapshot');
 });
+test('Web app: the owner\'s many browsers never lock a colleague out',async t=>{
+ const f=await fixture(t,{seats:2}),first=f.browser();
+ await first.call('account:login','','owner@lira.test','owner-password-1');
+ await first.call('account:user:add',{name:'Майстер',email:'staff@lira.test',password:'staff-password-1',role:'staff'});
+ await f.browser().call('account:login','','owner@lira.test','owner-password-1');
+ // Both seats belong to the owner; the colleague's phone takes the owner's oldest one.
+ const phone=f.browser();await phone.call('account:login','','staff@lira.test','staff-password-1');
+ assert.equal((await phone.call('snapshot')).role,'staff');
+ assert.deepEqual(f.owner.db.prepare("SELECT u.email,count(*) n FROM devices d JOIN users u ON u.id=d.user_id WHERE d.revoked=0 GROUP BY u.email ORDER BY u.email").all().map(r=>[r.email,r.n]),[['owner@lira.test',1],['staff@lira.test',1]]);
+ await assert.rejects(first.call('snapshot'),e=>e.status===401);
+});
 test('Web app: a new business registers in the browser and lands in its workspace',async t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'biz-web-reg-')),keys=setup(dir),owner=new ProductStore(path.join(dir,'owner.sqlite')),sent=[];
  const api=createProductServer({store:owner,...keys,allowLocalAdmin:true,mailTransportFactory:()=>({sendMail:async m=>{sent.push(m);return{accepted:[m.to]};},close(){}})});const apiPort=await listen(api);

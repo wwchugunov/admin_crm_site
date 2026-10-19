@@ -14,7 +14,6 @@ const {BotWorkers}=require('./bot-workers.cjs');
 const {Releases,version:stableVersion}=require('./releases.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
-const {ReleasePublishing}=require('./release-publishing.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
@@ -83,7 +82,6 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const updates=new Releases(store,privateKey,releaseDirectory);
   const website=new PublicSite(store,updates);
   const documents=new Documents(store,documentDirectory);website.documents=documents;
-  const publishing=new ReleasePublishing(store,updates);
   const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;members.mail=mail;
   const support=new Support({store,mail,fail});
   function admin(req){return administrator.verify(req);}
@@ -120,18 +118,12 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
     try {
       const forwarded=trustProxy&&typeof req.headers['x-forwarded-for']==='string'?req.headers['x-forwarded-for'].split(',').at(-1).trim():'';req.clientAddress=isIP(forwarded)?forwarded:req.socket.remoteAddress;
       const url = new URL(req.url, 'http://localhost'); const route = url.pathname;req.rawBody='';
-      if(req.method==='PUT'&&route==='/admin/releases/file'){
-        administrator.uploadSession(req);const size=Number(req.headers['content-length']);if(!Number.isSafeInteger(size)||size<1||size>512*1024*1024)fail(413,'Installer must be at most 512 MiB');const target=updates.file(url.searchParams.get('version'),url.searchParams.get('platform'),url.searchParams.get('arch'));if(fs.existsSync(target))fail(409,'Installer already exists; use a new version');const temporary=target+'.'+id()+'.partial',digest=crypto.createHash('sha256');let fd=fs.openSync(temporary,'wx',0o600),received=0;
-        try{for await(const chunk of req){received+=chunk.length;if(received>size)fail(413,'Invalid installer size');digest.update(chunk);fs.writeFileSync(fd,chunk);}if(received!==size)fail(400,'Incomplete installer');fs.fsyncSync(fd);fs.closeSync(fd);fd=null;administrator.verifyUpload(req,digest.digest('hex'));fs.linkSync(temporary,target);return reply(201,{ok:true});}finally{if(fd!==null)fs.closeSync(fd);fs.rmSync(temporary,{force:true});}
-      }
-      if(req.method==='PUT'&&route==='/publish/file')return reply(201,await publishing.upload(req,url));
       if(req.method==='PUT'&&route==='/admin/documents/file'){
         administrator.uploadSession(req);const size=Number(req.headers['content-length']);if(!Number.isSafeInteger(size)||size<1||size>DOCUMENT_MAX)fail(413,'Document must be at most 25 MiB');const temporary=documents.temporary(),digest=crypto.createHash('sha256');let fd=fs.openSync(temporary,'wx',0o600),received=0;
         try{for await(const chunk of req){received+=chunk.length;if(received>size)fail(413,'Invalid document size');digest.update(chunk);fs.writeFileSync(fd,chunk);}if(received!==size)fail(400,'Incomplete document');fs.fsyncSync(fd);fs.closeSync(fd);fd=null;const hex=digest.digest('hex');administrator.verifyUpload(req,hex);const p=url.searchParams;return reply(201,documents.add(temporary,{kind:p.get('kind'),language:p.get('language'),title:p.get('title'),filename:p.get('filename'),activate:p.get('activate')!=='0'},size,hex));}finally{if(fd!==null)fs.closeSync(fd);fs.rmSync(temporary,{force:true});}
       }
       if(['POST','PUT'].includes(req.method))await body(req);
       if (req.method === 'GET' && route === '/healthz') { store.db.prepare('SELECT 1').get(); return reply(200, { status: 'ok' }); }
-      if(req.method==='POST'&&route==='/publish/release')return reply(201,await publishing.register(req,req.parsedBody));
       if(req.method==='POST'&&route==='/admin/session')return reply(200,administrator.login(req,req.parsedBody));
       // Invitation link for a new administrator: the single-use token is the credential.
       if(req.method==='POST'&&route==='/admin/invite/info')return reply(200,members.info(req.clientAddress||req.socket.remoteAddress,req.parsedBody));
@@ -163,9 +155,6 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
         if(req.method==='POST'&&route==='/admin/site/lead')return reply(200,website.updateLead(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/site/lead/delete')return reply(200,website.deleteLead(req.parsedBody));
         if(req.method==='GET'&&route==='/admin/site/export')return reply(200,{format:'ch-site',version:1,...website.admin(),leads:store.db.prepare('SELECT * FROM site_leads ORDER BY created_at DESC').all()});
-        if(req.method==='POST'&&route==='/admin/releases/register')return reply(201,await updates.register(req.parsedBody));
-        if(req.method==='POST'&&route==='/admin/releases/withdraw'){updates.withdraw(req.parsedBody);return reply(200,{ok:true});}
-        if(req.method==='POST'&&route==='/admin/policy'){updates.policy(req.parsedBody);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/invite/revoke'){const data=req.parsedBody,row=store.db.prepare('SELECT * FROM invites WHERE id=?').get(string(data.id,64));if(!row)fail(404,'Key not found');store.db.prepare('UPDATE invites SET expires=0 WHERE id=?').run(row.id);store.event('invite.revoked',row.user_id);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/demo'){const data=req.parsedBody,days=Number(data.days||14);if(!Number.isInteger(days)||days<1||days>30)fail(400,'Demo duration must be 1–30 days');const password=crypto.randomBytes(24).toString('base64url'),userId=store.addUser({...data,days,max_devices:1,password_hash:passwordHash(password)});accounts.addBusiness(userId,data.business);const invite=store.invite(userId);invite.expires=Math.min(invite.expires,Date.now()+days*86400000);store.db.prepare('UPDATE invites SET expires=? WHERE token_hash=?').run(Math.min(invite.expires,Date.now()+days*86400000),hash(invite.token));store.event('demo.created',userId);const emailed=mail.access(store.db.prepare('SELECT * FROM users WHERE id=?').get(userId),invite,'demo',data.language);return reply(201,{id:userId,login:data.email,password,...invite,email:emailed?'queued':'not-configured'});}
         if (req.method === 'POST' && route === '/admin/users') {const data=await body(req);const encoded=passwordHash(data.password||crypto.randomBytes(24).toString('base64url'));let business;if(data.business_id){business=store.db.prepare('SELECT * FROM businesses WHERE id=?').get(data.business_id);if(!business)fail(404,OrbitI18n.t('m664'));if(!['admin','staff'].includes(data.role))fail(400,OrbitI18n.t('m678'));}const userId=store.addUser({...data,password_hash:encoded,account_id:business?.account_id,business:business?.name||data.business});if(business)store.db.prepare('INSERT INTO memberships VALUES(?,?,?)').run(userId,business.id,data.role);else accounts.addBusiness(userId,data.business);return reply(201,{id:userId});}
@@ -192,7 +181,8 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
         if (req.method === 'GET' && route === '/admin/export') { const data = {}; for (const table of ['users', 'devices', 'events','businesses','memberships','releases','update_policies','device_builds','update_backups','site_content','site_history','site_leads','site_downloads','security_rejections','purchases']) data[table] = store.db.prepare(`SELECT * FROM ${table}`).all().map(row=>{const copy={...row};delete copy.password_hash;return copy;}); return reply(200, { format: 'orbit-owner', version: 1, exported_at: new Date().toISOString(), tables: data }); }
         fail(404, OrbitI18n.t('m652'));
       }
-      const address = req.clientAddress, now = Date.now(), rate = rates.get(address) || { count: 0, start: now };
+      // Signed-in requests are counted per session, so colleagues behind one office router do not share a limit.
+      const bearer = (req.headers.authorization || '').replace(/^Bearer /, ''), address = bearer && bearer.length <= 200 ? 'session:' + crypto.createHash('sha256').update(bearer).digest('hex') : req.clientAddress, now = Date.now(), rate = rates.get(address) || { count: 0, start: now };
       if (now - rate.start > 60000) { rate.count = 0; rate.start = now; } rate.count++; rates.set(address, rate); if (rate.count > 120) fail(429, OrbitI18n.t('m681'));
       if(req.method==='GET'&&route==='/public/site')return reply(200,website.public());
       const documentMatch=/^\/public\/documents\/([a-z-]+)\/([a-z]{2})$/.exec(route);
@@ -245,21 +235,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
         store.transaction(() => { store.db.prepare('INSERT INTO requests VALUES(?,?)').run(data.request_id, Date.now()); store.db.prepare('UPDATE devices SET last_seen=?,platform=?,version=? WHERE id=?').run(Date.now(), platform, version, device.id); });
         if(data.arch&&['x64','arm64'].includes(data.arch))store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(device.id,data.arch);return reply(200, { license: accounts.licenseAccount(device.id, user), business: user.business,update:updates.sign(updates.status({...device,version:data.version},accounts.account(user))) });
       }
-      const updaterMatch=/^\/public\/updates\/([^/]+)$/.exec(route);
-      if(req.method==='GET'&&updaterMatch){const name=updaterMatch[1];if(!/^(?:latest(?:-mac)?\.yml|LOMVIKO-[0-9]+\.[0-9]+\.[0-9]+-(?:mac-(?:x64|arm64)\.zip|win-x64\.exe)(?:\.blockmap)?)$/.test(name))fail(404,'Update file not found');const filename=path.join(releaseDirectory,name);if(!fs.existsSync(filename))fail(404,'Update file not found');const stat=fs.lstatSync(filename);if(!stat.isFile()||stat.isSymbolicLink())fail(404,'Update file not found');res.writeHead(200,{'Content-Type':name.endsWith('.yml')?'text/yaml; charset=utf-8':'application/octet-stream','Content-Length':stat.size,'Cache-Control':name.startsWith('latest')?'no-cache':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'});fs.createReadStream(filename).pipe(res);return;}
-      const releaseMatch=/^\/(?:releases|public\/download)\/([0-9.]+)\/(mac|win)\/(x64|arm64)$/.exec(route);
-      if(req.method==='GET'&&releaseMatch){const publicDownload=route.startsWith('/public/');if(publicDownload)website.public();const[,v,p,a]=releaseMatch,row=updates.list().find(r=>!r.withdrawn&&r.version===v&&r.platform===p&&r.arch===a);if(!row)fail(404,'Release not found');const filename=updates.file(v,p,a),digest=crypto.createHash('sha256');for await(const chunk of fs.createReadStream(filename))digest.update(chunk);if(digest.digest('hex')!==row.sha256)fail(409,'Installer integrity check failed');if(publicDownload)website.countDownload(row);res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':row.size,'Content-Disposition':`attachment; filename="LOMVIKO-${v}.${p==='mac'?'dmg':'exe'}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});const stream=fs.createReadStream(filename);if(publicDownload)res.once('finish',()=>website.countDownload(row,true));res.on('close',()=>stream.destroy());stream.on('error',()=>res.destroy());stream.pipe(res);return;}
       if(req.method==='GET'&&route==='/v1/releases')return reply(200,updates.sign({releases:updates.list().filter(r=>!r.withdrawn)}));
-      if (req.method === 'GET' && route === '/download') {
-        const invitation = store.findInvite(url.searchParams.get('token')), platform = url.searchParams.get('platform');
-        const published=updates.latest(platform,url.searchParams.get('arch')||'x64'),candidate=published?updates.file(published.version,published.platform,published.arch):releases[platform];if (!['mac', 'win'].includes(platform) || !candidate || !fs.existsSync(candidate)) fail(404, OrbitI18n.t('m688'));
-        const filename = candidate, size = fs.statSync(filename).size; store.event('download.requested', invitation.user_id, null, platform);
-        res.writeHead(200, { 'Content-Type': 'application/octet-stream', 'Content-Length': size, 'Content-Disposition': `attachment; filename="${platform === 'mac' ? 'LOMVIKO.dmg' : 'LOMVIKO-Setup.exe'}"`, 'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' });
-        const stream = fs.createReadStream(filename);
-        res.once('finish', () => store.event('download.completed', invitation.user_id, null, platform));
-        res.once('close', () => { if (!res.writableFinished) store.event('download.interrupted', invitation.user_id, null, platform); stream.destroy(); });
-        stream.on('error', () => res.destroy()); stream.pipe(res); return;
-      }
       fail(404, OrbitI18n.t('m652'));
     } catch (error) { if(!error.status&&error.constructor===Error&&!error.code&&new URL(req.url,'http://localhost').pathname.startsWith('/v1/crm/'))error.status=400; if(!error.status&&!error.code?.startsWith?.('SQLITE_CONSTRAINT'))console.error('LOMVIKO request failed:',new URL(req.url,'http://localhost').pathname,error.stack||error.message); if([401,403,409,429].includes(error.status))website.reject(new URL(req.url,'http://localhost').pathname,error.status);if (!res.headersSent && !res.destroyed) reply(error.status || (error.code?.startsWith('SQLITE_CONSTRAINT')||[19,2067,1555].includes(error.errcode) ? 409 : 500), { error: error.status ? error.message : OrbitI18n.t('m689'),...(error.update?{update:error.update}:{}) }); else res.destroy(); }
   });
@@ -294,7 +270,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
     await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
-  server.mail=mail;server.retention=retention;server.updates=updates;server.documents=documents;server.publishing=publishing;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
+  server.mail=mail;server.retention=retention;server.updates=updates;server.documents=documents;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
   server.requestTimeout = 15*60000; server.headersTimeout = 10000;
   return server;
 }
@@ -302,9 +278,8 @@ module.exports = { setup, ProductStore, createProductServer };
 if (require.main === module) {
   const directory = path.resolve(process.env.ORBIT_OWNER_DATA || path.join(process.cwd(), '.owner-data')); const keys = setup(directory);
   const store = new ProductStore(path.join(directory, 'owner.sqlite'));
-  const releases = { mac: path.resolve(process.env.ORBIT_MAC_RELEASE || 'dist/LOMVIKO-0.2.5.dmg'), win: path.resolve(process.env.ORBIT_WIN_RELEASE || 'dist/LOMVIKO Setup 0.2.5.exe') };
   const port = Number(process.env.PORT || 4545), host = process.env.ORBIT_OWNER_HOST || '127.0.0.1';
-  const server = createProductServer({ store, ...keys, releases,allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
+  const server = createProductServer({ store, ...keys, allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
   let stopping = false;
   const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('LOMVIKO shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
