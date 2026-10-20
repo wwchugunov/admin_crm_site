@@ -95,6 +95,7 @@ function dashboardView() {
 function financeView() {
   if (data.role === "staff")
     return empty(OrbitI18n.t("m106"), OrbitI18n.t("m107"));
+  if (financeTab !== "overview") return financeTabs() + financeToolView();
   const appointments = data.appointments.filter(
       (a) =>
         businessDate(a.start).startsWith(financeMonth) &&
@@ -103,7 +104,7 @@ function financeView() {
     payments = (data.payments || []).filter((p) =>
       businessDate(p.at).startsWith(financeMonth),
     ),
-    income = payments.reduce((s, p) => s + p.amount, 0),
+    { income, sales, spent } = monthMoney(),
     costs = appointments
       .filter((a) => a.status === "completed")
       .reduce((s, a) => s + a.cost, 0);
@@ -111,13 +112,17 @@ function financeView() {
       (a) => a.status === "completed" && a.price > a.paid,
     ),
     due = unpaid.reduce((s, a) => s + a.price - a.paid, 0);
-  return `<div class="finance-toolbar"><input id="finance-month" type="month" value="${financeMonth}" aria-label="${OrbitI18n.t("m125")}"><span class="hint">${escape(data.currency)} · ${escape(data.timezone)}</span></div><div class="stats">${[
+  return `${financeTabs()}<div class="finance-toolbar"><input id="finance-month" type="month" value="${financeMonth}" aria-label="${OrbitI18n.t("m125")}"><span class="hint">${escape(data.currency)} · ${escape(data.timezone)}</span></div><div class="stats">${[
     [
       OrbitI18n.t("m108"),
       appointments.reduce((s, a) => s + a.total, 0),
       OrbitI18n.t("m109"),
     ],
-    [OrbitI18n.t("m110"), income, OrbitI18n.t("m111")],
+    [
+      OrbitI18n.t("m110"),
+      income,
+      sales ? `${ft("finSales")}: ${money(sales)}` : OrbitI18n.t("m111"),
+    ],
     [
       OrbitI18n.t("financeDue"),
       due,
@@ -126,8 +131,8 @@ function financeView() {
     ],
     [
       OrbitI18n.t("m114"),
-      income - costs,
-      `${OrbitI18n.t("m112")}: ${money(costs)}`,
+      income - costs - spent,
+      `${OrbitI18n.t("m112")}: ${money(costs)} · ${ft("finSpent")}: ${money(spent)}`,
     ],
   ]
     .map(
@@ -544,7 +549,7 @@ function catalogView() {
           })
           .join("")
       : empty(OrbitI18n.t("m211"), OrbitI18n.t("m212"))
-  }</section></div><div class="callout">${OrbitI18n.t("m216")}</div>`;
+  }</section></div>${materialsCard()}<div class="callout">${OrbitI18n.t("m216")}</div>`;
 }
 // "Повернення · Готівка" for a refund given back in cash; older refunds were their own method.
 function payMethodLabel(p) {

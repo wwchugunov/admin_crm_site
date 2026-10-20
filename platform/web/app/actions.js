@@ -579,13 +579,14 @@ $("#modal").addEventListener("cancel", (event) => {
 $("#modal-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.target);
-  const values = $('#modal-fields [name="work_days"]')
+  let values = $('#modal-fields [name="work_days"]')
     ? profileValues(form)
     : Object.fromEntries(form);
   for (const name of ["client_ids", "resource_ids"])
     if (form.has(name)) values[name] = form.getAll(name);
   for (const name of ["bot_visible", "web_visible"])
     if ($(`#modal-fields [name="${name}"]`)) values[name] = form.has(name);
+  values = serviceExtraValues(values);
   $("#modal-submit").disabled = true;
   $("#cancel-modal").disabled = true;
   $("#close-modal").disabled = true;

@@ -54,7 +54,7 @@ test('Online bookings and online payments are announced at once, each only once'
  await new Promise(r=>setTimeout(r,20));
  assert.match(f.sent.at(-1).text,/Новий запис онлайн\nСофія · \+380671234599\nСтрижка/);
  await f.notify.tick();f.sent.length=0;
- f.store.db.prepare('INSERT INTO payments VALUES(?,?,?,?,?)').run(crypto.randomUUID(),r.appointment_id,90000,Date.now()+1000,'monobank');
+ f.store.db.prepare('INSERT INTO payments(id,appointment_id,amount,at,method) VALUES(?,?,?,?,?)').run(crypto.randomUUID(),r.appointment_id,90000,Date.now()+1000,'monobank');
  await f.notify.tick(Date.now()+60000);await f.notify.tick(Date.now()+120000);
  const pays=f.sent.filter(m=>/Оплата monobank/.test(m.text));
  assert.equal(pays.length,1);assert.match(pays[0].text,/900 грн/);

@@ -146,21 +146,25 @@ async function run(fn) {
 // The company data arrives as a window (previous month, this month, everything ahead). Older
 // months are fetched once when finance or the dashboard needs them and kept here; when nothing
 // changed since the last refresh the app gets a few bytes and keeps what it has.
+// Lists that the app keeps for a window of months and loads further back on request.
+const DATED = ["appointments", "payments", "expenses", "certificates", "passes"];
+function emptyOlder(business = null) {
+  return { business, from: Infinity, ...Object.fromEntries(DATED.map((k) => [k, []])) };
+}
 let windowData = null,
-  older = { business: null, from: Infinity, appointments: [], payments: [] },
+  older = emptyOlder(),
   olderLoading = false;
 function mergeOlder() {
   if (!data?.loaded_from || older.business !== data.business_id) return;
-  const ids = new Set(windowData.appointments.map((a) => a.id)),
-    paymentIds = new Set(windowData.payments.map((p) => p.id));
-  data.appointments = [
-    ...older.appointments.filter((a) => !ids.has(a.id)),
-    ...windowData.appointments,
-  ];
-  data.payments = [
-    ...windowData.payments,
-    ...older.payments.filter((p) => !paymentIds.has(p.id)),
-  ];
+  for (const key of DATED) {
+    const ids = new Set(windowData[key].map((x) => x.id)),
+      before = older[key].filter((x) => !ids.has(x.id));
+    // Visits run oldest first; money lists newest first.
+    data[key] =
+      key === "appointments"
+        ? [...before, ...windowData[key]]
+        : [...windowData[key], ...before];
+  }
 }
 // Earliest moment the open page shows; older data is loaded if the window does not reach it.
 function neededFrom() {
@@ -196,14 +200,8 @@ async function loadOlder() {
       to: have,
     });
     if (older.business !== data.business_id)
-      older = {
-        business: data.business_id,
-        from: Infinity,
-        appointments: [],
-        payments: [],
-      };
-    older.appointments.push(...range.appointments);
-    older.payments.push(...range.payments);
+      older = emptyOlder(data.business_id);
+    for (const key of DATED) older[key].push(...(range[key] || []));
     older.from = need;
     mergeOlder();
     render();
@@ -223,13 +221,10 @@ async function refresh({ preserveView = false } = {}) {
     data = { ...data, ...next, unchanged: undefined };
   else {
     data = next;
-    windowData = {
-      appointments: next.appointments || [],
-      payments: next.payments || [],
-    };
+    windowData = Object.fromEntries(DATED.map((k) => [k, next[k] || []]));
   }
   if (older.business && older.business !== data.business_id)
-    older = { business: null, from: Infinity, appointments: [], payments: [] };
+    older = emptyOlder();
   mergeOlder();
   if (!appVersion) {
     appVersion = await window.orbit.call("app:version").catch(() => "");

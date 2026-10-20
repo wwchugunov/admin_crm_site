@@ -4,6 +4,7 @@ const { DatabaseSync } = require("node:sqlite");
 const { randomUUID, randomBytes } = require("node:crypto");
 const { mkdirSync, chmodSync } = require("node:fs");
 const { dirname } = require("node:path");
+const { finance } = require("./finance.cjs");
 
 const TABLES = [
   "clients",
@@ -21,6 +22,12 @@ const TABLES = [
   "resource_absences",
   "payment_links",
   "waitlist",
+  "materials",
+  "service_materials",
+  "material_moves",
+  "expenses",
+  "certificates",
+  "passes",
 ];
 // Company settings the app shows; changing one of them counts as a change of data.
 const PROFILE = [
@@ -233,6 +240,7 @@ class Store {
     if (!this.get("work_end")) this.set("work_end", "18:00");
     if (!this.get("work_days")) this.set("work_days", [1, 2, 3, 4, 5, 6, 7]);
     this.staffSchema();
+    this.financeSchema();
     // Indexes for the snapshot and client history (added after all tables exist).
     this.db.exec(
       "CREATE INDEX IF NOT EXISTS payment_visit ON payments(appointment_id);CREATE INDEX IF NOT EXISTS visit_clients ON appointment_clients(client_id);CREATE INDEX IF NOT EXISTS visit_resources ON appointment_resources(resource_id);CREATE INDEX IF NOT EXISTS visit_start ON appointments(start);CREATE INDEX IF NOT EXISTS payment_at ON payments(at);",
@@ -259,6 +267,12 @@ class Store {
       "resource_absences",
       "payment_links",
       "waitlist",
+      "materials",
+      "service_materials",
+      "material_moves",
+      "expenses",
+      "certificates",
+      "passes",
     ])
       for (const op of ["insert", "update", "delete"])
         this.db.exec(
@@ -356,6 +370,9 @@ class Store {
       to,
       appointments: this.visits("a.start>=? AND a.start<?", [from, to]),
       payments: this.paymentsBetween(from, to),
+      expenses: this.db.prepare("SELECT * FROM expenses WHERE at>=? AND at<? ORDER BY at DESC").all(from, to),
+      certificates: this.db.prepare("SELECT * FROM certificates WHERE sold_at>=? AND sold_at<? ORDER BY sold_at DESC").all(from, to),
+      passes: this.db.prepare("SELECT * FROM passes WHERE sold_at>=? AND sold_at<? ORDER BY sold_at DESC").all(from, to),
     };
   }
   // The client card: the latest visits of one client, however old.
@@ -415,6 +432,7 @@ class Store {
         randomBytes(24).toString("base64url"),
         ...EXTRAS.map((k) => extra[k]),
       );
+    this.setDiscount(id, data.discount);
     this.audit("client.created", id);
     return id;
   }
@@ -428,6 +446,8 @@ class Store {
       .run(id, ...values);
     if (Array.isArray(data.resource_ids))
       this.setServiceStaff(id, data.resource_ids);
+    this.setServiceMaterials(id, data.materials);
+    this.setPay("services", id, data);
     this.audit("service.created", id);
     return id;
   }
@@ -469,6 +489,8 @@ class Store {
       throw Error(OrbitI18n.t("m538"));
     if (Array.isArray(data.resource_ids))
       this.setServiceStaff(text(data.id), data.resource_ids);
+    this.setServiceMaterials(text(data.id), data.materials);
+    this.setPay("services", text(data.id), data);
     this.audit("service.updated", data.id);
   }
   addResource(data) {
@@ -476,6 +498,7 @@ class Store {
     this.db
       .prepare("INSERT INTO resources(id,name) VALUES(?,?)")
       .run(id, text(data.name, 120));
+    this.setPay("resources", id, data);
     this.audit("resource.created", id);
     return id;
   }
@@ -588,7 +611,9 @@ class Store {
           throw Error(OrbitI18n.t("m542"));
       const id = randomUUID();
       const total =
-          data.total === undefined ? service.price * people : cents(data.total),
+          data.total === undefined
+            ? this.discounted(service.price * people, clients[0])
+            : cents(data.total),
         cost = cents(data.cost || 0);
       if (total > 1e10) throw Error(OrbitI18n.t("m543"));
       this.db
@@ -804,6 +829,7 @@ class Store {
         ).changes
     )
       throw Error(OrbitI18n.t("catalogResourceMissing"));
+    this.setPay("resources", id, data);
     this.audit("resource.updated", id);
   }
   addAbsence(data) {
@@ -850,6 +876,7 @@ class Store {
         ...EXTRAS.map((k) => extra[k]),
         id,
       );
+    this.setDiscount(id, data.discount);
     this.audit("client.updated", id);
   }
   // A client with visits is anonymised (visits stay in the books); one without is removed.
@@ -873,7 +900,13 @@ class Store {
             randomBytes(24).toString("base64url"),
             id,
           );
-      else this.db.prepare("DELETE FROM clients WHERE id=?").run(id);
+      else {
+        this.db.prepare("DELETE FROM passes WHERE client_id=?").run(id);
+        this.db
+          .prepare("UPDATE certificates SET client_id=NULL WHERE client_id=?")
+          .run(id);
+        this.db.prepare("DELETE FROM clients WHERE id=?").run(id);
+      }
       this.audit("client.deleted", id);
     });
   }
@@ -916,6 +949,7 @@ class Store {
         .run(status, text(id)).changes
     )
       throw Error(OrbitI18n.t("m545"));
+    if (status === "completed") this.consumeMaterials(text(id));
     this.audit(`appointment.${status}`, id);
   }
   snapshot(options = {}) {
@@ -942,7 +976,7 @@ class Store {
       loaded_from: from,
       clients: this.db
         .prepare(
-          "SELECT id,name,phone,notes,chat_id,invited_at,birthday,email,source,alert,tags,vehicle,plate FROM clients ORDER BY name",
+          "SELECT id,name,phone,notes,chat_id,invited_at,birthday,email,source,alert,tags,vehicle,plate,discount FROM clients ORDER BY name",
         )
         .all()
         .map((c) => {
@@ -978,6 +1012,7 @@ class Store {
       payments: this.paymentsBetween(from, 8.64e15),
       payment_links: this.openPaymentLinks(),
       waitlist: this.waitlist(),
+      ...this.financeSnapshot(from),
       ...profile,
     };
   }
@@ -1041,6 +1076,12 @@ class Store {
         "resource_absences",
         "payment_links",
         "waitlist",
+        "materials",
+        "service_materials",
+        "material_moves",
+        "expenses",
+        "certificates",
+        "passes",
       ])
         if (!data.tables[t]) data.tables[t] = [];
     if (
@@ -1205,14 +1246,21 @@ class Store {
       throw Error(OrbitI18n.t("m549"));
     // A refund is a negative amount; the method says how the money went back (cash, card, transfer).
     // "refund" stays accepted for older apps that sent refunds as a separate method.
-    const method = ["cash", "card", "transfer", "refund"].includes(data.method)
+    const method = [
+      "cash",
+      "card",
+      "transfer",
+      "refund",
+      "certificate",
+      "pass",
+    ].includes(data.method)
       ? data.method
       : "cash";
     if (method === "refund" && value > 0) throw Error(OrbitI18n.t("m550"));
     const appointment = text(data.appointment_id);
     const row = this.db
       .prepare(
-        "SELECT a.id,a.total,COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0) paid FROM appointments a WHERE a.id=?",
+        "SELECT a.id,a.total,a.service_id,a.client_id,COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0) paid FROM appointments a WHERE a.id=?",
       )
       .get(appointment);
     if (!row) throw Error(OrbitI18n.t("m551"));
@@ -1232,9 +1280,17 @@ class Store {
         ),
       );
     const id = randomUUID();
-    this.db
-      .prepare("INSERT INTO payments VALUES(?,?,?,?,?)")
-      .run(id, appointment, value, at, method);
+    this.transaction(() => {
+      // Certificates and passes were paid for when sold; here they only cover the visit.
+      const voucher = ["certificate", "pass"].includes(method)
+        ? this.applyVoucher(method, data.voucher_id, value, row, due)
+        : null;
+      this.db
+        .prepare(
+          "INSERT INTO payments(id,appointment_id,amount,at,method,voucher_id) VALUES(?,?,?,?,?,?)",
+        )
+        .run(id, appointment, value, at, method, voucher);
+    });
     this.audit("payment.created", id);
     return id;
   }
@@ -1285,7 +1341,7 @@ class Store {
     this.transaction(() => {
       if (delta)
         this.db
-          .prepare("INSERT INTO payments VALUES(?,?,?,?,?)")
+          .prepare("INSERT INTO payments(id,appointment_id,amount,at,method) VALUES(?,?,?,?,?)")
           .run(
             randomUUID(),
             link.appointment_id,
@@ -1579,4 +1635,13 @@ class Store {
     });
   }
 }
+Object.assign(Store.prototype, finance);
+// Start and end of a calendar month ("2026-10") in the company's time zone.
+Store.prototype.monthRange = function (month) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month))) throw Error(OrbitI18n.t("m504"));
+  const [y, m] = month.split("-").map(Number),
+    zone = this.get("timezone") || "Europe/Kyiv",
+    next = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+  return [zonedTime(`${month}-01`, "00:00", zone), zonedTime(next, "00:00", zone)];
+};
 module.exports = { Store, zonedTime, CLIENT_SOURCES: SOURCES };

@@ -392,7 +392,8 @@ function appointmentModal(id) {
 }
 // Payment form shared by "Оплата" and "Завершити й оплатити": the amount starts at what is still due.
 function paymentModal(a, complete) {
-  const due = Math.max(0, a.price - a.paid);
+  const due = Math.max(0, a.price - a.paid),
+    vouchers = voucherPayOptions(a);
   modal(
     complete ? OrbitI18n.t("apptCompletePay") : OrbitI18n.t("m300"),
     `<p class="hint">${escape(a.client_name)} · ${escape(a.service_name)} · ${OrbitI18n.t("apptDue")} ${money(due)} ${escape(data.currency)}</p>` +
@@ -409,12 +410,14 @@ function paymentModal(a, complete) {
         ["cash", "m116"],
         ["card", "m117"],
         ["transfer", "m118"],
+        ...vouchers.methods,
       ]
         .map(
           ([value, key], i) =>
             `<label><input type="radio" name="method" value="${value}" ${i ? "" : "checked"}><span>${OrbitI18n.t(key)}</span></label>`,
         )
-        .join("")}</div>`,
+        .join("")}</div>` +
+      vouchers.fields,
     async (v) => {
       const amount = Number(v.amount);
       if (!amount && !complete) throw Error(OrbitI18n.t("m548"));
@@ -423,6 +426,12 @@ function paymentModal(a, complete) {
           amount,
           method: v.method,
           appointment_id: a.id,
+          voucher_id:
+            v.method === "certificate"
+              ? v.certificate_code.trim()
+              : v.method === "pass"
+                ? v.pass_id
+                : undefined,
         });
       // Money given back to an unhappy client lowers the price of the visit, so it does not turn into a debt.
       if (amount < 0 && v.compensate === "on")
@@ -434,12 +443,13 @@ function paymentModal(a, complete) {
         await window.orbit.call("booking:status", a.id, "completed");
       toast(
         OrbitI18n.t(
-          complete ? "apptCompleted" : amount < 0 ? "payRefundSaved" : "m283",
+          complete ? "apptCompleted" : amount < 0 ? "payRefundSaved" : "paySaved",
         ),
       );
     },
     complete ? OrbitI18n.t("apptCompletePay") : OrbitI18n.t("m271"),
   );
+  voucherPayWire(due);
 }
 // monobank or LiqPay: the client pays on the bank page; the server marks the visit paid when the bank reports it.
 function payProviders() {
@@ -783,6 +793,7 @@ function serviceFields(s = {}) {
     (data.resources.length
       ? `<fieldset class="chip-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")}</legend>${data.resources.map((r) => `<label class="chip"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${(s.resource_ids || []).includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</fieldset><p class="hint">${OrbitI18n.t("staffWhoHint")}</p>`
       : "") +
+    serviceExtraFields(s) +
     `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.web_visible ? "checked" : ""}>${OrbitI18n.t("m291")}</label>`
   );
 }
@@ -896,7 +907,13 @@ function setupBookingClients() {
       Math.min(Number(people.value), service.capacity),
     );
     people.max = service.capacity;
-    $("#field-total").value = (service.price / 100) * Number(people.value);
+    // The first chosen client's personal discount lowers the suggested price.
+    const discount =
+      data.clients.find((c) => ids.has(c.id))?.discount || 0;
+    $("#field-total").value =
+      Math.round(
+        (service.price * Number(people.value) * (100 - discount)) / 100,
+      ) / 100;
   }
   query.addEventListener("input", update);
   phone.addEventListener("input", update);
@@ -1165,7 +1182,8 @@ function staffModal(id) {
       `<div id="staff-days" ${kind === "days" ? "" : "hidden"}><div class="work-days">${names.map((n, i) => `<label class="chip"><input type="checkbox" name="staff_days" value="${i + 1}" ${s?.days?.includes(i + 1) ? "checked" : ""}><span>${n}</span></label>`).join("")}</div></div>` +
       `<div id="staff-cycle" class="form-grid three" ${kind === "cycle" ? "" : "hidden"}><div>${field(OrbitI18n.t("staffOn"), "on", "number", `min="1" max="14" value="${s?.on || 2}"`)}</div><div>${field(OrbitI18n.t("staffOff"), "off", "number", `min="1" max="14" value="${s?.off || 2}"`)}</div><div>${field(OrbitI18n.t("staffCycleStart"), "from", "date", `value="${s?.from || businessDate(Date.now())}"`)}</div></div>` +
       `<p class="hint">${OrbitI18n.t("staffScheduleHint")}</p>` +
-      `<h3 class="form-section">${OrbitI18n.t("staffAbsences")}</h3>${absences.length ? `<ul class="absence-list">${absences.map((a) => `<li><span>${a.start_date.split("-").reverse().join(".")} – ${a.end_date.split("-").reverse().join(".")}${a.reason ? ` · ${escape(a.reason)}` : ""}</span><button type="button" class="link-button" data-action="absence-delete" data-id="${escape(a.id)}" data-resource="${escape(id)}">${OrbitI18n.t("catalogDelete")}</button></li>`).join("")}</ul>` : `<p class="hint">${OrbitI18n.t("staffNoAbsences")}</p>`}<button type="button" class="secondary" data-action="absence-add" data-id="${escape(id)}">${OrbitI18n.t("staffAbsenceAdd")}</button>`,
+      `<h3 class="form-section">${OrbitI18n.t("staffAbsences")}</h3>${absences.length ? `<ul class="absence-list">${absences.map((a) => `<li><span>${a.start_date.split("-").reverse().join(".")} – ${a.end_date.split("-").reverse().join(".")}${a.reason ? ` · ${escape(a.reason)}` : ""}</span><button type="button" class="link-button" data-action="absence-delete" data-id="${escape(a.id)}" data-resource="${escape(id)}">${OrbitI18n.t("catalogDelete")}</button></li>`).join("")}</ul>` : `<p class="hint">${OrbitI18n.t("staffNoAbsences")}</p>`}<button type="button" class="secondary" data-action="absence-add" data-id="${escape(id)}">${OrbitI18n.t("staffAbsenceAdd")}</button>` +
+      staffPayFields(r),
     async (v) => {
       const schedule =
         v.kind === "days"
@@ -1182,6 +1200,12 @@ function staffModal(id) {
         id,
         name: v.name,
         schedule,
+        ...(v.pay_percent === undefined
+          ? {}
+          : {
+              pay_percent: Number(v.pay_percent || 0),
+              pay_daily: Number(v.pay_daily || 0),
+            }),
       });
       toast(OrbitI18n.t("m361"));
     },
@@ -1401,7 +1425,8 @@ function clientFields(c = {}) {
       "notes",
       "text",
       `maxlength="2000" ${v("notes")}`,
-    )
+    ) +
+    discountField(c)
   );
 }
 // "Important" notes of the people in a visit (allergies, contraindications).
