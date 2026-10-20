@@ -2,11 +2,11 @@
   "name": "lomviko",
   "private": true,
   "scripts": {
-    "check:repository": "node 33tools/check-repository.cjs",
-    "check:licenses": "node 33tools/audit-licenses.cjs platform/package-lock.json website/package-lock.json",
-    "test": "npm test --prefix platform && npm test --prefix website",
+    "check:repository": "node 33service/tools/check-repository.cjs",
+    "check:licenses": "node 33service/tools/audit-licenses.cjs platform/package-lock.json website/package-lock.json",
+    "test": "node --test 33service/tests/platform/*.test.cjs && node --test 33service/tests/website/*.test.cjs",
     "check": "npm run check:repository && npm run check:licenses && npm test",
-    "prepare:deployment": "node 33tools/prepare-deployment.cjs",
+    "prepare:deployment": "node 33service/tools/prepare-deployment.cjs",
     "presentation": "node 33marketing/presentation/build.cjs",
     "legal": "node 33marketing/legal/build.cjs"
   },

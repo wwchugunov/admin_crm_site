@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node api/server.cjs",
     "server": "node api/server.cjs",
-    "web": "node web/admin-server.cjs",
-    "test": "node --test 33test/*.test.cjs"
+    "web": "node web/admin-server.cjs"
   },
   "dependencies": {
     "nodemailer": "10.1.0"

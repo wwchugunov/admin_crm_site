@@ -2,7 +2,7 @@
 
 CRM для бизнеса, который работает по записи: салоны, барбершопы, СТО, студии, репетиторы. Работает в браузере на компьютере и телефоне, ничего устанавливать не нужно.
 
-[Запуск и обновление lomviko.com](33docs/PRODUCTION.md) · [Лицензии зависимостей](33docs/DEPENDENCIES.md)
+[Запуск и обновление lomviko.com](33service/docs/PRODUCTION.md) · [Лицензии зависимостей](33service/docs/DEPENDENCIES.md)
 
 | Адрес | Что это |
 | --- | --- |
@@ -25,7 +25,7 @@ platform/     один Docker-образ для всего остального:
   worker/       Telegram-бот для собственного сервера компании
   deploy/       Dockerfile, compose, Caddy, manage.sh
 33marketing/  оферта, политики, презентация
-33tools/      проверки репозитория и подготовка архива для сервера
+33service/    всё служебное: тесты (tests), проверки и скрипты деплоя (tools), инструкции (docs)
 compose.yaml  локальный запуск всех сервисов
 ```
 
@@ -50,13 +50,13 @@ docker compose up -d --build
 Вход в админки — ключ администратора и одноразовый код:
 
 ```sh
-sh 33tools/docker.sh credentials
-sh 33tools/docker.sh code
+sh 33service/tools/docker.sh credentials
+sh 33service/tools/docker.sh code
 ```
 
 ## Проверки
 
-Node.js 24 или новее. Всё сразу: `npm run check` — проверка репозитория, лицензий и тесты трёх проектов. Архив для сервера после коммита: `npm run prepare:deployment`.
+Node.js 24 или новее. Тесты лежат в `33service/tests`. Всё сразу: `npm run check` — проверка репозитория, лицензий и тесты сайта и платформы. Архив для сервера после коммита: `npm run prepare:deployment`.
 
 ## Как устроено
 
