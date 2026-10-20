@@ -7,7 +7,7 @@ Object.assign(OrbitI18n.messages, {
   fiscalCheckbox: { uk: "Checkbox", en: "Checkbox" },
   fiscalOff: { uk: "Вимкнено", en: "Off" },
   fiscalOn: { uk: "Чеки видаються", en: "Issuing receipts" },
-  fiscalShort: { uk: "Чек на кожну оплату готівкою чи карткою на місці, на продаж сертифіката чи абонемента й на повернення.", en: "A receipt for every cash or card payment at the place, certificate or pass sale, and refund." },
+  fiscalShort: { uk: "Чек на кожну оплату — готівкою, карткою на місці чи онлайн через monobank і LiqPay, — на продаж сертифіката чи абонемента й на повернення.", en: "A receipt for every payment — cash, card at the place or online through monobank and LiqPay — for certificate and pass sales, and refunds." },
   fiscalConnect: { uk: "Підключити Checkbox", en: "Connect Checkbox" },
   fiscalDisconnect: { uk: "Вимкнути", en: "Turn off" },
   fiscalDisconnectAsk: { uk: "Нові оплати більше не передаватимуться в Checkbox. Видані чеки залишаться в Checkbox і в списку нижче.", en: "New payments will no longer go to Checkbox. Issued receipts stay in Checkbox and in the list below." },
@@ -20,6 +20,8 @@ Object.assign(OrbitI18n.messages, {
   fiscalPassword: { uk: "Пароль касира", en: "Cashier password" },
   fiscalPin: { uk: "Або PIN-код касира", en: "Or the cashier PIN" },
   fiscalMethods: { uk: "Видавати чек, коли клієнт платить", en: "Issue a receipt when the client pays" },
+  fiscalOnline: { uk: "Онлайн: monobank, LiqPay", en: "Online: monobank, LiqPay" },
+  fiscalOnlineHint: { uk: "Онлайн-оплати вмикайте лише тоді, коли в кабінеті monobank чи LiqPay не увімкнені їхні власні чеки — інакше клієнт отримає два чеки на одну оплату.", en: "Turn on online payments only if receipts are not enabled in your monobank or LiqPay account — otherwise the client gets two receipts for one payment." },
   fiscalTelegram: { uk: "Надсилати клієнту посилання на чек у Telegram-бот", en: "Send the client a receipt link in the Telegram bot" },
   fiscalConsent: { uk: "Я розумію, що відповідальність за видачу чеків несу я, фіскалізацію виконує Checkbox, а LOMVIKO лише передає дані про продаж.", en: "I understand that I am responsible for issuing receipts, Checkbox performs the fiscalisation, and LOMVIKO only passes on the sale data." },
   fiscalConnected: { uk: "Checkbox підключено", en: "Checkbox connected" },
@@ -80,9 +82,10 @@ function fiscalMethodFields(f = {}) {
   return `<fieldset class="chip-group"><legend>${ft("fiscalMethods")}</legend>${[
     ["cash", "m116"],
     ["card", "m117"],
+    ["online", "fiscalOnline"],
   ]
     .map(([value, key]) => `<label class="chip"><input type="checkbox" name="fiscal_methods" value="${value}" ${methods.includes(value) ? "checked" : ""}><span>${OrbitI18n.t(key)}</span></label>`)
-    .join("")}</fieldset><label class="checkbox-line"><input type="checkbox" name="fiscal_telegram" ${f.telegram === false ? "" : "checked"}>${ft("fiscalTelegram")}</label>`;
+    .join("")}</fieldset><p class="hint">${ft("fiscalOnlineHint")}</p><label class="checkbox-line"><input type="checkbox" name="fiscal_telegram" ${f.telegram === false ? "" : "checked"}>${ft("fiscalTelegram")}</label>`;
 }
 const fiscalChoices = () => ({
   methods: Array.from(document.querySelectorAll('#modal-fields [name="fiscal_methods"]:checked'), (i) => i.value),

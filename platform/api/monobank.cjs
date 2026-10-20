@@ -82,7 +82,9 @@ class Monobank{
   if(!d||typeof d.invoiceId!=='string'||typeof d.status!=='string')this.fail(400,'Invalid monobank status');
   if(d.ccy!==undefined&&Number(d.ccy)!==980)this.fail(400,'Unexpected currency');
   const paid=d.status==='success'?(d.finalAmount??d.amount):d.status==='reversed'?(d.finalAmount??0):0;
-  return store.settlePaymentLink('monobank',d.invoiceId,{status:d.status,paid,modified:d.modifiedDate});
+  const r=store.settlePaymentLink('monobank',d.invoiceId,{status:d.status,paid,modified:d.modifiedDate});
+  if(r?.payment_id)this.accounts.fiscal?.queueFromStore(store,r.payment_id);
+  return r;
  }
  async check(runtime,token,link){const d=await this.api(token,'GET','/api/merchant/invoice/status?invoiceId='+encodeURIComponent(link.invoice_id));return this.apply(runtime.store,{...d,invoiceId:link.invoice_id});}
  async publicKey(runtime,token,refresh){

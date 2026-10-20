@@ -5,7 +5,7 @@ const crypto=require('node:crypto');
 //
 // What gets a receipt: a visit paid in cash or by card at the place (and the refund of such a payment), and a
 // certificate or pass sold for cash or by card. Bank transfers, certificate and pass redemptions and online
-// payments through monobank or LiqPay are left out: their money was received elsewhere.
+// payments through monobank or LiqPay get receipts only when the owner turns that on (when the bank does not issue its own).
 const CHECKBOX='https://api.checkbox.in.ua';
 const CLIENT={'X-Client-Name':'LOMVIKO','X-Client-Version':'2.4'};
 const RETRY=[60e3,5*60e3,15*60e3,60*60e3,3*60*60e3,6*60*60e3];
@@ -48,7 +48,7 @@ class Fiscal{
   return this.status(runtime);
  }
  configure(runtime,data){
-  if(Array.isArray(data?.methods))runtime.store.set('fiscal_methods',['cash','card'].filter(m=>data.methods.includes(m)));
+  if(Array.isArray(data?.methods))runtime.store.set('fiscal_methods',['cash','card','online'].filter(m=>data.methods.includes(m)));
   if(typeof data?.telegram==='boolean')runtime.store.set('fiscal_telegram',data.telegram);
   return this.status(runtime);
  }
@@ -60,10 +60,16 @@ class Fiscal{
  queuePayment(business,runtime,paymentId){
   const s=this.settings(runtime.store);if(!s.provider||!runtime.vault.has('fiscal'))return null;
   const p=runtime.store.db.prepare('SELECT p.*,s.name service_name,a.id visit FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN services s ON s.id=a.service_id WHERE p.id=?').get(paymentId);
-  if(!p||!['cash','card'].includes(p.method)||!s.methods.includes(p.method))return null;
-  const related=p.amount<0?runtime.store.db.prepare("SELECT f.id FROM fiscal_receipts f JOIN payments x ON x.id=f.source_id WHERE f.source='payment' AND f.kind='sell' AND f.status='done' AND x.appointment_id=? AND x.method=? ORDER BY f.created_at DESC LIMIT 1").get(p.visit,p.method)?.id||null:null;
-  return this.enqueue(business,runtime,{source:'payment',source_id:p.id,kind:p.amount<0?'return':'sell',amount:Math.abs(p.amount),method:p.method,title:p.service_name,related});
+  // Online payments come as 'monobank'/'liqpay'; their refunds are recorded as 'refund' on the same visit.
+  const online=['monobank','liqpay'].includes(p.method)||(p.method==='refund'&&runtime.store.db.prepare("SELECT 1 FROM payments WHERE appointment_id=? AND method IN ('monobank','liqpay') LIMIT 1").get(p.visit));
+  const group=online?'online':p.method;
+  if(!['cash','card','online'].includes(group)||!s.methods.includes(group))return null;
+  const methods=online?['monobank','liqpay']:[p.method];
+  const related=p.amount<0?runtime.store.db.prepare(`SELECT f.id FROM fiscal_receipts f JOIN payments x ON x.id=f.source_id WHERE f.source='payment' AND f.kind='sell' AND f.status='done' AND x.appointment_id=? AND x.method IN (${methods.map(()=>'?').join(',')}) ORDER BY f.created_at DESC LIMIT 1`).get(p.visit,...methods)?.id||null:null;
+  return this.enqueue(business,runtime,{source:'payment',source_id:p.id,kind:p.amount<0?'return':'sell',amount:Math.abs(p.amount),method:online?'card':p.method,title:p.service_name,related});
  }
+ // A bank callback only knows the company's store; find its business and runtime for the receipt.
+ queueFromStore(store,paymentId){for(const [id,runtime] of this.accounts.businesses.instances){if(runtime.store!==store)continue;const business=this.accounts.db.prepare('SELECT * FROM businesses WHERE id=?').get(id);return business?this.queuePayment(business,runtime,paymentId):null;}return null;}
  queueSale(business,runtime,kind,id){
   const s=this.settings(runtime.store);if(!s.provider||!runtime.vault.has('fiscal'))return null;
   const row=runtime.store.db.prepare(kind==='certificate'?'SELECT id,price,method FROM certificates WHERE id=?':'SELECT p.id,p.price,p.method,s.name FROM passes p JOIN services s ON s.id=p.service_id WHERE p.id=?').get(id);

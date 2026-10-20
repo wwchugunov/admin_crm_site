@@ -83,3 +83,21 @@ test('Certificate sales are fiscalised; failures retry, rejected receipts wait f
  await f.fiscal.disconnect(f.runtime);assert.equal(f.fiscal.status(f.runtime).connected,false);
  const later=f.store.payment({appointment_id:f.visit(),amount:100,method:'card'});assert.equal(f.fiscal.queuePayment(f.business,f.runtime,later),null);
 });
+
+test('Online payments get receipts only when the owner turns them on; a bank refund refers to the online sale',async t=>{
+ const f=await fixture(t);await f.fiscal.connect(f.runtime,f.user,{license_key:'licence-1',login:'cashier',password:'right',consent:true});
+ const link=(a,id)=>f.store.addPaymentLink({appointment_id:a,provider:'monobank',invoice_id:id,amount:90000,url:'https://pay.example/'+id,expires:Date.now()+86400000});
+ const first=f.visit();link(first,'inv-1');
+ const off=f.store.settlePaymentLink('monobank','inv-1',{status:'success',paid:90000});
+ assert.equal(f.fiscal.queueFromStore(f.store,off.payment_id),null,'online is off by default: the bank may issue its own receipt');
+ f.fiscal.configure(f.runtime,{methods:['cash','card','online']});
+ const second=f.visit();link(second,'inv-2');
+ const paid=f.store.settlePaymentLink('monobank','inv-2',{status:'success',paid:90000});
+ await f.fiscal.queueFromStore(f.store,paid.payment_id)&&await f.fiscal.work(f.business,f.runtime);
+ let r=receipts(f.store).find(x=>x.source_id===paid.payment_id);assert.equal(r.status,'done');
+ assert.equal(f.cb.state.receipts.get(r.id).payments[0].type,'CASHLESS');
+ const back=f.store.settlePaymentLink('monobank','inv-2',{status:'reversed',paid:30000});
+ await f.fiscal.queueFromStore(f.store,back.payment_id)&&await f.fiscal.work(f.business,f.runtime);
+ const ret=receipts(f.store).find(x=>x.source_id===back.payment_id);
+ assert.deepEqual([ret.kind,ret.amount,f.cb.state.receipts.get(ret.id).related_receipt_id],['return',60000,r.id]);
+});

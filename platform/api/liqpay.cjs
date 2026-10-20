@@ -68,7 +68,9 @@ class LiqPay{
   const s=state(d.status),amount=Math.round(Number(d.amount||0)*100),refunded=Math.round(Number(d.refund_amount||0)*100);
   const paid=s==='success'||s==='reversed'?Math.max(0,s==='reversed'&&!refunded?0:amount-refunded):0;
   const modified=d.end_date?new Date(Number(d.end_date)).toISOString():(d.create_date?new Date(Number(d.create_date)).toISOString():'');
-  return store.settlePaymentLink('liqpay',d.order_id,{status:s,paid,modified});
+  const r=store.settlePaymentLink('liqpay',d.order_id,{status:s,paid,modified});
+  if(r?.payment_id)this.accounts.fiscal?.queueFromStore(store,r.payment_id);
+  return r;
  }
  verify(keys,data,signature){
   if(typeof data!=='string'||typeof signature!=='string'||data.length>20000)return false;

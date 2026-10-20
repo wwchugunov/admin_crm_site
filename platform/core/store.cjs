@@ -1342,13 +1342,14 @@ class Store {
       : link.credited;
     if (!Number.isSafeInteger(target) || target > 1e10)
       throw Error("Invalid payment amount");
-    const delta = target - link.credited;
+    const delta = target - link.credited,
+      paymentId = delta ? randomUUID() : null;
     this.transaction(() => {
       if (delta)
         this.db
           .prepare("INSERT INTO payments(id,appointment_id,amount,at,method) VALUES(?,?,?,?,?)")
           .run(
-            randomUUID(),
+            paymentId,
             link.appointment_id,
             delta,
             Date.now(),
@@ -1361,7 +1362,7 @@ class Store {
         .run(String(state.status), target, modified || link.modified, link.id);
     });
     if (delta) this.audit("payment_link.settled", link.id);
-    return { ...link, status: state.status, credited: target, delta };
+    return { ...link, status: state.status, credited: target, delta, payment_id: paymentId };
   }
   // Usual gap between a client's completed visits in days (median); none with fewer than two visit days.
   rhythms() {

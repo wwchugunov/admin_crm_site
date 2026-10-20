@@ -29,13 +29,14 @@
     accountModal();
   }, 1000);
   const addButton = () => {
-    const bottom = document.querySelector('.sidebar-bottom');
-    if (!bottom || bottom.querySelector('[data-action="admin-account"]')) return;
+    const links = (typeof accountBox === 'function' ? accountBox() : document).querySelector('.account-links');
+    if (!links || links.querySelector('[data-action="admin-account"]')) return;
     const button = document.createElement('button');
-    button.className = 'secondary';
+    button.type = 'button';
+    button.className = 'account-link';
     button.dataset.action = 'admin-account';
     button.textContent = L('Логін і пароль', 'Sign-in details');
-    bottom.prepend(button);
+    links.prepend(button);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addButton, { once: true });
   else addButton();
