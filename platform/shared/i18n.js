@@ -1,6 +1,11 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const messages={
+    "botPhoneAsk": {"uk": "Щоб майстер міг зв’язатися з вами щодо запису, поділіться номером телефону: натисніть кнопку нижче або надішліть номер повідомленням.", "en": "So the specialist can reach you about the booking, share your phone number: tap the button below or send the number as a message."},
+    "botPhoneButton": {"uk": "Поділитися номером", "en": "Share my number"},
+    "botPhoneThanks": {"uk": "Дякуємо, номер збережено.", "en": "Thank you, your number is saved."},
+    "botPhoneOwn": {"uk": "Надішліть, будь ласка, власний номер телефону.", "en": "Please send your own phone number."},
+    "botPhoneInvalid": {"uk": "Не схоже на номер телефону. Надішліть його у форматі +380 XX XXX XX XX або натисніть кнопку «Поділитися номером».", "en": "That does not look like a phone number. Send it as +380 XX XXX XX XX or tap “Share my number”."},
     "staffCannotDo": {"uk":"Цей спеціаліст не виконує обрану послугу","en":"This specialist does not provide the selected service"},
     "staffScheduleInvalid": {"uk":"Перевірте графік: потрібен хоча б один робочий день","en":"Check the schedule: at least one working day is needed"},
     "staffAbsenceInvalid": {"uk":"Перевірте дати відсутності","en":"Check the absence dates"},

@@ -214,3 +214,19 @@ test("Backups keep staff settings and older backups still restore", (t) => {
   copy.restore(old);
   assert.equal(copy.snapshot().absences.length, 0);
 });
+
+test("“Any specialist” goes to whoever is least busy that day, not the first by name", (t) => {
+  const store = new Store(":memory:");
+  t.after(() => store.db.close());
+  store.saveProfile({ business: "Ліра", industry: "beauty", timezone: "Europe/Kyiv", currency: "UAH", work_start: "09:00", work_end: "20:00", work_days: [1, 2, 3, 4, 5, 6, 7] });
+  const anna = store.addResource({ name: "Анна" }),
+    bohdana = store.addResource({ name: "Богдана" });
+  const cut = store.addService({ name: "Стрижка", duration: 60, price: 600, resource_ids: [anna, bohdana] });
+  const client = store.addClient({ name: "Клієнт", phone: "+380501112233" });
+  const day = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  assert.deepEqual(store.availableResources(cut, "any", at(store, day, 10)), [anna], "an empty day starts with the first name");
+  store.book({ client_id: client, service_id: cut, resource_ids: [anna], start: at(store, day, 10) });
+  store.book({ client_id: client, service_id: cut, resource_ids: [anna], start: at(store, day, 11) });
+  assert.deepEqual(store.availableResources(cut, "any", at(store, day, 14)), [bohdana], "Anna already has two hours");
+  assert.deepEqual(store.availableResources(cut, anna, at(store, day, 14)), [anna], "a chosen specialist stays chosen");
+});

@@ -1172,11 +1172,23 @@ class Store {
       this.worksOn(id, day) &&
       this.resourceFree(id, start, end);
     if (!automatic && !fits(primary)) return [];
+    // "Any specialist": the least busy person that day gets the visit, so work spreads evenly.
+    const zone = this.get("timezone") || "Europe/Kyiv",
+      next = new Date(Date.parse(day + "T00:00:00Z") + 86400000).toISOString().slice(0, 10),
+      busy = new Map(
+        this.db
+          .prepare(
+            "SELECT ar.resource_id id,SUM(a.end-a.start) busy FROM appointments a JOIN appointment_resources ar ON ar.appointment_id=a.id WHERE a.status IN ('confirmed','completed') AND a.start>=? AND a.start<? GROUP BY ar.resource_id",
+          )
+          .all(zonedTime(day, "00:00", zone), zonedTime(next, "00:00", zone))
+          .map((r) => [r.id, r.busy]),
+      );
     const free = this.db
       .prepare("SELECT id FROM resources WHERE archived=0 ORDER BY name,id")
       .all()
       .filter((r) => r.id !== primary && fits(r.id))
-      .map((r) => r.id);
+      .map((r) => r.id)
+      .sort((x, y) => (busy.get(x) || 0) - (busy.get(y) || 0));
     const selected = (automatic ? free : [primary, ...free]).slice(
       0,
       service.required_resources,
