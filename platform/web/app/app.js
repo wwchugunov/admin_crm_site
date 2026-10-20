@@ -42,12 +42,11 @@ let data,
   appVersion = "";
 let scheduleMode = (() => {
   try {
-    return localStorage.getItem("lomviko.schedule.mode") === "list"
-      ? "list"
-      : "grid";
-  } catch {
-    return "grid";
-  }
+    const saved = localStorage.getItem("lomviko.schedule.mode");
+    if (saved) return saved === "list" ? "list" : "grid";
+  } catch {}
+  // Phones start with the day list: the grid is for wide screens.
+  return matchMedia("(max-width: 700px)").matches ? "list" : "grid";
 })();
 let dashboardMode = "month",
   dashboardDate = dateKey(new Date());

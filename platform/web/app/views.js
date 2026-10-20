@@ -403,8 +403,8 @@ function scheduleView() {
     OrbitI18n.locale(),
     { day: "numeric", month: "long", weekday: "long" },
   );
-  const list = rows.length
-    ? `<div class="agenda-labels" aria-hidden="true"><span>${OrbitI18n.t("m170")}</span><span>${OrbitI18n.t("m171")}</span><span>${OrbitI18n.t("m165")}</span><span>${OrbitI18n.t("m141")}</span></div><div class="agenda-list">${rows.map(scheduleAppointment).join("")}</div>`
+  const list = rows.length || freeWindows(rows).length
+    ? `<div class="agenda-labels" aria-hidden="true"><span>${OrbitI18n.t("m170")}</span><span>${OrbitI18n.t("m171")}</span><span>${OrbitI18n.t("m165")}</span><span>${OrbitI18n.t("m141")}</span></div><div class="agenda-list">${agendaWithFree(rows)}</div>`
     : empty(
         OrbitI18n.t("m172"),
         OrbitI18n.t("m173"),

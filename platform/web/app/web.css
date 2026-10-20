@@ -231,3 +231,10 @@ html[data-theme] .subscription-banner.ended {
 .import-column { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; margin: 0; }
 .import-column span { display: grid; gap: 2px; font-weight: 500; overflow: hidden; }
 .import-column small { color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-free { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 14px; margin: 6px 0; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); }
+.agenda-free-time { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink, inherit); }
+.agenda-free button { padding: 8px 12px; font-size: 13px; }
+@media (max-width: 700px) {
+  .agenda-free { padding: 12px; }
+  .agenda-free button { padding: 10px 14px; }
+}
