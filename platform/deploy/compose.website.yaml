@@ -42,7 +42,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:2.4.0
+    image: lomviko-platform:2.5.0
     pull_policy: never
     command: [node, web/admin-server.cjs]
     restart: unless-stopped
@@ -70,7 +70,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # LOMVIKO in the browser: the company workspace at app.lomviko.com.
   app-web:
-    image: lomviko-platform:2.4.0
+    image: lomviko-platform:2.5.0
     pull_policy: never
     command: [node, web/app-server.cjs]
     restart: unless-stopped
@@ -98,7 +98,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # The website admin runs from the platform image with its own panel profile.
   site-admin:
-    image: lomviko-platform:2.4.0
+    image: lomviko-platform:2.5.0
     pull_policy: never
     command: [node, web/admin-server.cjs]
     restart: unless-stopped
