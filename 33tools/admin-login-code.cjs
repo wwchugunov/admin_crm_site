@@ -1,6 +1,6 @@
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
-const { totp } = require("../orbit_admin/owner/admin-auth.cjs");
+const { totp } = require("../platform/api/admin-auth.cjs");
 const root = path.resolve(__dirname, "..");
 const read =
   "const fs=require('node:fs'),{DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/data/owner.sqlite',{readOnly:true});const last=db.prepare(\"SELECT value FROM admin_security WHERE name='totp-counter'\").get()?.value??-1;db.close();process.stdout.write(JSON.stringify({token:fs.readFileSync('/data/admin.secret','utf8').trim(),secret:fs.readFileSync('/data/admin-totp.secret','utf8').trim(),last}));";

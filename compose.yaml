@@ -18,7 +18,7 @@ services:
     <<: *service
     image: ch-platform-api:local
     build:
-      context: ./orbit_admin
+      context: ./platform
       dockerfile: deploy/Dockerfile
     environment:
       # Local mail links only; production deployment does not enable this flag.
@@ -47,7 +47,7 @@ services:
     <<: *service
     image: ch-platform-website:local
     build:
-      context: ./ch_landing
+      context: ./website
       dockerfile: deploy/Dockerfile
     environment:
       HOST: 0.0.0.0
@@ -72,13 +72,13 @@ services:
 
   site-admin:
     <<: *service
-    image: ch-platform-site-admin:local
-    build:
-      context: ./landing_admin
-      dockerfile: deploy/Dockerfile
+    image: ch-platform-api:local
+    pull_policy: never
+    command: [node, web/admin-server.cjs]
     environment:
       HOST: 0.0.0.0
       PORT: "4547"
+      CH_ADMIN_PROFILE: website
       CH_API_URL: http://api:4545
       CH_PUBLIC_API_URL: http://127.0.0.1:${CH_API_PORT:-4545}
       CH_ADMIN_ORIGIN: http://127.0.0.1:${CH_SITE_ADMIN_PORT:-4547}
@@ -103,7 +103,7 @@ services:
     <<: *service
     image: ch-platform-api:local
     pull_policy: never
-    command: [node, web/server.cjs]
+    command: [node, web/admin-server.cjs]
     environment:
       HOST: 0.0.0.0
       PORT: "4548"

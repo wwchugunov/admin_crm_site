@@ -1,10 +1,10 @@
 {
-  "name": "biz-platform-workspace",
+  "name": "lomviko",
   "private": true,
   "scripts": {
     "check:repository": "node 33tools/check-repository.cjs",
-    "check:licenses": "node 33tools/audit-licenses.cjs orbit_admin/package-lock.json ch_landing/package-lock.json landing_admin/package-lock.json",
-    "test": "npm test --prefix orbit_admin && npm test --prefix ch_landing && npm test --prefix landing_admin",
+    "check:licenses": "node 33tools/audit-licenses.cjs platform/package-lock.json website/package-lock.json",
+    "test": "npm test --prefix platform && npm test --prefix website",
     "check": "npm run check:repository && npm run check:licenses && npm test",
     "prepare:deployment": "node 33tools/prepare-deployment.cjs",
     "presentation": "node 33marketing/presentation/build.cjs",

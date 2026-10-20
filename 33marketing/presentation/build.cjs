@@ -11,7 +11,7 @@ const content = require('./content.cjs');
 const out = path.resolve(process.env.OUT_DIR || path.join(root, '.runtime', 'presentation'));
 const chrome = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const contactEmail = (process.env.CONTACT_EMAIL || '').trim();
-const fonts = path.join(root, 'ch_landing', 'public', 'fonts');
+const fonts = path.join(root, 'website', 'public', 'fonts');
 const screenshot = path.join(__dirname, 'assets', 'app.png');
 const TOTAL = 15;
 

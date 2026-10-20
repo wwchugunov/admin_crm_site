@@ -13,8 +13,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: orbit_admin/package-lock.json
-      - run: npm ci --prefix orbit_admin
+          cache-dependency-path: platform/package-lock.json
+      - run: npm ci --prefix platform
       - run: npm run check
       - name: Validate production Compose
         env:
@@ -23,4 +23,4 @@ jobs:
           CH_APP_ADMIN_DOMAIN: admin.lomviko.com
           CH_SITE_ADMIN_DOMAIN: site-admin.lomviko.com
           CH_WEB_APP_DOMAIN: app.lomviko.com
-        run: docker compose -f orbit_admin/deploy/compose.yaml -f orbit_admin/deploy/compose.website.yaml config --format json | node orbit_admin/deploy/preflight.cjs
+        run: docker compose -f platform/deploy/compose.yaml -f platform/deploy/compose.website.yaml config --format json | node platform/deploy/preflight.cjs

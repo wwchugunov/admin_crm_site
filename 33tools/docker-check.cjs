@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
-const { totp } = require("../orbit_admin/owner/admin-auth.cjs");
+const { totp } = require("../platform/api/admin-auth.cjs");
 const root = path.resolve(__dirname, "..");
 const compose = JSON.parse(
   execFileSync(

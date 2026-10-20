@@ -10,7 +10,7 @@ const fs = require('node:fs'), path = require('node:path'), { pathToFileURL } = 
 const root = path.resolve(__dirname, '..', '..');
 const out = path.resolve(process.env.OUT_DIR || path.join(root, '.runtime', 'legal'));
 const chrome = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const fonts = path.join(root, 'ch_landing', 'public', 'fonts');
+const fonts = path.join(root, 'website', 'public', 'fonts');
 const documents = [
   ['privacy-site.uk.html', 'LOMVIKO-privacy-site-uk'],
   ['privacy-app.uk.html', 'LOMVIKO-privacy-app-uk'],

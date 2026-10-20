@@ -17,8 +17,8 @@ npm run prepare:deployment
 
 ```sh
 mkdir -p /opt/biz
-tar -xzf /root/biz-platform-COMMIT.tar.gz -C /opt/biz
-cd /opt/biz/admin_crm_site/orbit_admin
+tar -xzf /root/lomviko-COMMIT.tar.gz -C /opt/biz
+cd /opt/biz/admin_crm_site/platform
 cp deploy/lomviko.env.example deploy/.env
 chmod 600 deploy/.env
 sh deploy/manage.sh start
@@ -43,11 +43,11 @@ docker compose --env-file .env -f compose.yaml -f compose.website.yaml exec orbi
 sha256sum -c   # сверить архив
 docker stop orbit-admin-orbit-1
 docker run --rm -v orbit-admin_orbit-data:/data -v /root/backups/prod-ДАТА:/backup alpine tar czf /backup/orbit-data.tgz -C /data .
-tar -xzf /root/biz-platform-COMMIT.tar.gz -C /opt/biz
-cd /opt/biz/admin_crm_site/orbit_admin/deploy && sh manage.sh update
+tar -xzf /root/lomviko-COMMIT.tar.gz -C /opt/biz
+cd /opt/biz/admin_crm_site/platform/deploy && sh manage.sh update
 ```
 
-Бэкап тома перед каждым обновлением обязателен. Новые файлы сервера добавляйте в список `COPY` в `orbit_admin/deploy/Dockerfile`, иначе контейнер не запустится.
+Бэкап тома перед каждым обновлением обязателен. Админка сайта и админка продукта запускаются из одного образа `lomviko-platform` (переменная `CH_ADMIN_PROFILE`).
 
 ## Проверка
 

@@ -1,4 +1,0 @@
-const fs=require('node:fs'),path=require('node:path');const{setup}=require('../owner/server.cjs'),{AdminAuth}=require('../owner/admin-auth.cjs');
-const directory=path.resolve(process.argv[2]||process.env.ORBIT_OWNER_DATA||'.owner-data');setup(directory);new AdminAuth({directory,token:'unused',db:null});
-if(process.argv.includes('--show-credentials')){const token=fs.readFileSync(path.join(directory,'admin.secret'),'utf8').trim(),secret=fs.readFileSync(path.join(directory,'admin-totp.secret'),'utf8').trim();console.log('Admin secret: '+token);console.log('Authenticator: otpauth://totp/LOMVIKO%20Admin:owner?secret='+secret+'&issuer=LOMVIKO%20Admin&algorithm=SHA1&digits=6&period=30');}
-else console.log('Credentials created in protected files. Run with --show-credentials on a trusted computer to provision your authenticator.');

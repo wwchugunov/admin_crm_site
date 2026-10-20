@@ -1,9 +1,0 @@
-const crypto=require('node:crypto');
-const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
-function payloadDigest(method,path,bodyHash,token,timestamp,nonce){return Buffer.from(JSON.stringify({method,path,body:bodyHash,token:digest(token),timestamp,nonce}));}
-function payload(method,path,body,token,timestamp,nonce){return payloadDigest(method,path,digest(body||''),token,timestamp,nonce);}
-function signRequest(method,path,body,token,key){const timestamp=Date.now(),nonce=crypto.randomUUID();return{'X-Orbit-Time':String(timestamp),'X-Orbit-Nonce':nonce,'X-Orbit-Proof':crypto.sign(null,payload(method,path,body,token,timestamp,nonce),key).toString('base64url')};}
-function signDigest(method,path,bodyHash,token,key){const timestamp=Date.now(),nonce=crypto.randomUUID();return{'X-Orbit-Time':String(timestamp),'X-Orbit-Nonce':nonce,'X-Orbit-Proof':crypto.sign(null,payloadDigest(method,path,bodyHash,token,timestamp,nonce),key).toString('base64url')};}
-function verifyDigest(req,bodyHash,token,key,db,maxAge=60000){const timestamp=Number(req.headers['x-orbit-time']),nonce=req.headers['x-orbit-nonce'],signature=req.headers['x-orbit-proof'];if(!Number.isSafeInteger(timestamp)||timestamp>Date.now()+60000||Date.now()-timestamp>maxAge||!/^[-a-f0-9]{36}$/.test(nonce||'')||typeof signature!=='string'||signature.length>150||!crypto.verify(null,payloadDigest(req.method,req.url,bodyHash,token,timestamp,nonce),key,Buffer.from(signature,'base64url')))throw Object.assign(Error('Device proof is required'),{status:401});try{db.prepare('INSERT INTO requests VALUES(?,?)').run(nonce,Date.now());}catch{throw Object.assign(Error('Request was already used'),{status:409});}}
-function verifyRequest(req,body,token,key,db){return verifyDigest(req,digest(body||''),token,key,db);}
-module.exports={signRequest,verifyRequest,signDigest,verifyDigest,digest};
