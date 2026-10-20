@@ -90,6 +90,7 @@ function fiscalGroup() {
       more: `<p>${ft(provider === "vchasno" ? "fiscalVchasnoPrice" : "fiscalCheckboxPrice")}</p><p>${ft("fiscalNote")}</p>`,
     });
   };
+  const why = `<div class="fiscal-why"><strong>${ft("fiscalWhyTitle")}</strong><ul><li>${ft("fiscalWhy1")}</li><li>${ft("fiscalWhy2")}</li><li>${ft("fiscalWhy3")}</li></ul></div>`;
   const checkbox = row("checkbox", "₴"),
     vchasno = row("vchasno", "◷");
   const list =

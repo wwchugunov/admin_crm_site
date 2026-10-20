@@ -287,9 +287,10 @@ class Store {
           `CREATE TRIGGER IF NOT EXISTS revision_${table}_${op} AFTER ${op.toUpperCase()} ON ${table} ${bump}`,
         );
     const shown = PROFILE.map((k) => `'${k}'`).join(",");
+    // The list of shown settings grows with new features, so these two triggers are rebuilt on every start.
     for (const op of ["insert", "update"])
       this.db.exec(
-        `CREATE TRIGGER IF NOT EXISTS revision_settings_${op} AFTER ${op.toUpperCase()} ON settings WHEN NEW.key IN (${shown}) ${bump}`,
+        `DROP TRIGGER IF EXISTS revision_settings_${op}; CREATE TRIGGER revision_settings_${op} AFTER ${op.toUpperCase()} ON settings WHEN NEW.key IN (${shown}) ${bump}`,
       );
   }
   revision() {
