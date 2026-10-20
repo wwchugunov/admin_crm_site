@@ -98,7 +98,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
   if(channel==='snapshot'){
    const o=args[0],known=o&&typeof o.revision==='string'?`&revision=${encodeURIComponent(o.revision)}&from=${encodeURIComponent(String(Number(o.from)))}`:'';
    const d=await upstream(req,`/v1/crm/snapshot?window=1&business_id=${encodeURIComponent(s.business)}${known}`,undefined,s);
-   return {...d,update:null,mode:'server',offline:false,cached_at:Date.now(),installation:'',integrations:{...d.integrations,drive:{connected:false},license:{mode:'subscription',label:''},product:{connected:true,loggedIn:true,web:true,user:d.account,businesses:d.businesses,business_id:d.business_id,endpoint:apiPublic,loginAvailable:true,state:'',enforced:true,update:null}}};
+   return {...d,mode:'server',offline:false,cached_at:Date.now(),integrations:{...d.integrations,product:{connected:true,loggedIn:true,web:true,user:d.account,businesses:d.businesses,business_id:d.business_id,endpoint:apiPublic,loginAvailable:true,state:'',enforced:true,update:null}}};
   }
   if(CRM[channel]&&!SHAPE[channel]){const r=await crm(req,s,CRM[channel],args[0]&&typeof args[0]==='object'?args[0]:{});return WHOLE.has(channel)?r:r.value;}
   if(SHAPE[channel]){const r=await crm(req,s,CRM[channel]||SHAPED[channel],SHAPE[channel](...args));return r.value;}

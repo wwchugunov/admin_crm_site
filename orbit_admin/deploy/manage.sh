@@ -11,13 +11,11 @@ compose() { docker compose --env-file .env -f compose.yaml -f compose.website.ya
 compose config --quiet
 case "${1:-start}" in
   start|update)
-    mkdir -p releases
     compose build
     trap 'rm -f .preflight-config.tmp' EXIT HUP INT TERM
     (umask 077; compose config --format json > .preflight-config.tmp)
-    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node lomviko-platform:2.0.0 tools/deployment-preflight.cjs < .preflight-config.tmp
+    docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node "$(sed -n 's/^ *image: \(lomviko-platform:[0-9.]*\)$/\1/p' compose.yaml | head -1)" tools/deployment-preflight.cjs < .preflight-config.tmp
     rm -f .preflight-config.tmp
-    compose run --rm --no-deps release-init
     compose up -d --wait --wait-timeout 180
     compose ps
     ;;

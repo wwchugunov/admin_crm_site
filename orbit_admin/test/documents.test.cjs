@@ -79,9 +79,9 @@ test('Public downloads serve the current file with safe headers and detect tampe
 });
 test('Rejected requests are logged by normalized address for diagnostics',async t=>{
  const f=await fixture(t);
- for(let i=0;i<3;i++)await fetch(f.url+'/v1/heartbeat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_id:'unknown-device'})});
+ for(let i=0;i<3;i++)await fetch(f.url+'/v1/crm/snapshot',{headers:{Authorization:'Bearer unknown-session'}});
  await fetch(f.url+'/public/documents/presentation/uk');
  const routes=(await f.call('/admin/snapshot')).value.security.routes;
- assert(routes.some(r=>r.route==='/v1/heartbeat'&&r.status===403&&r.count===3),JSON.stringify(routes));
+ assert(routes.some(r=>r.route==='/v1/crm/snapshot'&&r.status===401&&r.count===3),JSON.stringify(routes));
  assert(routes.every(r=>!/[0-9a-f]{8}-[0-9a-f]{4}/.test(r.route)));
 });

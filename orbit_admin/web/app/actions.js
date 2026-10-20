@@ -433,7 +433,6 @@ const actions = {
     selectedDate = businessDate(Date.now());
     render();
   },
-  "setup-local": () => onboarding(),
   "welcome-skip": () => closeModal(),
   "go-catalog": () => {
     page = "catalog";

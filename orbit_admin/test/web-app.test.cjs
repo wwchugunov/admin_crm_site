@@ -25,7 +25,7 @@ test('Web app: sign in, work with the company, sign out',async t=>{
  await assert.rejects(b.call('account:login','','owner@lira.test','wrong-password-1'),e=>e.status===401);
  await b.call('account:login','','owner@lira.test','owner-password-1');
  assert.match(b.jar.get('lv_session'),/^[\w-]+\.[a-f0-9-]{36}\.[a-f0-9]{16}$/);
- const s=await b.call('snapshot');assert.equal(s.mode,'server');assert.equal(s.business_id,f.businessId);assert.equal(s.update,null);
+ const s=await b.call('snapshot');assert.equal(s.mode,'server');assert.equal(s.business_id,f.businessId);assert.equal(s.update,undefined);
  const client=await b.call('client:add',{name:'Анна',phone:'+380671112233',birthday:'1990-01-02'});
  const visit=await b.call('booking:add',{client_id:client,service_id:f.service,resource_ids:[f.olena],start:Date.now()+86400000});
  await b.call('booking:status',visit,'completed');
@@ -34,7 +34,7 @@ test('Web app: sign in, work with the company, sign out',async t=>{
  await assert.rejects(b.call('drive:connect'),e=>e.status===404);
  const exported=await b.send('/web/export',{format:'json'});assert.equal(exported.status,200);assert.ok(JSON.parse(await exported.text()).tables.clients.length>=1);
  await b.call('account:logout');await assert.rejects(b.call('snapshot'),e=>e.status===401);
- // The device is labelled as a browser and is not asked to install desktop updates.
+ // The device is labelled as a browser.
  assert.equal(f.owner.db.prepare('SELECT platform FROM devices').get().platform,'web');
 });
 test('Web app: requests from other sites are refused',async t=>{

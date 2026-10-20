@@ -42,7 +42,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:2.0.2
+    image: lomviko-platform:2.1.0
     pull_policy: never
     command: [node, web/server.cjs]
     restart: unless-stopped
@@ -70,7 +70,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # LOMVIKO in the browser: the company workspace (former desktop app).
   app-web:
-    image: lomviko-platform:2.0.2
+    image: lomviko-platform:2.1.0
     pull_policy: never
     command: [node, web/app-server.cjs]
     restart: unless-stopped
@@ -97,7 +97,7 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   site-admin:
-    image: lomviko-site-admin:0.1.3
+    image: lomviko-site-admin:0.2.0
     build:
       context: ${CH_SITE_ADMIN_CONTEXT:-../../landing_admin}
       dockerfile: deploy/Dockerfile
@@ -124,18 +124,6 @@ services:
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
-  release-init:
-    image: lomviko-platform:2.0.2
-    profiles: [setup]
-    user: '0:0'
-    read_only: true
-    network_mode: none
-    security_opt: [no-new-privileges:true]
-    cap_drop: [ALL]
-    cap_add: [CHOWN, FOWNER]
-    volumes: [./releases:/releases:z]
-    command: [node, -e, "const fs=require('node:fs');fs.chownSync('/releases',1000,1000);fs.chmodSync('/releases',0o700)"]
-
 networks:
   mail:
     name: lomviko-mail_default

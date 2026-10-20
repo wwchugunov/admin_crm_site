@@ -38,12 +38,11 @@ function validate(input) {
   return { enabled: input.enabled, contactEmail, locales, announcements };
 }
 class PublicSite {
-  constructor(store, updates) {
-    this.store = store; this.db = store.db; this.updates = updates;
+  constructor(store) {
+    this.store = store; this.db = store.db;
     this.db.exec(`CREATE TABLE IF NOT EXISTS site_content(id INTEGER PRIMARY KEY CHECK(id=1),draft TEXT NOT NULL,published TEXT NOT NULL,revision INTEGER NOT NULL,published_revision INTEGER NOT NULL,updated_at INTEGER NOT NULL,published_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS site_history(revision INTEGER PRIMARY KEY,content TEXT NOT NULL,at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS site_leads(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,business TEXT NOT NULL,message TEXT NOT NULL,language TEXT NOT NULL,stage TEXT NOT NULL,created_at INTEGER NOT NULL);
-      CREATE TABLE IF NOT EXISTS site_downloads(day TEXT NOT NULL,version TEXT NOT NULL,platform TEXT NOT NULL,arch TEXT NOT NULL,requested INTEGER NOT NULL DEFAULT 0,completed INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(day,version,platform,arch));
       CREATE TABLE IF NOT EXISTS security_rejections(minute INTEGER NOT NULL,category TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,category,status));
       CREATE TABLE IF NOT EXISTS security_rejection_routes(minute INTEGER NOT NULL,route TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,route,status));`);
     const content = JSON.stringify(defaults()), now = Date.now();
@@ -52,7 +51,7 @@ class PublicSite {
   state() { return this.db.prepare('SELECT * FROM site_content WHERE id=1').get(); }
   admin() {
     const row = this.state();
-    return { draft: validate(JSON.parse(row.draft)), published: validate(JSON.parse(row.published)), revision: row.revision, publishedRevision: row.published_revision, publishedAt: row.published_at, leads: this.db.prepare('SELECT * FROM site_leads ORDER BY created_at DESC LIMIT 200').all(), leadCount: this.db.prepare('SELECT count(*) n FROM site_leads').get().n, downloads: this.db.prepare('SELECT * FROM site_downloads ORDER BY day DESC LIMIT 200').all(), downloadTotals: this.db.prepare('SELECT COALESCE(sum(requested),0) requested,COALESCE(sum(completed),0) completed FROM site_downloads').get() };
+    return { draft: validate(JSON.parse(row.draft)), published: validate(JSON.parse(row.published)), revision: row.revision, publishedRevision: row.published_revision, publishedAt: row.published_at, leads: this.db.prepare('SELECT * FROM site_leads ORDER BY created_at DESC LIMIT 200').all(), leadCount: this.db.prepare('SELECT count(*) n FROM site_leads').get().n };
   }
   save(data) {
     const content = JSON.stringify(validate(data.content));
@@ -75,11 +74,7 @@ class PublicSite {
   public() {
     const row = this.state(), content = validate(JSON.parse(row.published));
     if (!content.enabled) fail('Website temporarily unavailable', 503);
-    const releases = [];
-    for (const platform of ['mac', 'win']) for (const arch of ['x64', 'arm64']) {
-      const r = this.updates.latest(platform, arch); if (r) releases.push({ version: r.version, platform, arch, sha256: r.sha256, size: r.size, notes: r.notes, publishedAt: r.published_at, path: `/public/download/${r.version}/${platform}/${arch}` });
-    }
-    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), releases, documents: this.documents?.public() || {}, demoAvailable: !!content.contactEmail };
+    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), documents: this.documents?.public() || {}, demoAvailable: !!content.contactEmail };
   }
   lead(data) {
     if (!this.public().demoAvailable) fail('Demo requests are not configured yet', 503);
@@ -99,10 +94,6 @@ class PublicSite {
     this.store.event('site.lead.updated'); return { ok: true };
   }
   deleteLead(data) { this.mail?.cancelLead(data.id);this.db.prepare('DELETE FROM site_leads WHERE id=?').run(data.id); this.store.event('site.lead.deleted'); return { ok: true }; }
-  countDownload(r, complete = false) {
-    const day = new Date().toISOString().slice(0,10);
-    this.db.prepare(`INSERT INTO site_downloads VALUES(?,?,?,?,?,?) ON CONFLICT(day,version,platform,arch) DO UPDATE SET ${complete?'completed=completed+1':'requested=requested+1'}`).run(day, r.version, r.platform, r.arch, complete?0:1, complete?1:0);
-  }
   reject(route, status) {
     const category = route.startsWith('/admin/') ? 'admin' : route.startsWith('/public/') ? 'website' : 'client';
     const minute = Math.floor(Date.now()/60000)*60000;

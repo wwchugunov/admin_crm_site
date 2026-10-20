@@ -3,7 +3,7 @@
   const messages={perpetualAccess:{uk:"Безстроковий доступ",en:"Perpetual access"},
 "fiveMinutes":{"uk": "5 хвилин", "en": "5 minutes"},"companyBots":{"uk": "Боти компаній", "en": "Company bots"},"botWaiting":{"uk": "Очікує запуску", "en": "Waiting for worker"},"botOnOwnServer":{"uk": "Власний сервер", "en": "Own server"},"botNotConnected":{"uk": "Не підключено", "en": "Not connected"},"trialStarted":{"uk": "Початок пробного періоду", "en": "Trial started"},"registrationRequested":{"uk": "Реєстрація", "en": "Registration"},"botExternalOnline":{"uk": "✓ Власний сервер", "en": "✓ Own server"},"botExternalWaiting":{"uk": "Очікує запуску на власному сервері", "en": "Waiting for your server"},
 "panelTitle": {"uk": "Адмін-панель застосунку", "en": "Application admin panel"},
-"panelName": {"uk": "Застосунок", "en": "App admin"},
+"panelName": {"uk": "LOMVIKO", "en": "App admin"},
   "m000": {
     "uk": "Підтверджено",
     "en": "Confirmed"
@@ -1521,12 +1521,12 @@
     "en": "Companies, contacts and access terms."
   },
   "m379": {
-    "uk": "Пристрої та ліцензії",
-    "en": "Devices and licenses"
+    "uk": "Пристрої",
+    "en": "Devices"
   },
   "m380": {
-    "uk": "Активації, версії та останнє підключення.",
-    "en": "Activations, versions and last connections."
+    "uk": "Браузери й телефони, з яких входять у LOMVIKO, і останній вхід.",
+    "en": "Browsers and phones used to sign in to LOMVIKO, with the last sign-in."
   },
   "m381": {
     "uk": "Завантаження",
@@ -1629,11 +1629,11 @@
     "en": "By last device connection"
   },
   "m406": {
-    "uk": "Активовані пристрої",
+    "uk": "Браузери й телефони",
     "en": "Activated devices"
   },
   "m407": {
-    "uk": "З доступом до сервера",
+    "uk": "Зараз мають вхід",
     "en": "With server access"
   },
   "m408": {
@@ -3045,8 +3045,8 @@
 "demoCredentials":{"uk": "Дані демодоступу — збережіть зараз", "en": "Demo credentials — save now"},
 "revokeKey":{"uk": "Відкликати ключ", "en": "Revoke key"},
 "licenseAccounts":{"uk": "Клієнти", "en": "Customers"},
-"licenseActive":{"uk": "Чинні ліцензії", "en": "Active licenses"},
-"licenseTrial":{"uk": "Демоліцензії", "en": "Demo licenses"},
+"licenseActive":{"uk": "Входи з доступом", "en": "Sign-ins with access"},
+"licenseTrial":{"uk": "На пробному періоді", "en": "On free trial"},
 "licenseBlocked":{"uk": "Вимкнені / прострочені", "en": "Disabled / expired"},
 "totpCode":{"uk": "Код автентифікатора", "en": "Authenticator code"},
 "totpHint":{"uk": "Віддалений доступ: секрет адміністратора та одноразовий код. Сесія діє 15 хвилин.", "en": "Remote access requires the admin secret and a one-time code. Sessions last 15 minutes."},

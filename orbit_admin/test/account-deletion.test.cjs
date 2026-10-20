@@ -63,5 +63,5 @@ test('A revoked device is signed out at once and can sign in again with the pass
  const r=await again();assert.equal(r.status,200,JSON.stringify(r.value));assert.equal(r.value.device_id,device);
  assert.equal(f.store.db.prepare('SELECT revoked FROM devices WHERE id=?').get(device).revoked,0);
  assert.equal(f.count("SELECT count(*) n FROM events WHERE event='device.reactivated'"),1);
- assert(r.value.update,'the reactivated device receives update information');
+ 
 });

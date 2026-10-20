@@ -11,7 +11,6 @@ const {Mailer}=require('./mail.cjs');
 const {Registration}=require('./registration.cjs');
 const {PasswordReset}=require('./password-reset.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
-const {Releases,version:stableVersion}=require('./releases.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
@@ -75,21 +74,16 @@ class ProductStore {
     return { users, businesses:this.db.prepare('SELECT b.*,u.name owner_name FROM businesses b JOIN users u ON u.id=b.account_id ORDER BY b.name').all(), devices: this.db.prepare('SELECT d.id,d.user_id,d.platform,d.version,d.activated_at,d.last_seen,d.revoked,u.name user_name,u.business FROM devices d JOIN users u ON u.id=d.user_id ORDER BY last_seen DESC').all(), events: this.db.prepare('SELECT e.*,u.name user_name,u.email FROM events e LEFT JOIN users u ON u.id=e.user_id ORDER BY at DESC LIMIT 500').all() };
   }
 }
-function createProductServer({ store, adminToken, privateKey, publicKey, releases = {}, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,releaseDirectory=path.join(store.directory,'releases'),documentDirectory=path.join(store.directory,'documents'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
+function createProductServer({ store, adminToken, privateKey, publicKey, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,documentDirectory=path.join(store.directory,'documents'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
   const rates = new Map();
   const administrator=new AdminAuth({directory:store.directory,token:adminToken,db:store.db,local:allowLocalAdmin});
   const members=new AdminMembers({db:store.db,mail:null,adminUrl:process.env.CH_PRODUCT_ADMIN_URL||(process.env.CH_APP_ADMIN_DOMAIN?'https://'+process.env.CH_APP_ADMIN_DOMAIN:''),totp,base32});administrator.members=members;
-  const updates=new Releases(store,privateKey,releaseDirectory);
-  const website=new PublicSite(store,updates);
+  const website=new PublicSite(store);
   const documents=new Documents(store,documentDirectory);website.documents=documents;
   const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;members.mail=mail;
   const support=new Support({store,mail,fail});
   function admin(req){return administrator.verify(req);}
-  function license(device, user) {
-    const now = Date.now(); const claims = Buffer.from(JSON.stringify({ version: 1, license_id:device, kind:user.stage==='trial'?'demo':'subscription', trial:user.stage==='trial', installation: device, customer: user.business, issued: now, expires: Math.min(user.expires, now + 300000) }));
-    return `${claims.toString('base64url')}.${crypto.sign(null, claims, privateKey).toString('base64url')}`;
-  }
-  const accounts=new Accounts({store,directory:businessDirectory,body,fail,string,license,telegramFactory,updates});
+  const accounts=new Accounts({store,directory:businessDirectory,body,fail,string,telegramFactory});
   const registration=new Registration({store,accounts,mail,fail,string});
   const reset=new PasswordReset({store,mail,fail,string,key:registration.key});
   const botWorkers=new BotWorkers({store,accounts,fail});accounts.botWorkers=botWorkers;
@@ -102,17 +96,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
   const notify=new Notify({db:store.db,accounts,mail,fail});accounts.notify=notify;
   // Booking pages live on the website domain (lomviko.com/b/<address>); the API domain serves them too.
   const bookingPage=new BookingPage({db:store.db,accounts,fail,booking:accounts.websiteBooking,publicUrl:process.env.CH_BOOKING_URL||(process.env.CH_WEBSITE_DOMAIN?'https://'+process.env.CH_WEBSITE_DOMAIN:(process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')))});accounts.bookingPage=bookingPage;
-  function authenticatedDevice(data) {
-    const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64));
-    if (!device || device.revoked) fail(403, OrbitI18n.t('m371'));
-    if (!Number.isSafeInteger(data.timestamp) || Math.abs(Date.now() - data.timestamp) > 15*60000 || typeof data.request_id !== 'string' || !/^[a-f0-9-]{36}$/.test(data.request_id)) fail(401, OrbitI18n.t('m676'));
-    const payload = JSON.stringify({ device_id: data.device_id, timestamp: data.timestamp, request_id: data.request_id, platform: data.platform, version: data.version,...(data.arch?{arch:data.arch}:{}) });
-    if (typeof data.signature !== 'string' || data.signature.length > 150 || !crypto.verify(null, Buffer.from(payload), device.public_key, Buffer.from(data.signature, 'base64url'))) fail(401, OrbitI18n.t('m676'));
-    if (store.db.prepare('SELECT id FROM requests WHERE id=?').get(data.request_id)) fail(409, OrbitI18n.t('m677'));
-    const user = store.db.prepare('SELECT * FROM users WHERE id=?').get(device.user_id);
-    accounts.allowed(user);
-    return { device, user };
-  }
+
   const server = http.createServer(async (req, res) => {
     const reply = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(JSON.stringify(value)); };
     try {
@@ -142,7 +126,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, release
         if(req.method==='POST'&&route==='/admin/documents/activate')return reply(200,documents.activate(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/documents/delete')return reply(200,documents.delete(req.parsedBody));
         if(req.method==='GET'&&route==='/admin/documents/file')return await documents.send(res,documents.owned({id:url.searchParams.get('id')||'',kind:url.searchParams.get('kind')||undefined}));
-        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),supportRequests:support.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),releases:updates.list(),policies:store.db.prepare('SELECT * FROM update_policies').all(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage,COALESCE(b.arch,'x64') arch FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id LEFT JOIN device_builds b ON b.device_id=d.id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
+        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),supportRequests:support.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
         if(req.method==='POST'&&route==='/admin/mail/settings')return reply(200,mail.save(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/mail/verify')return reply(200,await mail.verify());
         if(req.method==='POST'&&route==='/admin/mail/test'){const c=mail.settings();if(!mail.configured())fail(400,'Configure SMTP first');mail.enqueue('test',c.fromEmail,req.parsedBody.language||'uk',{});return reply(201,{queued:true});}
@@ -167,7 +151,6 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
           if(req.method==='POST'&&route==='/admin/business/service'){if(data.id)runtime.store.updateService(data);else runtime.store.addService(data);return reply(200,{ok:true});}
           if(req.method==='POST'&&route==='/admin/business/resource'){runtime.store.addResource(data);return reply(200,{ok:true});}fail(404,OrbitI18n.t('m652'));
         }
-        if (req.method === 'POST' && route === '/admin/invite') { const data = await body(req); return reply(201, store.invite(string(data.user_id, 64))); }
         if (req.method === 'POST' && route === '/admin/user') {
           const data = await body(req); const user = store.db.prepare('SELECT * FROM users WHERE id=?').get(string(data.id, 64)); if (!user) fail(404, OrbitI18n.t('m641'));
           const stages = ['lead', 'trial', 'active', 'blocked']; if (!stages.includes(data.stage)) fail(400, OrbitI18n.t('m544'));
@@ -178,7 +161,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
         // Permanent deletion; the panel must repeat the user's email so a misclick cannot erase an account.
         if (req.method === 'POST' && route === '/admin/user/delete') { const data = await body(req), user = store.db.prepare('SELECT * FROM users WHERE id=?').get(string(data.id, 64)); if (!user) fail(404, OrbitI18n.t('m641')); if (typeof data.confirm !== 'string' || data.confirm.trim().toLowerCase() !== user.email.toLowerCase()) fail(400, 'Введіть email користувача для підтвердження / Type the user email to confirm'); return reply(200, deletion.delete(user.id)); }
         if (req.method === 'POST' && route === '/admin/revoke') { const data = await body(req); const device = store.db.prepare('SELECT * FROM devices WHERE id=?').get(string(data.device_id, 64)); if (!device) fail(404, OrbitI18n.t('m680')); store.db.prepare('UPDATE devices SET revoked=1 WHERE id=?').run(device.id); store.db.prepare('DELETE FROM sessions WHERE device_id=?').run(device.id);store.event('device.revoked', device.user_id, device.id); return reply(200, { ok: true }); }
-        if (req.method === 'GET' && route === '/admin/export') { const data = {}; for (const table of ['users', 'devices', 'events','businesses','memberships','releases','update_policies','device_builds','update_backups','site_content','site_history','site_leads','site_downloads','security_rejections','purchases']) data[table] = store.db.prepare(`SELECT * FROM ${table}`).all().map(row=>{const copy={...row};delete copy.password_hash;return copy;}); return reply(200, { format: 'orbit-owner', version: 1, exported_at: new Date().toISOString(), tables: data }); }
+        if (req.method === 'GET' && route === '/admin/export') { const data = {}; for (const table of ['users', 'devices', 'events','businesses','memberships','site_content','site_history','site_leads','security_rejections','purchases']) data[table] = store.db.prepare(`SELECT * FROM ${table}`).all().map(row=>{const copy={...row};delete copy.password_hash;return copy;}); return reply(200, { format: 'orbit-owner', version: 1, exported_at: new Date().toISOString(), tables: data }); }
         fail(404, OrbitI18n.t('m652'));
       }
       // Signed-in requests are counted per session, so colleagues behind one office router do not share a limit.
@@ -199,43 +182,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
       if(await registration.handle(req,url,reply))return;
       if(await reset.handle(req,url,reply))return;
       if(await accounts.handle(req,res,url,reply))return;
-      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,updates:true,device_proof:true,support:support.contact() });
-      if (req.method === 'POST' && route === '/v1/challenge') {
-        const data = await body(req), invitation = store.findInvite(data.token, true);
-        accounts.allowed(store.db.prepare('SELECT * FROM users WHERE id=?').get(invitation.user_id));if (invitation.user_expires <= Date.now()) fail(403, OrbitI18n.t('m682'));
-        let key; try { key = crypto.createPublicKey(string(data.public_key, 1000)); } catch { fail(400, OrbitI18n.t('m646')); }
-        if (key.asymmetricKeyType !== 'ed25519') fail(400, OrbitI18n.t('m647'));
-        const challengeId = id(), nonce = crypto.randomBytes(32).toString('base64url');
-        store.db.prepare('INSERT INTO challenges VALUES(?,?,?,?,?)').run(challengeId, invitation.id, key.export({ type: 'spki', format: 'pem' }), nonce, Date.now() + 300000);
-        return reply(200, { challenge_id: challengeId, nonce });
-      }
-      if (req.method === 'POST' && route === '/v1/enroll') {
-        const data = await body(req); const challenge = store.db.prepare('SELECT * FROM challenges WHERE id=?').get(string(data.challenge_id, 64));
-        if (!challenge || challenge.expires <= Date.now()) fail(401, OrbitI18n.t('m683'));
-        const proof = Buffer.from(JSON.stringify({ challenge_id: challenge.id, nonce: challenge.nonce }));
-        if (typeof data.signature !== 'string' || data.signature.length > 150 || !crypto.verify(null, proof, challenge.public_key, Buffer.from(data.signature, 'base64url'))) fail(401, OrbitI18n.t('m684'));
-        if(!['x64','arm64'].includes(data.arch||'x64'))fail(400,'Unsupported architecture');
-        const platform = string(data.platform, 30), version = stableVersion(string(data.version, 30));
-        const installation = hash(crypto.createPublicKey(challenge.public_key).export({ type: 'spki', format: 'der' }));
-        const user = store.transaction(() => {
-          const invitation = store.db.prepare('SELECT * FROM invites WHERE id=?').get(challenge.invite_id), user = store.db.prepare('SELECT * FROM users WHERE id=?').get(invitation.user_id);
-          if (invitation.used_at || invitation.expires <= Date.now() || user.stage === 'blocked' || user.expires <= Date.now()) fail(403, OrbitI18n.t('m685'));
-          const account=accounts.allowed(user);const current = store.db.prepare('SELECT * FROM devices WHERE id=?').get(installation);
-          if (current && (current.user_id !== user.id || current.revoked)) fail(403, OrbitI18n.t('m686'));
-          const count = store.db.prepare('SELECT count(*) n FROM devices d JOIN users u ON u.id=d.user_id WHERE COALESCE(u.account_id,u.id)=? AND d.revoked=0').get(account.id).n;
-          if (!current && count >= account.max_devices) fail(403, OrbitI18n.t('m687'));
-          if (!current) store.db.prepare('INSERT INTO devices VALUES(?,?,?,?,?,?,?,0)').run(installation, user.id, challenge.public_key, platform, version, Date.now(), Date.now());
-          store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(), invitation.id); store.db.prepare('DELETE FROM challenges WHERE id=?').run(challenge.id);
-          store.event('device.activated', user.id, installation, platform, version); return user;
-        });
-        store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(installation,data.arch||'x64');return reply(200, { device_id: installation, business: user.business, license: accounts.licenseAccount(installation, user) });
-      }
-      if (req.method === 'POST' && route === '/v1/heartbeat') {
-        const data = await body(req), { device, user } = authenticatedDevice(data);stableVersion(data.version); const platform = string(data.platform, 30), version = stableVersion(string(data.version, 30));
-        store.transaction(() => { store.db.prepare('INSERT INTO requests VALUES(?,?)').run(data.request_id, Date.now()); store.db.prepare('UPDATE devices SET last_seen=?,platform=?,version=? WHERE id=?').run(Date.now(), platform, version, device.id); });
-        if(data.arch&&['x64','arm64'].includes(data.arch))store.db.prepare('INSERT INTO device_builds VALUES(?,?) ON CONFLICT(device_id) DO UPDATE SET arch=excluded.arch').run(device.id,data.arch);return reply(200, { license: accounts.licenseAccount(device.id, user), business: user.business,update:updates.sign(updates.status({...device,version:data.version},accounts.account(user))) });
-      }
-      if(req.method==='GET'&&route==='/v1/releases')return reply(200,updates.sign({releases:updates.list().filter(r=>!r.withdrawn)}));
+      if (req.method === 'GET' && route === '/v1/info') return reply(200, { product: 'LOMVIKO', public_key: publicKey, protocol: 2,support:support.contact() });
       fail(404, OrbitI18n.t('m652'));
     } catch (error) { if(!error.status&&error.constructor===Error&&!error.code&&new URL(req.url,'http://localhost').pathname.startsWith('/v1/crm/'))error.status=400; if(!error.status&&!error.code?.startsWith?.('SQLITE_CONSTRAINT'))console.error('LOMVIKO request failed:',new URL(req.url,'http://localhost').pathname,error.stack||error.message); if([401,403,409,429].includes(error.status))website.reject(new URL(req.url,'http://localhost').pathname,error.status);if (!res.headersSent && !res.destroyed) reply(error.status || (error.code?.startsWith('SQLITE_CONSTRAINT')||[19,2067,1555].includes(error.errcode) ? 409 : 500), { error: error.status ? error.message : OrbitI18n.t('m689'),...(error.update?{update:error.update}:{}) }); else res.destroy(); }
   });
@@ -270,7 +217,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
     await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
-  server.mail=mail;server.retention=retention;server.updates=updates;server.documents=documents;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
+  server.mail=mail;server.retention=retention;server.documents=documents;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
   server.requestTimeout = 15*60000; server.headersTimeout = 10000;
   return server;
 }
@@ -279,7 +226,7 @@ if (require.main === module) {
   const directory = path.resolve(process.env.ORBIT_OWNER_DATA || path.join(process.cwd(), '.owner-data')); const keys = setup(directory);
   const store = new ProductStore(path.join(directory, 'owner.sqlite'));
   const port = Number(process.env.PORT || 4545), host = process.env.ORBIT_OWNER_HOST || '127.0.0.1';
-  const server = createProductServer({ store, ...keys, allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1',releaseDirectory:path.resolve(process.env.ORBIT_RELEASES_DIR||path.join(directory,'releases')) });
+  const server = createProductServer({ store, ...keys, allowLocalMail:process.env.CH_LOCAL_TEST_MODE==='1',trustProxy:process.env.ORBIT_TRUST_PROXY==='1' });
   let stopping = false;
   const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('LOMVIKO shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);

@@ -1,7 +1,7 @@
 name: orbit-admin
 services:
   orbit:
-    image: lomviko-platform:2.0.2
+    image: lomviko-platform:2.1.0
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -16,7 +16,6 @@ services:
       ORBIT_OWNER_HOST: 0.0.0.0
       ORBIT_TRUST_PROXY: '1'
       PORT: '4545'
-      ORBIT_RELEASES_DIR: /releases
       # Address of the product admin panel, used in administrator invitation emails.
       CH_APP_ADMIN_DOMAIN: ${CH_APP_ADMIN_DOMAIN:-}
       # Public API address for payment callbacks (monobank, LiqPay).
@@ -25,7 +24,6 @@ services:
       CH_WEBSITE_DOMAIN: ${ORBIT_WEBSITE_DOMAIN:-}
     volumes:
       - orbit-data:/data
-      - ./releases:/releases:z
     expose: ['4545']
     stop_grace_period: 60s
     healthcheck:

@@ -17,22 +17,24 @@ class AccountDeletion{
   const{user,owner,users,businesses}=this.plan(userId),ids=users.map(u=>u.id),emails=users.map(u=>u.email.toLowerCase());
   for(const b of businesses){const runtime=this.accounts.businesses.instances.get(b.id);if(runtime?.telegram.busy||this.accounts.botWorkers?.work.has(b.id))this.fail(409,'Бот компанії зараз працює, спробуйте за хвилину / Company bot is busy, try again in a minute');}
   const each=(sql,values)=>{const statement=this.db.prepare(sql);for(const v of values)statement.run(v);};
+  // Tables left by the archived desktop app exist only in databases created before the web version.
+  const legacy=table=>Boolean(this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table));
   this.store.transaction(()=>{
-   for(const b of businesses){for(const table of ['web_requests','bot_workers','bot_messages','bot_updates','update_backups','memberships'])this.db.prepare(`DELETE FROM ${table} WHERE business_id=?`).run(b.id);}
+   for(const b of businesses){for(const table of ['web_requests','bot_workers','bot_messages','bot_updates',...(legacy('update_backups')?['update_backups']:[]),'memberships'])this.db.prepare(`DELETE FROM ${table} WHERE business_id=?`).run(b.id);}
    each('DELETE FROM sessions WHERE user_id=?',ids);
    each('DELETE FROM login_challenges WHERE user_id=?',ids);
    const devices=ids.flatMap(id=>this.db.prepare('SELECT id FROM devices WHERE user_id=?').all(id).map(d=>d.id));
    each('DELETE FROM trial_consumptions WHERE device=?',devices);
    each('DELETE FROM trial_consumptions WHERE email_hash=?',emails.map(e=>crypto.createHash('sha256').update(e).digest('hex')));
    each('DELETE FROM sessions WHERE device_id IN(SELECT id FROM devices WHERE user_id=?)',ids);
-   each('DELETE FROM device_builds WHERE device_id IN(SELECT id FROM devices WHERE user_id=?)',ids);
+   if(legacy('device_builds'))each('DELETE FROM device_builds WHERE device_id IN(SELECT id FROM devices WHERE user_id=?)',ids);
    each('DELETE FROM devices WHERE user_id=?',ids);
    each('DELETE FROM challenges WHERE invite_id IN(SELECT id FROM invites WHERE user_id=?)',ids);
    each('DELETE FROM invites WHERE user_id=?',ids);
    each('DELETE FROM memberships WHERE user_id=?',ids);
    each('DELETE FROM events WHERE user_id=?',ids);
-   each('DELETE FROM update_policies WHERE scope=?',ids);
-   each('DELETE FROM update_backups WHERE user_id=?',ids);
+   if(legacy('update_policies'))each('DELETE FROM update_policies WHERE scope=?',ids);
+   if(legacy('update_backups'))each('DELETE FROM update_backups WHERE user_id=?',ids);
    each('DELETE FROM mail_outbox WHERE user_id=?',ids);
    each('DELETE FROM mail_outbox WHERE lower(recipient)=?',emails);
    each('DELETE FROM registration_pending WHERE lower(email)=?',emails);

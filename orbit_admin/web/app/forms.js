@@ -16,27 +16,6 @@ function profileValues(form) {
   if (selectedLogo !== undefined) values.logo = selectedLogo;
   return values;
 }
-function onboarding() {
-  selectedLogo = undefined;
-  modal(
-    OrbitI18n.t("m058"),
-    `<div class="initial-setup"><p class="hint">${OrbitI18n.t("m059")}</p><button class="secondary" type="button" data-action="login">${OrbitI18n.t("m060")}</button></div>` +
-      field(
-        OrbitI18n.t("m061"),
-        "business",
-        "text",
-        `required maxlength="120" placeholder="${OrbitI18n.t("m062")}"`,
-      ) +
-      `<label>${OrbitI18n.t("m063")}</label><select name="industry"><option value="beauty">${OrbitI18n.t("m064")}</option><option value="auto">${OrbitI18n.t("m065")}</option><option value="universal">${OrbitI18n.t("m066")}</option></select>` +
-      profileInputs(data),
-    async (values) => {
-      await window.orbit.call("settings:save", values);
-      selectedLogo = undefined;
-      toast(OrbitI18n.t("m067"));
-    },
-    OrbitI18n.t("m068"),
-  );
-}
 function field(label, name, type = "text", extras = "") {
   return `<label for="field-${name}">${label}</label><input id="field-${name}" name="${name}" type="${type}" ${extras}>`;
 }

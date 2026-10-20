@@ -37,7 +37,6 @@ let data,
   modalNeedsConnection = true,
   toastTimer,
   selectedLogo,
-  welcomed = false,
   financeMonth = new Date().toISOString().slice(0, 7),
   team = [],
   appVersion = "";
@@ -261,23 +260,7 @@ async function refresh({ preserveView = false } = {}) {
         ),
       250,
     );
-  if (
-    !welcomed &&
-    !data.onboarded &&
-    data.mode === "local" &&
-    !data.connecting
-  ) {
-    welcomed = true;
-    setTimeout(
-      () => {
-        // Only the short tour opens by itself, once. Sign-in and setup live in
-        // the banner on the schedule, so the app never blocks on start-up.
-        if ($("#modal").open || data.mode === "server") return;
-        if (!localStorage.getItem("biz.welcome.seen")) OrbitWelcome.start();
-      },
-      matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1350,
-    );
-  }
+
 }
 const onlineActions = new Set([
   "book",
@@ -300,12 +283,9 @@ const onlineActions = new Set([
   "export-json",
   "export-csv",
   "backup",
-  "drive-now",
 ]);
 function connectionView() {
-  const update = data.integrations.product.update,
-    blocked = Boolean(update?.mandatory),
-    offline = Boolean(data.offline),
+  const offline = Boolean(data.offline),
     remote = data.mode === "server";
   $("#mode-pill").textContent = remote
     ? offline
@@ -319,11 +299,6 @@ function connectionView() {
       ? OrbitI18n.t("m024")
       : OrbitI18n.t("m025")
     : OrbitI18n.t("m026");
-  const banner = $("#update-notice");
-  banner.hidden = !update?.available && !blocked;
-  banner.innerHTML = update
-    ? `<strong>${OrbitI18n.t(blocked ? "updateBlockedBanner" : "updateAvailable")} ${escape(update.release?.version || "")}</strong><p>${escape(update.message || "")}${update.deadline ? ` · ${OrbitI18n.t("pendingUpdate")} ${new Date(update.deadline).toLocaleString(OrbitI18n.locale())}` : ""}</p><button class="primary" data-action="update-download">${OrbitI18n.t("updateButton")}</button>`
-    : "";
   const notice = $("#connection-notice");
   notice.hidden = !offline;
   notice.textContent = offline
@@ -341,16 +316,12 @@ function connectionView() {
   );
   for (const el of controls) {
     if (
-      (offline ||
-        (blocked &&
-          !["export-json", "export-csv", "backup"].includes(
-            el.dataset.action,
-          ))) &&
+      offline &&
       !el.disabled
     ) {
       el.dataset.offlineDisabled = "1";
       el.disabled = true;
-    } else if (!offline && !blocked && el.dataset.offlineDisabled) {
+    } else if (!offline && el.dataset.offlineDisabled) {
       delete el.dataset.offlineDisabled;
       el.disabled = false;
     }
