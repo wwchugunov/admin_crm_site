@@ -15,7 +15,7 @@ const CRM={'client:add':'client','client:update':'client/update','client:delete'
  'waitlist:add':'waitlist','waitlist:remove':'waitlist/remove','telegram:disconnect':'telegram/disconnect','monobank:invoice':'monobank/invoice','monobank:cancel':'monobank/cancel',
  'liqpay:connect':'liqpay/connect','liqpay:invoice':'liqpay/invoice','liqpay:cancel':'liqpay/cancel','monobank:disconnect':'monobank/disconnect','liqpay:disconnect':'liqpay/disconnect',
  'expense:add':'expense','expense:delete':'expense/delete','material:add':'material','material:update':'material/update','material:delete':'material/delete','material:move':'material/move',
- 'certificate:sell':'certificate','certificate:void':'certificate/void','pass:sell':'pass','pass:void':'pass/void','payroll:get':'payroll','client:import':'client/import','lapsed:settings':'lapsed/settings','lapsed:invite-all':'lapsed/invite-all',
+ 'certificate:sell':'certificate','certificate:void':'certificate/void','pass:sell':'pass','pass:void':'pass/void','payroll:get':'payroll','client:import':'client/import','reviews:save':'reviews/save','lapsed:settings':'lapsed/settings','lapsed:invite-all':'lapsed/invite-all',
  'fiscal:connect':'fiscal/connect','fiscal:disconnect':'fiscal/disconnect','fiscal:settings':'fiscal/settings','fiscal:retry':'fiscal/retry',
  'notify:save':'notify/save','notify:unlink':'notify/unlink','notify:test':'notify/test','booking:save':'booking/save','account:user:add':'users/add','account:user:update':'users/update'};
 const WHOLE=new Set(['account:user:add','account:user:update']);

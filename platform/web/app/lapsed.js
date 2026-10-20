@@ -21,6 +21,16 @@ Object.assign(OrbitI18n.messages, {
   lapsedTemplate: { uk: "Шаблон", en: "Template" },
   lapsedPreview: { uk: "Клієнт отримає", en: "The client gets" },
   lapsedSend: { uk: "Надіслати", en: "Send" },
+  reviewsName: { uk: "Відгуки в Google", en: "Google reviews" },
+  reviewsShort: { uk: "Через 2 години після візиту бот просить оцінку: 4–5★ ведуть на ваші відгуки в Google, 1–3★ — одразу вам.", en: "Two hours after a visit the bot asks for a rating: 4–5★ lead to your Google reviews, 1–3★ come straight to you." },
+  reviewsOn: { uk: "Увімкнено", en: "On" },
+  reviewsOff: { uk: "Вимкнено", en: "Off" },
+  reviewsSetup: { uk: "Налаштувати", en: "Set up" },
+  reviewsUrl: { uk: "Посилання на відгуки в Google", en: "Google review link" },
+  reviewsHow: { uk: "Профіль компанії в Google → «Попросити відгуки» (або «Отримати більше відгуків») → скопіюйте посилання й вставте сюди.", en: "Your Google Business Profile → “Ask for reviews” (or “Get more reviews”) → copy the link and paste it here." },
+  reviewsEnable: { uk: "Просити оцінку після кожного візиту (одному клієнту — не частіше ніж раз на 2 тижні)", en: "Ask for a rating after each visit (no more than once in 2 weeks per client)" },
+  reviewsNeedBot: { uk: "Працює для клієнтів, підключених до Telegram-бота.", en: "Works for clients connected to the Telegram bot." },
+  reviewRating: { uk: "Оцінка клієнта", en: "Client rating" },
   lapsedSummary: { uk: "Від {days} днів без візиту", en: "From {days} days without a visit" },
 });
 function lapsedSettingsData() {
@@ -90,7 +100,31 @@ function lapsedInviteModal(id) {
   $("#field-template_id").addEventListener("change", preview);
   preview();
 }
+function reviewsRow() {
+  const r = data.reviews || {},
+    on = Boolean(r.enabled);
+  return integrationRow({
+    icon: "★",
+    name: OrbitI18n.t("reviewsName"),
+    on,
+    status: OrbitI18n.t(on ? "reviewsOn" : "reviewsOff"),
+    short: OrbitI18n.t("reviewsShort"),
+    controls: data.role === "staff" ? "" : `<button class="${on ? "secondary" : "primary"}" data-action="reviews-setup">${OrbitI18n.t("reviewsSetup")}</button>`,
+    more: `<p>${OrbitI18n.t("reviewsNeedBot")}</p>`,
+  });
+}
 Object.assign(actions, {
+  "reviews-setup": () => {
+    const r = data.reviews || {};
+    modal(
+      OrbitI18n.t("reviewsName"),
+      `<p class="hint">${OrbitI18n.t("reviewsShort")}</p>` + field(OrbitI18n.t("reviewsUrl"), "url", "url", `maxlength="500" placeholder="https://g.page/r/…" value="${escape(r.url || "")}"`) + `<p class="hint">${OrbitI18n.t("reviewsHow")}</p><label class="checkbox-line"><input type="checkbox" name="enabled" ${r.enabled ? "checked" : ""}>${OrbitI18n.t("reviewsEnable")}</label><p class="hint">${OrbitI18n.t("reviewsNeedBot")}</p>`,
+      async (v) => {
+        await window.orbit.call("reviews:save", { url: v.url, enabled: v.enabled === "on" });
+        toast(OrbitI18n.t("m361"));
+      },
+    );
+  },
   "lapsed-settings": lapsedSettingsModal,
   "lapsed-invite-all": () => {
     const ready = lapsedReady(lapsedClients()).length;

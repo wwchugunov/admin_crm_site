@@ -138,9 +138,10 @@ class Notify{
   const when=`${dayName(a.start,tz)}, ${clock(a.start,tz)}`,who=`${a.client_name}${a.phone?` · ${a.phone}`:''}`;
   const text=kind==='booking'?`🆕 Новий запис ${extra?.waitlist?'з листа очікування':source==='bot'?'через Telegram-бота':'онлайн'}\n${who}\n${a.service_name} · ${a.resource_name}\n${when} · ${money(a.total,cur)}`
    :kind==='reschedule'?`🔁 Клієнт переніс запис ${source==='page'?'за посиланням зі сторінки запису':'через бота'}\n${who}\n${a.service_name} · ${a.resource_name}\nБуло: ${extra?.from?`${dayName(extra.from,tz)}, ${clock(extra.from,tz)}`:'—'}\nСтало: ${when}`
+   :kind==='review'?`⭐ Низька оцінка візиту: ${extra?.rating}/5\n${who}\n${a.service_name} · ${a.resource_name}\n${when}\nЗв’яжіться з клієнтом, поки враження свіже.`
    :source==='deposit'?`❌ Запис скасовано: передоплату не внесено вчасно\n${who}\n${a.service_name} · ${a.resource_name}\n${when}\nЧас знову вільний.`
    :`❌ Клієнт скасував запис ${source==='page'?'за посиланням зі сторінки запису':'через бота'}\n${who}\n${a.service_name} · ${a.resource_name}\n${when}\nЧас знову вільний.`;
-  const subject=kind==='booking'?'Новий онлайн-запис':kind==='reschedule'?'Перенесення запису':'Скасування запису';
+  const subject=kind==='booking'?'Новий онлайн-запис':kind==='reschedule'?'Перенесення запису':kind==='review'?'Низька оцінка візиту':'Скасування запису';
   // A move is a change made by the client, like a cancellation: the same switch covers both.
   for(const m of this.team(business))if(m.prefs[kind==='booking'?'booking':'cancel'])await this.deliver(business,runtime,m,{subject,text,dedupe:`${kind}:${id}:${kind==='reschedule'?a.start+':':''}${m.id}`});
  }

@@ -1,6 +1,11 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const messages={
+    "botReviewAsk": {"uk": "Як вам візит? Оцініть, будь ласка:", "en": "How was your visit? Please rate it:"},
+    "botReviewGoogle": {"uk": "Дякуємо! Нам дуже допоможе ваш відгук у Google — це хвилина:", "en": "Thank you! A review on Google would help us a lot — it takes a minute:"},
+    "botReviewGoogleButton": {"uk": "Залишити відгук у Google", "en": "Leave a Google review"},
+    "botReviewThanks": {"uk": "Дякуємо за оцінку!", "en": "Thank you for the rating!"},
+    "botReviewSorry": {"uk": "Дякуємо за чесність. Нам шкода, що щось пішло не так — напишіть, будь ласка, що нам покращити. Власник уже отримав вашу оцінку.", "en": "Thank you for being honest. We are sorry something went wrong — please tell us what to improve. The owner has already received your rating."},
     "botDepositAsk": {"uk": "Щоб підтвердити запис, внесіть передоплату {amount} протягом 30 хвилин. Інакше запис скасується, а час звільниться.", "en": "To confirm the booking, pay a prepayment of {amount} within 30 minutes. Otherwise the booking is cancelled and the time is freed."},
     "botDepositPay": {"uk": "Оплатити передоплату", "en": "Pay the prepayment"},
     "botDepositExpired": {"uk": "Запис скасовано: передоплату не отримано вчасно. Ви можете записатися знову.", "en": "The booking was cancelled: the prepayment did not arrive in time. You can book again."},

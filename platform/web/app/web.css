@@ -239,3 +239,4 @@ html[data-theme] .subscription-banner.ended {
   .agenda-free button { padding: 10px 14px; }
 }
 .badge.deposit-wait { background: #fff4e0; color: #9a6a12; }
+.badge.rating-badge { background: #fff6dc; color: #a37812; letter-spacing: 1px; }

@@ -44,7 +44,7 @@ class BotWorkers{
   let offset=worker.offset;
   try{
    for(const update of updates){if(!Number.isSafeInteger(update.update_id)||update.update_id<0)this.fail(400,'Invalid update id');const id=business.id+':'+update.update_id;if(this.db.prepare('SELECT id FROM bot_updates WHERE id=?').get(id))continue;this.db.prepare('INSERT INTO bot_updates VALUES(?,?,?)').run(id,business.id,Date.now());offset=Math.max(offset,update.update_id+1);await telegram.handle(update);}
-   await telegram.reminders();
+   await telegram.reminders();await telegram.reviews().catch(()=>{});
   }finally{telegram.call=original;}
   if(data.username)runtime.store.set('bot_username',data.username);
   this.db.prepare('UPDATE bot_workers SET last_seen=?,offset=?,username=CASE WHEN ? IS NULL THEN username ELSE ? END WHERE business_id=?').run(Date.now(),offset,data.username||null,data.username||null,business.id);

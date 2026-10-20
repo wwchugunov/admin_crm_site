@@ -6,6 +6,7 @@ const { mkdirSync, chmodSync } = require("node:fs");
 const { dirname } = require("node:path");
 const { finance } = require("./finance.cjs");
 const { clientImport } = require("./client-import.cjs");
+const { reviews } = require("./reviews.cjs");
 const OrbitIndustries = require("../shared/industries.js");
 
 const TABLES = [
@@ -49,6 +50,7 @@ const PROFILE = [
   "website_enabled",
   "lapsed_days",
   "lapsed_settings",
+  "reviews",
 ];
 function text(value, max = 500) {
   if (typeof value !== "string" || !value.trim() || value.length > max)
@@ -245,6 +247,7 @@ class Store {
     if (!this.get("work_days")) this.set("work_days", [1, 2, 3, 4, 5, 6, 7]);
     this.staffSchema();
     this.financeSchema();
+    this.reviewSchema();
     // Indexes for the snapshot and client history (added after all tables exist).
     this.db.exec(
       "CREATE INDEX IF NOT EXISTS payment_visit ON payments(appointment_id);CREATE INDEX IF NOT EXISTS visit_clients ON appointment_clients(client_id);CREATE INDEX IF NOT EXISTS visit_resources ON appointment_resources(resource_id);CREATE INDEX IF NOT EXISTS visit_start ON appointments(start);CREATE INDEX IF NOT EXISTS payment_at ON payments(at);",
@@ -1648,7 +1651,7 @@ class Store {
     });
   }
 }
-Object.assign(Store.prototype, finance, clientImport);
+Object.assign(Store.prototype, finance, clientImport, reviews);
 // Start and end of a calendar month ("2026-10") in the company's time zone.
 Store.prototype.monthRange = function (month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month))) throw Error(OrbitI18n.t("m504"));

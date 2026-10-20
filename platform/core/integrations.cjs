@@ -71,6 +71,11 @@ class Telegram {
      await this.call('sendMessage',{chat_id:chat,text:this.text(chat,'botPhoneThanks'),reply_markup:{remove_keyboard:true}});
      if(waiting?.awaitPhone&&waiting.quote&&waiting.expires>=Date.now()){delete waiting.awaitPhone;await this.confirmBooking(chat,key,client,waiting);}else await this.menu(chat);return;}
     if(['menu','/menu','/start','consent'].includes(command)){await this.menu(chat);return;}
+    if(/^rv:[-a-f0-9]{36}:[1-5]$/.test(command)){const[,id,n]=command.split(':');const rating=Number(n);if(!this.store.rateVisit(id,client.id,rating)){await this.send(chat,this.text(chat,'botReviewThanks'),this.homeButtons(chat));return;}
+     const url=this.store.reviewSettings().url;
+     if(rating>=4&&url)await this.send(chat,this.text(chat,'botReviewGoogle'),[[{text:this.text(chat,'botReviewGoogleButton'),url}],[this.button(chat,'botHome','menu')]]);
+     else{await this.send(chat,this.text(chat,rating>=4?'botReviewThanks':'botReviewSorry'),this.homeButtons(chat));if(rating<=3)Telegram.onEvent?.(this,'review',id,{rating});}
+     return;}
     if(command==='info'){await this.send(chat,`${this.store.get('business')}\n${this.text(chat,'m042')}: ${this.store.get('address')||this.text(chat,'botMissingInfo')}\n${this.text(chat,'m322')}: ${this.store.get('phone')||this.text(chat,'botMissingInfo')}\n${this.text(chat,'m043')}: ${this.store.get('timezone')}`,[[this.button(chat,'botBook','book'),this.button(chat,'botHome','menu')]]);return;}
     if(['book','/book'].includes(command)){this.sessions.delete(key);await this.services(chat);return;}
     if(/^services:\d{1,3}$/.test(command)){await this.services(chat,Number(command.slice(9)));return;}
@@ -96,6 +101,13 @@ class Telegram {
     if(command.startsWith('t:')&&session.slots?.includes(Number(command.slice(2)))){const start=Number(command.slice(2)),service=this.store.db.prepare('SELECT * FROM services WHERE id=? AND bot_visible=1 AND archived=0').get(session.service);if(!service){await this.send(chat,this.text(chat,'m602'),this.homeButtons(chat));return;}const resource_ids=this.store.availableResources(service.id,session.resource,start);if(resource_ids.length<service.required_resources){await this.send(chat,this.text(chat,'botTaken'),[[this.button(chat,'botDates','dates:0')]]);return;}session.quote={nonce:crypto.randomBytes(8).toString('base64url'),start,price:service.price,name:service.name,capacity:service.capacity,duration:service.duration,required_resources:service.required_resources,currency:this.store.get('currency')};const resource_name=session.resource==='any'?this.text(chat,'m587'):this.store.db.prepare('SELECT name FROM resources WHERE id=?').get(session.resource).name;await this.send(chat,`${this.text(chat,'botQuote')}\n\n${this.summary(chat,{start,service_name:service.name,resource_name,people_count:session.people||1,total:service.price*(session.people||1)})}`,[[this.button(chat,'botConfirm',`confirm:${session.quote.nonce}`)],[this.button(chat,'botEdit','times:0'),this.button(chat,'botHome','menu')]]);return;}
     if(command.startsWith('confirm:')&&session.quote?.nonce===command.slice(8)){if(!client.phone){session.awaitPhone=true;await this.askPhone(chat);return;}await this.confirmBooking(chat,key,client,session);return;}
     await this.send(chat,this.text(chat,'botExpired'),this.homeButtons(chat));
+  }
+  // After a completed visit: "How was it?" with 1–5 stars.
+  async reviews() {
+    for (const row of this.store.dueReviews()) {
+      this.store.markReviewAsked(row.id);
+      try { await this.send(row.chat_id, `${this.text(row.chat_id, 'botReviewAsk')}\n${row.service_name} · ${this.store.get('business') || ''}`, [[1, 2, 3, 4, 5].map((n) => ({ text: '★'.repeat(n), callback_data: `rv:${row.id}:${n}` }))]); } catch {}
+    }
   }
   async reminders() {
     const now = Date.now();
@@ -135,7 +147,7 @@ class Telegram {
         // Acknowledge before side effects: avoid duplicate bookings on an uncertain HTTP reply.
         this.store.set('telegram_offset', update.update_id + 1); await this.handle(update);
       }
-      await this.reminders(); this.state = this.runtime === 'server' ? OrbitI18n.t('m618') : OrbitI18n.t('m619');
+      await this.reminders(); await this.reviews().catch(() => {}); this.state = this.runtime === 'server' ? OrbitI18n.t('m618') : OrbitI18n.t('m619');
     } catch (e) { this.state = e.message; } finally { this.busy = false; }
   }
 }
