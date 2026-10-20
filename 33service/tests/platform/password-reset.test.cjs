@@ -24,7 +24,7 @@ test('Owners hear 7, 3 and 1 day before access ends and once when it ends; early
   const f=await fixture(t),day=86400000,now=Date.now();
   for(const left of [6.5*day,2.5*day,0.5*day,-0.5*day]){f.store.db.prepare('UPDATE users SET expires=? WHERE id=?').run(now+left,f.id);f.server.retention.remind(now);f.server.retention.remind(now);}
   await f.server.mail.tick();await f.server.mail.tick();
-  assert.deepEqual(f.sent.map(m=>m.subject),['LOMVIKO — пробного періоду залишилось 7 днів','LOMVIKO — пробного періоду залишилось 3 дні','LOMVIKO — безкоштовний місяць закінчується завтра','LOMVIKO — доступ завершився, дані збережено']);
+  assert.deepEqual(f.sent.map(m=>m.subject),['LOMVIKO — пробного періоду залишилось 7 днів','LOMVIKO — пробного періоду залишилось 3 дні','LOMVIKO — безкоштовний період закінчується завтра','LOMVIKO — доступ завершився, дані збережено']);
   assert(f.sent.every(m=>m.text.includes('https://app.lomviko.com')));
   const trialEnd=now+20*day;f.store.db.prepare("UPDATE users SET stage='trial',expires=? WHERE id=?").run(trialEnd,f.id);
   assert.equal((await f.call('/admin/purchase',{user_id:f.id,reference:'LV-1',days:30,max_devices:10,confirmed:true,language:'uk'},true)).status,201);

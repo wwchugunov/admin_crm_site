@@ -14,8 +14,8 @@
       en: "Bookings, clients and payments in one place",
     },
     webGateText: {
-      uk: "Увійдіть до своєї компанії або почніть 30 днів безкоштовно — без встановлення, з комп’ютера чи телефона.",
-      en: "Sign in to your company or start a free 30-day trial — nothing to install, on a computer or a phone.",
+      uk: "Увійдіть до своєї компанії або почніть безкоштовно до 1 березня 2027 — без встановлення, з комп’ютера чи телефона.",
+      en: "Sign in to your company or start free until 1 March 2027 — nothing to install, on a computer or a phone.",
     },
     webUnavailable: {
       uk: "Ця дія недоступна у веб-версії",
@@ -137,8 +137,8 @@
       en: "Start registration again",
     },
     registerFreeTrial: {
-      uk: "Спробувати місяць безкоштовно",
-      en: "Try all features free for a month",
+      uk: "Спробувати безкоштовно",
+      en: "Try every feature free",
     },
     registrationHint: {
       uk: "Усі функції без обмеження тарифом. Підтвердіть email кодом із листа — тоді почнеться пробний період.",
@@ -237,8 +237,8 @@
     subscriptionSoonHint: { uk: "Щоб працювати без перерви, продовжіть заздалегідь — новий місяць додасться після поточного терміну.", en: "Renew ahead to keep working without a break — the new month starts after the current one." },
     subscriptionEndedHint: { uk: "Дані збережені: можна переглядати й вивантажити базу. Нові записи, бот і сторінка запису відновляться після оплати.", en: "Your data is safe: you can view it and export it. New bookings, the bot and the booking page come back after payment." },
     subscriptionExtend: { uk: "Продовжити", en: "Renew" },
-    subscriptionPriceHint: { uk: "399 грн на місяць за компанію.", en: "399 UAH per month per company." },
-    subscriptionRequest: { uk: "Добрий день! Хочу продовжити LOMVIKO для «{business}» на наступний місяць (399 грн). Надішліть, будь ласка, реквізити для оплати.", en: "Hello! I would like to renew LOMVIKO for “{business}” for the next month (399 UAH). Please send the payment details." },
+    subscriptionPriceHint: { uk: "499 грн на місяць або 5 000 грн на рік за компанію.", en: "499 UAH a month or 5,000 UAH a year per company." },
+    subscriptionRequest: { uk: "Добрий день! Хочу продовжити LOMVIKO для «{business}» на наступний місяць (499 грн) або на рік (5 000 грн). Надішліть, будь ласка, реквізити для оплати.", en: "Hello! I would like to renew LOMVIKO for “{business}” for the next month (499 UAH) or a year (5,000 UAH). Please send the payment details." },
     forgotPasswordTitle: { uk: "Відновити пароль", en: "Reset your password" },
     forgotPasswordHint: { uk: "Вкажіть email, з яким входите. Надішлемо шестизначний код.", en: "Enter the email you sign in with. We will send a six-digit code." },
     forgotPasswordCodeTitle: { uk: "Новий пароль", en: "New password" },
@@ -1497,8 +1497,8 @@
       en: "JSON and CSV contain personal data in plain text. The .orbit backup is password protected. LOMVIKO support restores data from a backup.",
     },
     m265: {
-      uk: "Зареєструйтеся на безкоштовний місяць з усіма функціями або увійдіть. Якщо отримали одноразовий ключ, активуйте його нижче.",
-      en: "Register for a free month with all features or sign in. If you received a one-time key, activate it below.",
+      uk: "Зареєструйтеся й користуйтеся всім безкоштовно до 1 березня 2027 або увійдіть. Якщо отримали одноразовий ключ, активуйте його нижче.",
+      en: "Register and use every feature free until 1 March 2027, or sign in. If you received a one-time key, activate it below.",
     },
     m266: {
       uk: "Увійти за логіном",

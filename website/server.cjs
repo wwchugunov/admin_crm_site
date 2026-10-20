@@ -30,6 +30,11 @@ function missingDocument(language) {
   const en = language === 'en';
   return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#07080a"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
 }
+// Unknown addresses opened in a browser get a page with a way back, not a JSON error.
+function notFound(language) {
+  const en = language === 'en';
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#07080a"><title>${en ? 'Page not found' : 'Сторінку не знайдено'} · LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This page <em>does not exist.</em>' : 'Такої сторінки <em>немає.</em>'}</h2><p class="section-intro">${en ? 'The link may be outdated or mistyped. Everything about LOMVIKO is on the home page.' : 'Можливо, посилання застаріло або в ньому помилка. Усе про LOMVIKO — на головній сторінці.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
+}
 // The English page reuses index.html with its own head metadata, so crawlers and link previews see English text.
 function page(directory, language) {
   const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
@@ -52,7 +57,7 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
       const url = new URL(req.url,'http://localhost'), route = url.pathname, read = req.method === 'GET' || req.method === 'HEAD';
       const asset = STATIC.get(route), language = PAGES.get(route), document = DOCUMENTS.get(route);
       // Pages and static files ignore marketing parameters such as utm_source, gclid or fbclid; API paths stay strict.
-      if (url.search && !(read && (asset || language || document || route === '/en/'))) return json(400,{error:'Query parameters are not supported'});
+      if (url.search && route.startsWith('/public/') && !(read && (asset || language || document || route === '/en/'))) return json(400,{error:'Query parameters are not supported'});
       if (req.method === 'GET' && route === '/healthz') return json(200,{status:'ok'});
       if (read && route === '/en/') { res.writeHead(301,{Location:'/en'+url.search});return res.end(); }
       if (read && language) {
@@ -87,7 +92,14 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
         await pipeline(fs.createReadStream(filename),res);return;
       }
       const allowed = (req.method === 'GET' && route === '/public/site') || (req.method === 'POST' && ['/public/demo','/public/access'].includes(route));
-      if (!allowed) return json(404,{error:'Not found'});
+      if (!allowed) {
+        if (read && /text\/html/.test(req.headers.accept || '') && !route.startsWith('/public/')) {
+          const html = Buffer.from(notFound(route === '/en' || route.startsWith('/en/') ? 'en' : 'uk'));
+          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': html.length });
+          return res.end(req.method === 'HEAD' ? undefined : html);
+        }
+        return json(404,{error:'Not found'});
+      }
       let body;
       if (req.method === 'POST') {
         if (req.headers['sec-fetch-site'] === 'cross-site') return json(403,{error:'Cross-site requests are not accepted'});

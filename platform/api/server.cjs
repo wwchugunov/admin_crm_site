@@ -57,7 +57,7 @@ class ProductStore {
     if(this.db.prepare('SELECT id FROM users WHERE email=?').get(email))fail(409,'Цей email вже зареєстровано / Email already registered');
     const days = Number(data.days || 14), seats = Number(data.max_devices || 2);
     if (!Number.isInteger(days) || days < 1 || days > 3650 || !Number.isInteger(seats) || seats < 1 || seats > 100) fail(400, OrbitI18n.t('m672'));
-    const userId = id(); this.transaction(() => { this.db.prepare('INSERT INTO users(id,name,email,business,stage,created_at,expires,max_devices,password_hash,account_id) VALUES(?,?,?,?,?,?,?,?,?,?)').run(userId, string(data.name, 120), email, string(data.business, 120), 'trial', Date.now(), Date.now() + days * 86400000, seats,data.password_hash||'',data.account_id||null); this.event('user.created', userId); }); return userId;
+    const userId = id(); this.transaction(() => { this.db.prepare('INSERT INTO users(id,name,email,business,stage,created_at,expires,max_devices,password_hash,account_id) VALUES(?,?,?,?,?,?,?,?,?,?)').run(userId, string(data.name, 120), email, string(data.business, 120), 'trial', Date.now(), Number.isSafeInteger(data.expires) && data.expires > Date.now() ? data.expires : Date.now() + days * 86400000, seats,data.password_hash||'',data.account_id||null); this.event('user.created', userId); }); return userId;
   }
   invite(userId) {
     if (!this.db.prepare('SELECT id FROM users WHERE id=?').get(userId)) fail(404, OrbitI18n.t('m641'));

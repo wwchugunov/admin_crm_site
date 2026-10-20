@@ -14,3 +14,9 @@ test('Short document addresses stream the current file or show a friendly placeh
  assert.equal((await fetch(f.url+'/offer')).status,502,'non-document content types are never relayed');
  assert.deepEqual(f.requests.map(r=>r.path).filter(p=>p.startsWith('/public/documents/')).slice(0,1),['/public/documents/presentation/en']);
  assert.equal((await fetch(f.url+'/secret')).status,404);});
+test('Unknown pages opened in a browser get an HTML 404 with a way home; API clients still get JSON',async t=>{const f=await fixture(t);
+ const page=await fetch(f.url+'/no-such-page?utm_source=tiktok',{headers:{Accept:'text/html,application/xhtml+xml'}});assert.equal(page.status,404);assert.match(page.headers.get('content-type'),/text\/html/);const html=await page.text();assert.match(html,/Такої сторінки/);assert.match(html,/href="\/"/);
+ const en=await fetch(f.url+'/en/nothing',{headers:{Accept:'text/html'}});assert.match(await en.text(),/does not exist/);
+ const api=await fetch(f.url+'/no-such-page');assert.equal(api.status,404);assert.match(api.headers.get('content-type'),/application\/json/);
+ assert.equal((await fetch(f.url+'/public/site?x=1')).status,400);
+});
