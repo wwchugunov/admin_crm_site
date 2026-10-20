@@ -62,3 +62,6 @@ html[data-theme="dark"] .danger-note{background:#3a2422;color:#f1b8b2}
 .support-list .support-item .support-head{display:flex;gap:10px;align-items:center;margin:0;padding:0;border:0;min-height:0;background:none}
 .support-list .support-item .support-head .hint{margin-left:auto}
 .support-list .support-item .support-from{margin:4px 0 0}
+
+/* Documents: on/off state next to the panel actions. */
+.panel-head .inline-actions{align-items:center}

@@ -85,3 +85,19 @@ test('Rejected requests are logged by normalized address for diagnostics',async 
  assert(routes.some(r=>r.route==='/v1/crm/snapshot'&&r.status===401&&r.count===3),JSON.stringify(routes));
  assert(routes.every(r=>!/[0-9a-f]{8}-[0-9a-f]{4}/.test(r.route)));
 });
+
+test('A switched-off document disappears from public links and comes back when switched on',async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.upload(PDF,{kind:'site-offer',title:'Оферта',filename:'offer.pdf'})).status,201);
+ const publicSite=async()=>(await (await fetch(f.url+'/public/site')).json()).documents||{};
+ assert(publicSite().then(d=>d['site-offer']));
+ assert.equal((await f.call('/admin/documents/switch',{kind:'site-offer',enabled:'no'})).status,400);
+ assert.equal((await f.call('/admin/documents/switch',{kind:'site-offer',enabled:false})).status,200);
+ assert.equal((await publicSite())['site-offer'],undefined);
+ const hidden=await fetch(f.url+'/public/documents/site-offer/uk');
+ assert.equal(hidden.status,404);assert.match(hidden.headers.get('content-type'),/text\/html/);assert.match(await hidden.text(),/Документ зараз недоступний/);
+ const snapshot=await f.call('/admin/snapshot');assert.deepEqual(snapshot.value.documentsDisabled,['site-offer']);assert.equal(snapshot.value.documents.length,1,'files stay while switched off');
+ assert.equal((await f.call('/admin/documents/switch',{kind:'site-offer',enabled:true})).status,200);
+ assert((await publicSite())['site-offer'].uk);
+ const shown=await fetch(f.url+'/public/documents/site-offer/uk');assert.equal(shown.status,200);assert.equal(shown.headers.get('content-type'),'application/pdf');
+});

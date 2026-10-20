@@ -29,7 +29,8 @@ class Documents{
  constructor(store,directory){
   Object.assign(this,{store,db:store.db,directory});fs.mkdirSync(directory,{recursive:true,mode:0o700});
   this.db.exec(`CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY,kind TEXT NOT NULL,language TEXT NOT NULL,title TEXT NOT NULL,filename TEXT NOT NULL,extension TEXT NOT NULL,size INTEGER NOT NULL,sha256 TEXT NOT NULL,uploaded_at INTEGER NOT NULL,active INTEGER NOT NULL DEFAULT 0);
-   CREATE INDEX IF NOT EXISTS documents_current ON documents(kind,language,active);`);
+   CREATE INDEX IF NOT EXISTS documents_current ON documents(kind,language,active);
+   CREATE TABLE IF NOT EXISTS document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL);`);
  }
  path(id){if(!/^[a-f0-9-]{36}$/.test(id||''))fail('Document not found',404);return path.join(this.directory,id);}
  temporary(){return path.join(this.directory,`${crypto.randomUUID()}.partial`);}
@@ -60,15 +61,23 @@ class Documents{
   });
   fs.rmSync(this.path(row.id),{force:true});return{ok:true};
  }
+ // A switched-off kind keeps its files but disappears from the website and the app until switched on again.
+ disabled(k){return Boolean(this.db.prepare('SELECT disabled FROM document_switches WHERE kind=?').get(k)?.disabled);}
+ disabledKinds(){return this.db.prepare('SELECT kind FROM document_switches WHERE disabled=1 ORDER BY kind').all().map(r=>r.kind);}
+ setEnabled(data){
+  const k=kind(data?.kind);if(typeof data.enabled!=='boolean')fail('Choose whether the document is shown');
+  this.store.transaction(()=>{this.db.prepare('INSERT INTO document_switches VALUES(?,?) ON CONFLICT(kind) DO UPDATE SET disabled=excluded.disabled').run(k,data.enabled?0:1);this.store.event(data.enabled?'document.enabled':'document.disabled',null,null,'all',k);});
+  return{ok:true};
+ }
  list(){return this.db.prepare('SELECT id,kind,language,title,filename,extension,size,sha256,uploaded_at,active FROM documents ORDER BY kind,language,uploaded_at DESC').all().map(r=>({...r,active:!!r.active}));}
  current(k,lang){return this.db.prepare('SELECT * FROM documents WHERE kind=? AND language=? AND active=1').get(k,lang)||null;}
  // Public metadata: the current version per kind and language, falling back to the other language.
  public(){
   const result={};
-  for(const k of KINDS){const entry={};for(const lang of LANGUAGES){const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(row)entry[lang]={title:row.title,extension:row.extension,size:row.size,updatedAt:row.uploaded_at,language:row.language,path:`/public/documents/${k}/${lang}`};}if(Object.keys(entry).length)result[k]=entry;}
+  for(const k of KINDS){if(this.disabled(k))continue;const entry={};for(const lang of LANGUAGES){const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(row)entry[lang]={title:row.title,extension:row.extension,size:row.size,updatedAt:row.uploaded_at,language:row.language,path:`/public/documents/${k}/${lang}`};}if(Object.keys(entry).length)result[k]=entry;}
   return result;
  }
- resolve(k,lang){kind(k);language(lang);const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(!row)fail('Document is not published',404);return row;}
+ resolve(k,lang){kind(k);language(lang);if(this.disabled(k))fail('Document is not published',404);const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(!row)fail('Document is not published',404);return row;}
  async send(res,row,head=false){
   const file=this.path(row.id),digest=crypto.createHash('sha256');
   for await(const chunk of fs.createReadStream(file))digest.update(chunk);
@@ -78,4 +87,9 @@ class Documents{
   const stream=fs.createReadStream(file);res.on('close',()=>stream.destroy());stream.on('error',()=>res.destroy());stream.pipe(res);
  }
 }
-module.exports={Documents,KINDS,LANGUAGES,MAX_SIZE};
+// Shown instead of a JSON error when a visitor opens a document link that is switched off or not uploaded yet.
+function unavailable(res,lang,head=false){
+ const en=lang==='en',html=Buffer.from(`<!doctype html><html lang="${en?'en':'uk'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>LOMVIKO</title></head><body><h1>${en?'This document is not available right now.':'Документ зараз недоступний.'}</h1><p>${en?'Please check back a little later.':'Будь ласка, загляньте трохи пізніше.'}</p></body></html>`);
+ res.writeHead(404,{'Content-Type':'text/html; charset=utf-8','Content-Length':html.length,'Cache-Control':'no-cache'});res.end(head?undefined:html);
+}
+module.exports={Documents,KINDS,LANGUAGES,MAX_SIZE,unavailable};

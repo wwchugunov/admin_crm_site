@@ -12,7 +12,7 @@ const {Registration}=require('./registration.cjs');
 const {PasswordReset}=require('./password-reset.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
-const {Documents,MAX_SIZE:DOCUMENT_MAX}=require('./documents.cjs');
+const {Documents,MAX_SIZE:DOCUMENT_MAX,unavailable}=require('./documents.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
@@ -125,8 +125,9 @@ function createProductServer({ store, adminToken, privateKey, publicKey, busines
         if(req.method==='POST'&&route==='/admin/members/delete'){administrator.owner(session);members.remove(req.parsedBody?.id);administrator.endMember(req.parsedBody?.id);return reply(200,{ok:true});}
         if(req.method==='POST'&&route==='/admin/documents/activate')return reply(200,documents.activate(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/documents/delete')return reply(200,documents.delete(req.parsedBody));
+        if(req.method==='POST'&&route==='/admin/documents/switch')return reply(200,documents.setEnabled(req.parsedBody));
         if(req.method==='GET'&&route==='/admin/documents/file')return await documents.send(res,documents.owned({id:url.searchParams.get('id')||'',kind:url.searchParams.get('kind')||undefined}));
-        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),supportRequests:support.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
+        if (req.method === 'GET' && route === '/admin/snapshot') return reply(200, {...store.snapshot(),adminAccount:administrator.account(),adminMembers:members.list(),supportRequests:support.list(),adminMe:{owner:!session?.member,name:session?.name||null},documents:documents.list(),documentsDisabled:documents.disabledKinds(),licenses:store.db.prepare(`SELECT d.id,d.user_id,d.platform,d.version,d.revoked,u.name,u.business,COALESCE(a.expires,u.expires) expires,COALESCE(a.stage,u.stage) stage FROM devices d JOIN users u ON u.id=d.user_id LEFT JOIN users a ON a.id=u.account_id`).all(),invites:store.db.prepare('SELECT id,user_id,expires,used_at,created_at FROM invites ORDER BY created_at DESC LIMIT 200').all(),website:website.admin(),security:website.security(),mail:mail.admin(),bots:store.db.prepare('SELECT * FROM businesses').all().map(b=>({business_id:b.id,business:b.name,...botWorkers.status(b)}))});
         if(req.method==='POST'&&route==='/admin/mail/settings')return reply(200,mail.save(req.parsedBody));
         if(req.method==='POST'&&route==='/admin/mail/verify')return reply(200,await mail.verify());
         if(req.method==='POST'&&route==='/admin/mail/test'){const c=mail.settings();if(!mail.configured())fail(400,'Configure SMTP first');mail.enqueue('test',c.fromEmail,req.parsedBody.language||'uk',{});return reply(201,{queued:true});}
@@ -169,7 +170,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
       if (now - rate.start > 60000) { rate.count = 0; rate.start = now; } rate.count++; rates.set(address, rate); if (rate.count > 120) fail(429, OrbitI18n.t('m681'));
       if(req.method==='GET'&&route==='/public/site')return reply(200,website.public());
       const documentMatch=/^\/public\/documents\/([a-z-]+)\/([a-z]{2})$/.exec(route);
-      if(documentMatch&&['GET','HEAD'].includes(req.method))return await documents.send(res,documents.resolve(documentMatch[1],documentMatch[2]),req.method==='HEAD');
+      if(documentMatch&&['GET','HEAD'].includes(req.method)){let row;try{row=documents.resolve(documentMatch[1],documentMatch[2]);}catch(error){if(error.status!==404)throw error;return unavailable(res,documentMatch[2],req.method==='HEAD');}return await documents.send(res,row,req.method==='HEAD');}
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
       if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));
