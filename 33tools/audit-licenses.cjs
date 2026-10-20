@@ -24,5 +24,5 @@ for (const file of locks) {
   }
   console.log(JSON.stringify({ file, packages: count, licenses: totals }));
 }
-console.log("Scope: npm lockfiles. Containers and external service terms require separate review; see docs/DEPENDENCIES.md.");
+console.log("Scope: npm lockfiles. Containers and external service terms require separate review; see 33docs/DEPENDENCIES.md.");
 if (failed) process.exitCode = 1;

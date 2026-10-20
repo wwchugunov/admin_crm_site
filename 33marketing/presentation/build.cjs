@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Builds the LOMVIKO sales presentation (16:9 PDF, Ukrainian and English) with a local Chrome.
-//   node marketing/presentation/build.cjs [uk|en]
+//   node 33marketing/presentation/build.cjs [uk|en]
 // Env: CHROME_PATH (default: macOS Google Chrome), PLAYWRIGHT_CORE (module path), OUT_DIR (default: .runtime/presentation),
 //      CONTACT_EMAIL (optional, shown on the last slide), PREVIEW=1 (also writes a PNG per slide).
 // Upload the resulting PDF in the website admin → Documents → LOMVIKO presentation.

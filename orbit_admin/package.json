@@ -8,7 +8,7 @@
     "start": "node owner/server.cjs",
     "server": "node owner/server.cjs",
     "web": "node web/server.cjs",
-    "test": "node --test test/*.test.cjs"
+    "test": "node --test 33test/*.test.cjs"
   },
   "dependencies": {
     "nodemailer": "10.1.0"

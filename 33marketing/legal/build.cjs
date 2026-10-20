@@ -2,7 +2,7 @@
 // Renders the legal documents to PDF (A4, local Chrome) and DOCX (macOS textutil).
 // Requisites and terms live in requisites.json: {{executor.name}}, {{terms.trial_days}} … in the HTML
 // are filled from it; an empty value is highlighted yellow so nothing unfinished goes unnoticed.
-//   node marketing/legal/build.cjs
+//   node 33marketing/legal/build.cjs
 // Env: CHROME_PATH, PLAYWRIGHT_CORE, OUT_DIR (default: .runtime/legal).
 // After review, upload the final files in the admins → Documents.
 'use strict';

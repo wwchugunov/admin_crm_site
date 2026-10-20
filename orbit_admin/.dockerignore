@@ -9,5 +9,4 @@ config
 data
 .env
 deploy/.env
-deploy/releases
 **/*.orbit

@@ -12,7 +12,7 @@ case "${1:-start}" in
   status) compose ps ;;
   logs) compose logs --tail=100 -f ;;
   stop) compose stop ;;
-  code) node tools/admin-login-code.cjs ;;
+  code) node 33tools/admin-login-code.cjs ;;
   credentials)
     umask 077
     mkdir -p .runtime
@@ -22,5 +22,5 @@ case "${1:-start}" in
     chmod 600 .runtime/admin-access.txt
     echo "Saved administrator credentials: $project_directory/.runtime/admin-access.txt"
     ;;
-  *) echo "Usage: sh tools/docker.sh [start|update|status|logs|stop|credentials|code]"; exit 2 ;;
+  *) echo "Usage: sh 33tools/docker.sh [start|update|status|logs|stop|credentials|code]"; exit 2 ;;
 esac
