@@ -84,6 +84,7 @@ const finance = {
       CREATE TABLE IF NOT EXISTS material_moves(id TEXT PRIMARY KEY,material_id TEXT NOT NULL REFERENCES materials(id),quantity REAL NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('purchase','use','adjust')),appointment_id TEXT REFERENCES appointments(id),cost INTEGER NOT NULL DEFAULT 0,at INTEGER NOT NULL,note TEXT NOT NULL DEFAULT '');
       CREATE INDEX IF NOT EXISTS material_moves_visit ON material_moves(appointment_id);
       CREATE TABLE IF NOT EXISTS certificates(id TEXT PRIMARY KEY,code TEXT NOT NULL UNIQUE,amount INTEGER NOT NULL CHECK(amount>0),balance INTEGER NOT NULL CHECK(balance>=0),price INTEGER NOT NULL CHECK(price>=0),method TEXT NOT NULL,client_id TEXT REFERENCES clients(id),sold_at INTEGER NOT NULL,expires INTEGER,status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','void')),note TEXT NOT NULL DEFAULT '');
+      CREATE TABLE IF NOT EXISTS fiscal_receipts(id TEXT PRIMARY KEY,source TEXT NOT NULL,source_id TEXT NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('sell','return')),amount INTEGER NOT NULL CHECK(amount>0),method TEXT NOT NULL,title TEXT NOT NULL,related_id TEXT,status TEXT NOT NULL CHECK(status IN ('pending','sent','done','failed')),attempts INTEGER NOT NULL DEFAULT 0,next_at INTEGER NOT NULL DEFAULT 0,error TEXT NOT NULL DEFAULT '',fiscal_code TEXT,is_test INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,done_at INTEGER,UNIQUE(source,source_id));
       CREATE TABLE IF NOT EXISTS passes(id TEXT PRIMARY KEY,client_id TEXT NOT NULL REFERENCES clients(id),service_id TEXT NOT NULL REFERENCES services(id),visits INTEGER NOT NULL CHECK(visits BETWEEN 1 AND 500),used INTEGER NOT NULL DEFAULT 0 CHECK(used>=0),price INTEGER NOT NULL CHECK(price>=0),method TEXT NOT NULL,sold_at INTEGER NOT NULL,expires INTEGER,status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','void')),note TEXT NOT NULL DEFAULT '');`);
     for (const [table, column, definition] of [
       // A personal discount the owner gives a client; new visits are priced with it.
@@ -330,6 +331,7 @@ const finance = {
       service_materials: this.db.prepare("SELECT sm.* FROM service_materials sm JOIN materials m ON m.id=sm.material_id WHERE m.archived=0").all(),
       certificates: this.db.prepare("SELECT * FROM certificates WHERE sold_at>=? OR (status='active' AND balance>0) ORDER BY sold_at DESC").all(from),
       passes: this.db.prepare("SELECT * FROM passes WHERE sold_at>=? OR (status='active' AND used<visits) ORDER BY sold_at DESC").all(from),
+      fiscal_receipts: this.db.prepare("SELECT id,source,source_id,kind,amount,method,title,status,error,fiscal_code,is_test,created_at FROM fiscal_receipts ORDER BY created_at DESC LIMIT 50").all(),
     };
   },
   setDiscount(clientId, value) {

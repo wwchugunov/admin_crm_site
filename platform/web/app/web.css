@@ -212,3 +212,7 @@ html[data-theme] .subscription-banner.ended {
 @media (max-width: 600px) {
   .material-line { grid-template-columns: minmax(0, 1fr) 90px 30px; }
 }
+.fiscal-receipts { padding: 12px 16px 16px; display: grid; gap: 10px; }
+.fiscal-receipts h4 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
+.fiscal-error { display: block; color: var(--c-cancelled); }
+.consent-line { align-items: flex-start; line-height: 1.45; }

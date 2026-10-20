@@ -28,6 +28,7 @@ const TABLES = [
   "expenses",
   "certificates",
   "passes",
+  "fiscal_receipts",
 ];
 // Company settings the app shows; changing one of them counts as a change of data.
 const PROFILE = [
@@ -273,6 +274,7 @@ class Store {
       "expenses",
       "certificates",
       "passes",
+      "fiscal_receipts",
     ])
       for (const op of ["insert", "update", "delete"])
         this.db.exec(
@@ -1082,6 +1084,7 @@ class Store {
         "expenses",
         "certificates",
         "passes",
+        "fiscal_receipts",
       ])
         if (!data.tables[t]) data.tables[t] = [];
     if (

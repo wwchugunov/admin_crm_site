@@ -16,6 +16,7 @@ const CRM={'client:add':'client','client:update':'client/update','client:delete'
  'liqpay:connect':'liqpay/connect','liqpay:invoice':'liqpay/invoice','liqpay:cancel':'liqpay/cancel','monobank:disconnect':'monobank/disconnect','liqpay:disconnect':'liqpay/disconnect',
  'expense:add':'expense','expense:delete':'expense/delete','material:add':'material','material:update':'material/update','material:delete':'material/delete','material:move':'material/move',
  'certificate:sell':'certificate','certificate:void':'certificate/void','pass:sell':'pass','pass:void':'pass/void','payroll:get':'payroll',
+ 'fiscal:connect':'fiscal/connect','fiscal:disconnect':'fiscal/disconnect','fiscal:settings':'fiscal/settings','fiscal:retry':'fiscal/retry',
  'notify:save':'notify/save','notify:unlink':'notify/unlink','notify:test':'notify/test','booking:save':'booking/save','account:user:add':'users/add','account:user:update':'users/update'};
 const WHOLE=new Set(['account:user:add','account:user:update']);
 // Calls whose single argument is not the request body itself.

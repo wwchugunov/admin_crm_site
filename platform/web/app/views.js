@@ -638,7 +638,7 @@ function integrationsView() {
         more: `<p>${OrbitI18n.t("m236")}</p>`,
       })
     : "";
-  return `<div class="integrations">${settingsGroup(OrbitI18n.t("intGroupClients"), booking + telegram + website, OrbitI18n.t("m237"))}${settingsGroup(OrbitI18n.t("intGroupPay"), payRow("monobank") + payRow("liqpay"))}</div>`;
+  return `<div class="integrations">${settingsGroup(OrbitI18n.t("intGroupClients"), booking + telegram + website, OrbitI18n.t("m237"))}${settingsGroup(OrbitI18n.t("intGroupPay"), payRow("monobank") + payRow("liqpay"))}${fiscalGroup()}</div>`;
 }
 let settingsSection = "general";
 // One setting per row: what it is on the left, the control on the right.

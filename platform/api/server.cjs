@@ -16,6 +16,7 @@ const {Documents,MAX_SIZE:DOCUMENT_MAX,unavailable}=require('./documents.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
+const {Fiscal}=require('./fiscal.cjs');
 const {LiqPay}=require('./liqpay.cjs');
 const {BookingPage}=require('./booking-page.cjs');
 const {Notify}=require('./notify.cjs');
@@ -92,6 +93,8 @@ function createProductServer({ store, adminToken, privateKey, publicKey, busines
   const legal=new Legal({store,fail});accounts.legal=legal;registration.legal=legal;
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   const liqpay=new LiqPay({db:store.db,accounts,fail,api:process.env.CH_LIQPAY_API,sender:monobank,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.liqpay=liqpay;
+  // Fiscal receipts through Checkbox for companies that switched them on; failed ones are retried in the background.
+  const fiscal=new Fiscal({accounts,fail,api:process.env.CH_CHECKBOX_API});accounts.fiscal=fiscal;
   // Morning summaries, reports and instant news for the company team (Telegram and email).
   const notify=new Notify({db:store.db,accounts,mail,fail});accounts.notify=notify;
   // Booking pages live on the website domain (lomviko.com/b/<address>); the API domain serves them too.
@@ -191,6 +194,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
   const notifyTimer=setInterval(()=>notify.tick().catch(()=>{}),60000);notifyTimer.unref();
   const payTimer=setInterval(()=>{monobank.poll().catch(()=>{});liqpay.poll().catch(()=>{});},180000);payTimer.unref();
+  const fiscalTimer=setInterval(()=>fiscal.tick().catch(()=>{}),60000);fiscalTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;
   function tickBots() {
@@ -210,7 +214,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
   server.once('listening', tickBots);
   let resolveDisposed; server.disposed = new Promise(resolve => { resolveDisposed = resolve; });
   server.on('close', () => {
-    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);clearInterval(payTimer);
+    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);clearInterval(payTimer);clearInterval(fiscalTimer);
     Promise.all([botWork,mail.close()]).finally(() => { accounts.close(); resolveDisposed(); });
   });
   server.shutdown = async () => {
