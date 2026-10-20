@@ -6,7 +6,7 @@
   const base = `/b/${cfg.slug}`;
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tz = cfg.timezone;
-  const state = { services: [], resources: [], service: null, resource: 'any', date: null, slots: null, nearest: [], start: null, step: 'service', error: '', busy: false, done: null, request: null, waiting: false, waited: null };
+  const state = { services: [], resources: [], service: null, resource: 'any', date: null, slots: null, nearest: [], start: null, step: 'service', error: '', busy: false, done: null, request: null, waiting: false, waited: null, manage: new URLSearchParams(location.search).get('visit'), visit: null, mv: null, cancelAsk: false, copied: false };
 
   // Text on the company colour stays readable: white on dark colours, near-black on light ones.
   (() => {
@@ -90,11 +90,34 @@
   function doneStep() {
     const d = state.done;
     const who = state.resource === 'any' ? '' : `<p>${esc(state.resources.find((r) => r.id === state.resource)?.name || '')}</p>`;
-    return `<section class="step done" role="status"><div class="check">✓</div><h2>Ви записані</h2><p class="when">${esc(longDate(d.start))}, ${time(d.start)}</p><p>${esc(d.service || state.service.name)}</p>${who}${cfg.address ? `<p class="empty">${esc(cfg.address)}</p>` : ''}<button class="secondary" type="button" data-act="ics">Додати в календар</button>${cfg.bot ? `<a class="secondary" href="https://t.me/${esc(cfg.bot)}" target="_blank" rel="noopener">Нагадування в Telegram</a>` : ''}<button class="link" type="button" data-act="again" style="margin-top:14px">Записатися ще раз</button>${cfg.phone ? `<p class="empty" style="margin-top:12px">Щоб змінити або скасувати запис, зателефонуйте: ${esc(cfg.phone)}</p>` : ''}</section>`;
+    return `<section class="step done" role="status"><div class="check">✓</div><h2>Ви записані</h2><p class="when">${esc(longDate(d.start))}, ${time(d.start)}</p><p>${esc(d.service || state.service.name)}</p>${who}${cfg.address ? `<p class="empty">${esc(cfg.address)}</p>` : ''}<button class="secondary" type="button" data-act="ics">Додати в календар</button>${cfg.bot ? `<a class="secondary" href="https://t.me/${esc(cfg.bot)}" target="_blank" rel="noopener">Нагадування в Telegram</a>` : ''}<button class="link" type="button" data-act="again" style="margin-top:14px">Записатися ще раз</button>${d.manage ? `<div class="manage-box"><p>Збережіть посилання — за ним можна перенести або скасувати запис:</p><input id="manage-link" readonly value="${esc(d.manage)}"><button class="secondary" type="button" data-act="copy-link">${state.copied ? 'Скопійовано ✓' : 'Скопіювати посилання'}</button></div>` : cfg.phone ? `<p class="empty" style="margin-top:12px">Щоб змінити або скасувати запис, зателефонуйте: ${esc(cfg.phone)}</p>` : ''}</section>`;
+  }
+  // "My visit": the private link from the confirmation shows the visit and lets the client move or cancel it.
+  function manageStep() {
+    const v = state.visit;
+    if (!v) return `<section class="step"><h2>Ваш запис</h2>${state.error ? errorBox() : '<p class="loading">Завантажуємо запис…</p>'}</section>`;
+    const when = `<p class="when">${esc(longDate(v.start))}, ${time(v.start)}</p><p>${esc(v.service)}</p><p class="empty">${esc(v.resource || '')}</p>`;
+    if (v.status === 'cancelled') return `<section class="step done" role="status"><h2>Запис скасовано</h2>${when}<a class="secondary" href="${base}">Записатися знову</a></section>`;
+    if (!v.can_change) return `<section class="step done"><h2>Ваш запис</h2>${when}${cfg.phone ? `<p class="empty">Змінити його вже не можна онлайн. Телефонуйте: ${esc(cfg.phone)}</p>` : ''}</section>`;
+    if (state.cancelAsk) return `<section class="step"><h2>Скасувати запис?</h2>${when}${errorBox()}<div class="actions-row"><button class="primary" type="button" data-act="m-cancel-ok" ${state.busy ? 'disabled' : ''}>Так, скасувати</button><button class="secondary" type="button" data-act="m-back">Ні, залишити</button></div></section>`;
+    if (state.mv) {
+      const strip = days.map((d) => { const l = dayLabel(d); return `<button type="button" class="day" data-act="m-day" data-date="${d}" ${pressed(state.mv.date === d)}><small${d === today ? ' class="today"' : ''}>${d === today ? 'сьогодні' : esc(l.week)}</small><b>${l.num}</b><small>${esc(l.month)}</small></button>`; }).join('');
+      const slots = state.mv.slots === null ? '<p class="loading">Шукаємо вільний час…</p>' : state.mv.slots.length ? `<div class="times">${state.mv.slots.map((t) => `<button type="button" class="time" data-act="m-time" data-start="${t}" ${pressed(state.mv.start === t)}>${time(t)}</button>`).join('')}</div>` : '<p class="empty">На цей день вільного часу немає.</p>';
+      return `<section class="step"><h2>Новий час</h2><div class="summary"><b>${esc(v.service)}</b><span>Зараз: ${esc(longDate(v.start))}, ${time(v.start)}</span></div><div class="days" id="days">${strip}</div>${slots}${errorBox()}<div class="actions-row">${state.mv.start ? `<button class="primary" type="button" data-act="m-move-ok" ${state.busy ? 'disabled' : ''}>Перенести на ${esc(shortDay(state.mv.start))}, ${time(state.mv.start)}</button>` : ''}<button class="secondary" type="button" data-act="m-back">Скасувати зміну</button></div></section>`;
+    }
+    return `<section class="step done"><h2>Ваш запис</h2>${when}${errorBox()}<div class="actions-row"><button class="primary" type="button" data-act="m-move">Перенести</button><button class="secondary" type="button" data-act="m-cancel">Скасувати запис</button></div><button class="secondary" type="button" data-act="ics">Додати в календар</button></section>`;
+  }
+  async function loadMoveSlots(date) {
+    state.mv = { date, slots: null, start: null }; render();
+    try {
+      const data = await api('/catalog?' + new URLSearchParams({ service_id: state.visit.service_id, date, resource_id: state.visit.resource_id || 'any' }));
+      if (state.mv?.date === date) state.mv.slots = (data.slots || []).filter((t) => t !== state.visit.start);
+    } catch (e) { if (state.mv) state.mv.slots = []; state.error = e.message; }
+    render();
   }
   function render(focus) {
     const scroll = document.getElementById('days')?.scrollLeft;
-    app.innerHTML = header() + (state.done ? doneStep() : state.waited ? waitedStep() : serviceStep() + resourceStep() + timeStep() + formStep()) + '<p class="foot">Онлайн-запис <a href="https://lomviko.com" target="_blank" rel="noopener">LOMVIKO</a></p>';
+    app.innerHTML = header() + (state.manage ? manageStep() : state.done ? doneStep() : state.waited ? waitedStep() : serviceStep() + resourceStep() + timeStep() + formStep()) + '<p class="foot">Онлайн-запис <a href="https://lomviko.com" target="_blank" rel="noopener">LOMVIKO</a></p>';
     const strip = document.getElementById('days');
     if (strip) {
       if (scroll !== undefined) strip.scrollLeft = scroll;
@@ -152,6 +175,21 @@
     if (act === 'near') { const start = Number(b.dataset.start); await loadSlots(ymd(start)); if (state.slots?.includes(start)) { state.start = start; render('form-step'); document.getElementById('name')?.focus({ preventScroll: true }); } return; }
     if (act === 'wait-open') { state.waiting = true; state.start = null; render('form-step'); document.getElementById('name')?.focus({ preventScroll: true }); return; }
     if (act === 'ics') return ics();
+    if (act === 'copy-link') { try { await navigator.clipboard.writeText(state.done.manage); state.copied = true; } catch { state.copied = false; document.getElementById('manage-link')?.select(); } return render(); }
+    if (act === 'm-move') return loadMoveSlots(ymd(state.visit.start));
+    if (act === 'm-day') return loadMoveSlots(b.dataset.date);
+    if (act === 'm-time') { state.mv.start = Number(b.dataset.start); return render(); }
+    if (act === 'm-back') { state.mv = null; state.cancelAsk = false; return render(); }
+    if (act === 'm-cancel') { state.cancelAsk = true; return render(); }
+    if (act === 'm-cancel-ok' || act === 'm-move-ok') {
+      state.busy = true; render();
+      try {
+        const path = `/visit/${state.manage}/${act === 'm-cancel-ok' ? 'cancel' : 'move'}`;
+        await api(path, act === 'm-cancel-ok' ? {} : { start: state.mv.start });
+        state.visit = await api(`/visit/${state.manage}`); state.mv = null; state.cancelAsk = false;
+      } catch (e) { state.error = e.message; if (e.status === 409 && state.mv) { state.busy = false; await loadMoveSlots(state.mv.date); state.error = e.message; } }
+      state.busy = false; return render();
+    }
     if (act === 'again') { Object.assign(state, { done: null, waited: null, waiting: false, service: null, start: null, slots: null, date: null, resource: 'any', request: null }); return render(); }
   });
   app.addEventListener('input', (event) => {
@@ -190,5 +228,6 @@
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && cfg.embed) parent.postMessage({ lomviko: 'close' }, '*'); });
   render();
-  api('/catalog').then((data) => { state.services = data.services || []; state.loaded = true; render(); }).catch((e) => { state.loaded = true; state.error = e.message; render(); });
+  if (state.manage) api(`/visit/${encodeURIComponent(state.manage)}`).then((v) => { state.visit = v; render(); }).catch((e) => { state.error = e.message; render(); });
+  else api('/catalog').then((data) => { state.services = data.services || []; state.loaded = true; render(); }).catch((e) => { state.loaded = true; state.error = e.message; render(); });
 })();

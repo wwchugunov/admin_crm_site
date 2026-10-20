@@ -322,3 +322,7 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in sr
   .embed #app { padding-top: 0; }
   .embed .cover { border-radius: 0; }
 }
+.actions-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 10px; justify-content: center; }
+.manage-box { margin-top: 16px; display: grid; gap: 8px; text-align: left; }
+.manage-box p { margin: 0; font-size: 14px; }
+.manage-box input { width: 100%; font-size: 13px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.15); }

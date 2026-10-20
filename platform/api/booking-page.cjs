@@ -75,6 +75,24 @@ class BookingPage{
   const runtime=this.accounts.businesses.get(business),settings=this.settings(runtime.store);
   return settings.enabled?{business,runtime,store:runtime.store,settings}:null;
  }
+ // A private link the client keeps to see, move or cancel the visit made on the page.
+ links(store){store.db.exec('CREATE TABLE IF NOT EXISTS visit_links(token TEXT PRIMARY KEY,appointment_id TEXT NOT NULL UNIQUE,created_at INTEGER NOT NULL)');}
+ visitLink(store,id){this.links(store);const row=store.db.prepare('SELECT token FROM visit_links WHERE appointment_id=?').get(id);if(row)return row.token;const token=crypto.randomBytes(24).toString('base64url');store.db.prepare('INSERT INTO visit_links VALUES(?,?,?)').run(token,id,Date.now());return token;}
+ manage(req,res,reply,v,missing){
+  const c=this.company(v[1]);if(!c)missing();this.links(c.store);
+  const link=c.store.db.prepare('SELECT appointment_id FROM visit_links WHERE token=?').get(v[2]);if(!link)this.fail(404,'Посилання недійсне / The link is not valid');
+  const visit=()=>c.store.visits('a.id=?',[link.appointment_id])[0];let a=visit();if(!a)this.fail(404,'Запис не знайдено / Visit not found');
+  const open=a.status==='confirmed'&&a.start>Date.now();
+  if(!v[3]&&req.method==='GET'){reply(200,{service:a.service_name,service_id:a.service_id,resource:a.resource_name,resource_id:a.resource_id,start:a.start,end:a.end,status:a.status,can_change:open});return true;}
+  if(req.method!=='POST')this.fail(405,'Method not allowed');
+  if(!open)this.fail(409,'Цей запис уже не можна змінити — зателефонуйте нам / This visit can no longer be changed');
+  if(v[3]==='cancel'){c.store.status(a.id,'cancelled');this.accounts.notify?.event(c.business,'cancel',a.id,'page').catch(()=>{});reply(200,{ok:true,status:'cancelled'});return true;}
+  const start=Number(req.parsedBody?.start);if(!Number.isSafeInteger(start)||start<=Date.now())this.fail(400,'Оберіть час у майбутньому / Choose a future time');
+  const from=a.start,resources=c.store.availableResources(a.service_id,a.resource_id,start);
+  if(resources.length!==(a.resources?.length||1))this.fail(409,'Цей час уже зайнятий — оберіть інший / This time was just taken');
+  c.store.reschedule({id:a.id,start,resource_ids:resources});this.accounts.notify?.event(c.business,'reschedule',a.id,'page',{from}).catch(()=>{});
+  a=visit();reply(200,{ok:true,start:a.start,end:a.end});return true;
+ }
  headers(type,extra={}){return{'Content-Type':type,'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin',...extra};}
  page(res,slug,c,embed){
   const {store,settings}=c,name=store.get('business')||'',phone=store.get('phone')||'',address=store.get('address')||'';
@@ -98,6 +116,8 @@ class BookingPage{
   }
   const m=/^\/b\/([a-z0-9-]{3,40})(?:\/(logo|cover|catalog|book|wait))?\/?$/.exec(route);
   const missing=()=>{this.fail(404,'Сторінку запису не знайдено або її вимкнено / Booking page not found');};
+  const v=/^\/b\/([a-z0-9-]{3,40})\/visit\/([A-Za-z0-9_-]{32})(?:\/(cancel|move))?$/.exec(route);
+  if(v)return this.manage(req,res,reply,v,missing);
   if(!m)missing();
   const c=this.company(m[1]);
   // A person opening a wrong or switched-off link sees a clear page, not an error code.
@@ -113,7 +133,7 @@ class BookingPage{
    if(!this.checkToken(m[1],data.token))this.fail(400,'Сторінка застаріла — оновіть її і спробуйте ще раз / The page is outdated, reload it');
    const r=this.booking.create(c.business,c.store,{...data,request_id:data.request_id},req.clientAddress||req.socket.remoteAddress,'page');
    const a=c.store.db.prepare('SELECT a.start,a.end,s.name service FROM appointments a JOIN services s ON s.id=a.service_id WHERE a.id=?').get(r.appointment_id);
-   reply(r.status,{ok:true,start:a?.start,end:a?.end,service:a?.service});return true;
+   reply(r.status,{ok:true,start:a?.start,end:a?.end,service:a?.service,manage:a?`${this.base}/b/${m[1]}?visit=${this.visitLink(c.store,r.appointment_id)}`:null});return true;
   }
   if(m[2]==='wait'&&req.method==='POST'){
    const data=req.parsedBody||{};

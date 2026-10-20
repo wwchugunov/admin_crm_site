@@ -99,3 +99,17 @@ test('A full day shows the nearest free times; the client can wait for that day 
  const list=f.store.waitlist();
  assert.equal(list.length,1);assert.equal(list[0].client_name,'Ліна');assert.equal(list[0].date,f.date);assert.equal(list[0].source,'page');assert.equal(list[0].telegram,false);
 });
+test('A booking from the page comes with a private link to see, move or cancel the visit',async t=>{
+ const f=await fixture(t);f.page.save(f.business,f.runtime,{slug:'studio-olena',enabled:true});
+ const booked=await f.post('/b/studio-olena/book',f.booking());assert.equal(booked.status,201,JSON.stringify(booked.value));
+ const token=new URL(booked.value.manage,'http://x').searchParams.get('visit');assert.match(token,/^[A-Za-z0-9_-]{32}$/);
+ assert.equal((await f.get('/b/studio-olena/visit/'+'x'.repeat(32))).status,404,'a guessed link shows nothing');
+ const visit=JSON.parse((await f.get('/b/studio-olena/visit/'+token)).text);
+ assert.deepEqual([visit.service,visit.start,visit.can_change],['Стрижка',f.start,true]);assert.equal(visit.phone,undefined,'no personal data in the link');
+ const later=f.store.slots(f.service,visit.resource_id,f.date).find(s=>s>f.start+3600000);
+ assert.equal((await f.post('/b/studio-olena/visit/'+token+'/move',{start:Date.now()-1000})).status,400);
+ const moved=await f.post('/b/studio-olena/visit/'+token+'/move',{start:later});assert.equal(moved.status,200,JSON.stringify(moved.value));assert.equal(moved.value.start,later);
+ assert.equal((await f.post('/b/studio-olena/visit/'+token+'/cancel',{})).status,200);
+ const after=JSON.parse((await f.get('/b/studio-olena/visit/'+token)).text);assert.deepEqual([after.status,after.can_change],['cancelled',false]);
+ assert.equal((await f.post('/b/studio-olena/visit/'+token+'/cancel',{})).status,409,'nothing to change after cancelling');
+});
