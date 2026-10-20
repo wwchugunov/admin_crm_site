@@ -12,8 +12,18 @@ Object.assign(OrbitI18n.messages, {
   fiscalDisconnect: { uk: "Вимкнути", en: "Turn off" },
   fiscalDisconnectAsk: { uk: "Нові оплати більше не передаватимуться в Checkbox. Видані чеки залишаться в Checkbox і в списку нижче.", en: "New payments will no longer go to Checkbox. Issued receipts stay in Checkbox and in the list below." },
   fiscalVchasno: { uk: "Вчасно.Каса", en: "Vchasno.Kasa" },
+  fiscalWhyTitle: { uk: "Фіскальні чеки — за вашим бажанням", en: "Fiscal receipts are up to you" },
+  fiscalWhy1: { uk: "LOMVIKO повністю працює й без них: записи, клієнти, оплати, звіти, бот — усе як є.", en: "LOMVIKO works fully without them: bookings, clients, payments, reports and the bot stay as they are." },
+  fiscalWhy2: { uk: "Каса (ПРРО) — це ваш окремий договір із провайдером: Checkbox або Вчасно.Каса. Ви реєструєтеся в нього й оплачуєте його тариф напряму, а LOMVIKO лише передає продажі у вашу касу й нічого за це не бере.", en: "The cash register (PRRO) is your own agreement with a provider: Checkbox or Vchasno.Kasa. You sign up with them and pay their plan directly; LOMVIKO only passes sales to your register and charges nothing for it." },
+  fiscalWhy3: { uk: "Чи потрібні вам чеки і на яких оплатах — вирішує ваш бухгалтер. Ціни провайдерів можуть змінюватися, перевіряйте їх на їхніх сайтах.", en: "Your accountant decides whether you need receipts and for which payments. Provider prices may change; check them on their websites." },
+  fiscalCheckboxPrice: { uk: "Checkbox: 30 днів безкоштовно, далі близько 348 грн на місяць за касу (за даними їхнього сайту).", en: "Checkbox: 30 days free, then about 348 UAH a month per register (according to their website)." },
+  fiscalHowTitle: { uk: "Як підключити Checkbox", en: "How to connect Checkbox" },
+  fiscalHow1: { uk: "Зареєструйтеся на checkbox.ua — як ФОП або компанія, з КЕП.", en: "Sign up at checkbox.ua as a sole proprietor or company, with a qualified e-signature." },
+  fiscalHow2: { uk: "Створіть касу. Щоб спершу спробувати, візьміть тестову касу — її чеки не йдуть у податкову.", en: "Create a cash register. To try first, use a test register — its receipts do not go to the tax service." },
+  fiscalHow3: { uk: "Додайте касира й задайте йому логін і пароль або PIN-код.", en: "Add a cashier and give them a login and password or a PIN." },
+  fiscalHow4: { uk: "Скопіюйте ключ ліцензії каси й вставте все нижче.", en: "Copy the register licence key and paste everything below." },
   fiscalSoon: { uk: "Незабаром", en: "Coming soon" },
-  fiscalVchasnoShort: { uk: "Підключення з’явиться згодом.", en: "Coming later." },
+  fiscalVchasnoShort: { uk: "Підключення з’явиться найближчим часом. За даними їхнього сайту, є безкоштовний тариф з обмеженнями.", en: "Coming soon. According to their website, there is a free plan with limits." },
   fiscalLicence: { uk: "Ключ ліцензії каси", en: "Cash register licence key" },
   fiscalLicenceHint: { uk: "Кабінет Checkbox → Каси → ваша каса → «Ключ ліцензії». Для перевірки можна взяти тестову касу.", en: "Checkbox account → Cash registers → your register → “Licence key”. A test register works for trying it out." },
   fiscalLogin: { uk: "Логін касира", en: "Cashier login" },
@@ -55,8 +65,9 @@ function fiscalGroup() {
     status: f.connected ? ft("fiscalOn") : ft("fiscalOff"),
     short: f.connected ? `${ft("fiscalCashier")}: ${escape(f.cashier || "")}${f.consent_at ? ` · ${ft("fiscalSince")} ${dayText(f.consent_at)}` : ""}` : ft("fiscalShort"),
     controls: !owner ? "" : f.connected ? `<button class="secondary" data-action="fiscal-settings">${ft("fiscalSettings")}</button><button class="danger" data-action="fiscal-off">${ft("fiscalDisconnect")}</button>` : `<button class="primary" data-action="fiscal-connect">${ft("fiscalConnect")}</button>`,
-    more: `<p>${ft("fiscalNote")}</p>`,
+    more: `<p>${ft("fiscalCheckboxPrice")}</p><p>${ft("fiscalNote")}</p>`,
   });
+  const why = `<div class="fiscal-why"><strong>${ft("fiscalWhyTitle")}</strong><ul><li>${ft("fiscalWhy1")}</li><li>${ft("fiscalWhy2")}</li><li>${ft("fiscalWhy3")}</li></ul></div>`;
   const vchasno = integrationRow({ icon: "◷", name: ft("fiscalVchasno"), on: false, status: ft("fiscalSoon"), short: ft("fiscalVchasnoShort"), controls: "", more: "" });
   const list =
     f.connected || receipts.length
@@ -72,7 +83,7 @@ function fiscalGroup() {
             : `<p class="hint">${ft("fiscalNone")}</p>`
         }</div>`
       : "";
-  return settingsGroup(ft("fiscalGroup"), checkbox + vchasno + list);
+  return settingsGroup(ft("fiscalGroup"), why + checkbox + vchasno + list);
 }
 function fiscalReceiptUrl(id) {
   return `https://api.checkbox.in.ua/api/v1/receipts/${id}/html`;
@@ -95,7 +106,7 @@ Object.assign(actions, {
   "fiscal-connect": () =>
     modal(
       ft("fiscalConnect"),
-      `<p class="hint">${ft("fiscalNote")}</p>` +
+      `<div class="bot-guide"><strong>${ft("fiscalHowTitle")}</strong><ol>${[1, 2, 3, 4].map((n) => `<li>${ft("fiscalHow" + n)}</li>`).join("")}</ol><p class="hint">${ft("fiscalWhy2")}</p><p class="hint">${ft("fiscalCheckboxPrice")}</p></div>` +
         field(ft("fiscalLicence"), "license_key", "password", 'required autocomplete="off" spellcheck="false" maxlength="200"') +
         `<p class="hint">${ft("fiscalLicenceHint")}</p>` +
         `<div class="form-grid"><div>${field(ft("fiscalLogin"), "login", "text", 'autocomplete="off" maxlength="200"')}</div><div>${field(ft("fiscalPassword"), "password", "password", 'autocomplete="new-password" maxlength="200"')}</div></div>` +

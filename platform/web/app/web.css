@@ -225,3 +225,5 @@ html[data-theme] .subscription-banner.ended {
 .lapsed-template textarea { width: 100%; resize: vertical; }
 .tpl-remove-cell { display: flex; align-items: flex-end; justify-content: flex-end; }
 .lapsed-preview { margin: 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; white-space: pre-wrap; }
+.fiscal-why { padding: 14px 16px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; }
+.fiscal-why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
