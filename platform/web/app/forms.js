@@ -33,6 +33,15 @@ function modal(title, html, submit, button = OrbitI18n.t("m271")) {
   $("#modal").showModal();
 }
 function closeModal() {
+  // A message shown inside the window moves to the page, so "Saved" stays visible after the window closes.
+  const note = $("#toast");
+  if (note.parentElement === $("#modal")) {
+    document.body.append(note);
+    if (note.style.display === "block") {
+      note.hidePopover?.();
+      note.showPopover?.();
+    }
+  }
   $("#modal").close();
   $("#modal-form").reset();
   $("#modal-fields").innerHTML = "";

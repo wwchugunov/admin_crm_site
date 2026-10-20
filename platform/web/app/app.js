@@ -135,6 +135,16 @@ function toast(message, error = false) {
     error ? 12000 : 5000,
   );
 }
+function hideToast() {
+  clearTimeout(toastTimer);
+  $("#toast").hidePopover?.();
+  $("#toast").style.display = "none";
+}
+// A tap on the message closes it; moving to another section clears an old one.
+document.addEventListener("click", (event) => {
+  if (event.target.closest("#toast") && !event.target.closest(".toast-help")) hideToast();
+  else if (event.target.closest(".nav[data-page]")) hideToast();
+});
 async function run(fn) {
   try {
     return await fn();

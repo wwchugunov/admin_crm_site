@@ -43,5 +43,5 @@ test('Registration during the launch offer runs free until 1 March 2027 and send
  const u=f.store.db.prepare('SELECT * FROM users WHERE email=?').get('welcome@example.test'),freeUntil=Date.parse('2027-03-01T00:00:00+02:00');
  assert.equal(u.expires,Math.max(freeUntil,u.expires));assert(u.expires>=Date.now()+30*86400000-60000,'never shorter than 30 days');
  await f.server.mail.tick();const welcome=f.sent.find(m=>m.to==='welcome@example.test'&&/безкоштовний період почався/.test(m.subject));
- assert(welcome,'welcome email sent');assert.match(welcome.text,/Telegram/);assert.match(welcome.text,/app\.lomviko\.com|Вхід:/);
+ assert(welcome,'welcome email sent');assert.match(welcome.text,/Telegram/);assert.match(welcome.text,/app\.lomviko\.com|Відкрити LOMVIKO/);
 });
