@@ -311,7 +311,7 @@ function subscriptionBanner() {
 }
 function legalBanner() {
   if (!legalState?.required || data?.mode !== "server") return "";
-  return `<section class="setup-banner legal-banner"><div><strong>${OrbitI18n.t(legalState.updated ? "legalBannerTitle" : "legalBannerTitleFirst")}</strong><p>${OrbitI18n.t(legalState.updated ? "legalBannerUpdated" : "legalBannerFirst")}</p><p class="legal-links"><button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOfferTitle")}</button> · <button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button></p></div><div class="setup-actions"><button class="primary" data-action="legal-accept">${OrbitI18n.t("legalAccept")}</button></div></section>`;
+  return `<section class="setup-banner legal-banner"><div><strong>${OrbitI18n.t(legalState.updated ? "legalBannerTitle" : "legalBannerTitleFirst")}</strong><p>${OrbitI18n.t(legalState.offer?.version === "off" ? "legalBannerPrivacyOnly" : legalState.updated ? "legalBannerUpdated" : "legalBannerFirst")}</p><p class="legal-links">${legalState.offer?.version === "off" ? "" : `<button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOfferTitle")}</button> · `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button></p></div><div class="setup-actions"><button class="primary" data-action="legal-accept">${OrbitI18n.t("legalAccept")}</button></div></section>`;
 }
 function dayGrid(rows) {
   // Columns only for people on shift that day (plus anyone who already has a visit).

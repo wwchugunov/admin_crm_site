@@ -995,7 +995,7 @@ function registrationModal() {
         'required minlength="12" maxlength="128" autocomplete="new-password"',
       ) +
       `<p class="hint">${OrbitI18n.t("registerPasswordHint")}</p>` +
-      `<label class="checkbox-line legal-accept"><input name="accept" type="checkbox" required><span>${OrbitI18n.t("legalAcceptLabel")} <button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOffer")}</button> ${OrbitI18n.t("legalAnd")} <button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("legalPrivacyAccusative")}</button></span></label>`,
+      `<label class="checkbox-line legal-accept"><input name="accept" type="checkbox" required><span>${OrbitI18n.t("legalAcceptLabel")} ${window.OrbitWeb?.offer === false ? "" : `<button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOffer")}</button> ${OrbitI18n.t("legalAnd")} `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("legalPrivacyAccusative")}</button></span></label>`,
     async (values) => {
       if (values.password !== values.password_again)
         throw Error(OrbitI18n.t("registerPasswordMismatch"));

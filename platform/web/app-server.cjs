@@ -137,7 +137,8 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
     if(req.headers.host!==external.host)problem(403,'Invalid host');
     if(req.method!=='POST'||req.headers.origin!==external.origin)problem(403,'Invalid origin');
     if(!String(req.headers['content-type']||'').startsWith('application/json'))problem(415,'JSON required');
-    if(url.pathname==='/web/info')return reply(200,{version:VERSION,api:apiPublic});
+    // Whether the public offer is published decides what registration asks people to accept.
+    if(url.pathname==='/web/info'){let offer=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)offer=(await r.json())?.offer?.version!=='off';}catch{}return reply(200,{version:VERSION,api:apiPublic,offer});}
     if(url.pathname==='/web/call'){const {channel,args=[]}=await json(req,4*1024*1024);return reply(200,{value:(await call(req,res,channel,args))??null});}
     if(url.pathname==='/web/export'){
      const {format,password}=await json(req,4096),s=session(req);if(!['json','csv','orbit'].includes(format))problem(400,'Unknown format');

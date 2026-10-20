@@ -134,6 +134,10 @@
   };
   // Signed out (or the session ended): the sign-in screen replaces the workspace.
   window.OrbitWeb = {
+    // False while the public offer is switched off: registration then asks for the privacy policy only.
+    get offer() {
+      return info.offer !== false;
+    },
     signedOut() {
       if (document.body.classList.contains("signed-out")) return;
       document.body.classList.add("signed-out");

@@ -39,3 +39,19 @@ test("Acceptance is recorded per document version; a new upload asks again; stal
   legal.forget(["u1"], ["anna@salon.ua"]);
   assert.equal(legal.history("u1").length, 0);
 });
+
+test("While the offer is switched off only the privacy policy is accepted; switching it on asks again", (t) => {
+  const db = new DatabaseSync(":memory:");
+  t.after(() => db.close());
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER);CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
+  db.prepare("INSERT INTO documents VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
+  db.prepare("INSERT INTO documents VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
+  db.prepare("INSERT INTO document_switches VALUES('site-offer',1)").run();
+  const legal = new Legal({ store: { db }, fail }),
+    user = { id: "u1", email: "anna@salon.ua" };
+  assert.equal(legal.current().offer.version, "off");
+  legal.record({ userId: user.id, email: user.email, method: "app-signed" });
+  assert.equal(legal.status(user).required, false);
+  db.prepare("UPDATE document_switches SET disabled=0").run();
+  assert.equal(legal.status(user).required, true, "the published offer needs consent");
+});

@@ -3657,6 +3657,10 @@
       uk: "Ми оновили Публічну оферту або Політику конфіденційності. Перегляньте, будь ласка, нову редакцію й підтвердьте згоду — без цього ми не можемо гарантувати вам ті самі умови.",
       en: "We have updated the Public offer or the Privacy policy. Please review the new version and confirm your consent.",
     },
+    legalBannerPrivacyOnly: {
+      uk: "Перш ніж продовжити, перегляньте й прийміть Політику конфіденційності LOMVIKO. Це займе хвилину.",
+      en: "Before you continue, please review and accept the LOMVIKO Privacy policy. It takes a minute.",
+    },
     legalAccept: {
       uk: "Приймаю",
       en: "I accept",

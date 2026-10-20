@@ -9,6 +9,8 @@ class Legal{
  constructor({store,fail}){Object.assign(this,{store,db:store.db,fail});
   this.db.exec('CREATE TABLE IF NOT EXISTS legal_acceptances(id TEXT PRIMARY KEY,user_id TEXT,email TEXT NOT NULL,offer_version TEXT NOT NULL,privacy_version TEXT NOT NULL,method TEXT NOT NULL,ip TEXT NOT NULL,device TEXT NOT NULL,app_version TEXT NOT NULL,accepted_at INTEGER NOT NULL);CREATE INDEX IF NOT EXISTS legal_user ON legal_acceptances(user_id)');}
  version(kind){
+  // A document the owner switched off is not shown and not accepted; switching it on asks everyone again.
+  try{if(this.db.prepare('SELECT disabled FROM document_switches WHERE kind=?').get(kind)?.disabled)return{version:'off',date:null};}catch{}
   try{const r=this.db.prepare("SELECT sha256,uploaded_at FROM documents WHERE kind=? AND language='uk' AND active=1").get(kind);if(r)return{version:r.sha256.slice(0,16),date:r.uploaded_at};}catch{}
   return{version:'none',date:null};
  }
