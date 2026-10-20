@@ -227,3 +227,7 @@ html[data-theme] .subscription-banner.ended {
 .lapsed-preview { margin: 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; white-space: pre-wrap; }
 .fiscal-why { padding: 14px 16px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; }
 .fiscal-why ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
+.import-columns { display: grid; gap: 8px; }
+.import-column { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; margin: 0; }
+.import-column span { display: grid; gap: 2px; font-weight: 500; overflow: hidden; }
+.import-column small { color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

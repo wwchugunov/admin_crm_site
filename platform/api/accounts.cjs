@@ -11,6 +11,7 @@ const FINANCE={
  '/v1/crm/material':(store,d)=>store.addMaterial(d),'/v1/crm/material/update':(store,d)=>store.updateMaterial(d),'/v1/crm/material/delete':(store,d)=>store.deleteMaterial(d),'/v1/crm/material/move':(store,d)=>store.materialMove(d),
  '/v1/crm/certificate':(store,d)=>store.sellCertificate(d),'/v1/crm/certificate/void':(store,d)=>store.voidCertificate(d),
  '/v1/crm/pass':(store,d)=>store.sellPass(d),'/v1/crm/pass/void':(store,d)=>store.voidPass(d),
+ '/v1/crm/client/import':(store,d)=>store.importClients(d.rows),
  '/v1/crm/payroll':(store,d)=>d.month?store.payroll(...store.monthRange(d.month)):store.payroll(d.from,d.to),
 };
 class Accounts {

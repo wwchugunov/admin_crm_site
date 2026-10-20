@@ -5,6 +5,7 @@ const { randomUUID, randomBytes } = require("node:crypto");
 const { mkdirSync, chmodSync } = require("node:fs");
 const { dirname } = require("node:path");
 const { finance } = require("./finance.cjs");
+const { clientImport } = require("./client-import.cjs");
 const OrbitIndustries = require("../shared/industries.js");
 
 const TABLES = [
@@ -1641,7 +1642,7 @@ class Store {
     });
   }
 }
-Object.assign(Store.prototype, finance);
+Object.assign(Store.prototype, finance, clientImport);
 // Start and end of a calendar month ("2026-10") in the company's time zone.
 Store.prototype.monthRange = function (month) {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month))) throw Error(OrbitI18n.t("m504"));
