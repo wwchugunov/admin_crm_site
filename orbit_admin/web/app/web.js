@@ -1,6 +1,6 @@
 "use strict";
-// The browser side of LOMVIKO: the screens call window.orbit.call(channel, ...args) as they did in
-// the desktop app; here every call goes to /web/call on the same site. A few things happen in the
+// The browser side of LOMVIKO: the screens call window.orbit.call(channel, ...args) and every
+// call goes to /web/call on the same site. A few things happen in the
 // browser itself: picking a logo, opening links, downloading an export.
 (function () {
   let info = { version: "", api: "" };

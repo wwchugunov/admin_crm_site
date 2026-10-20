@@ -32,7 +32,7 @@ const fontCss = face('onest-cyrillic-wght-normal.woff2', 'U+0301,U+0400-045F,U+0
 (async () => {
   fs.mkdirSync(out, { recursive: true });
   let playwright;
-  try { playwright = require.resolve(process.env.PLAYWRIGHT_CORE || 'playwright-core', { paths: [root, path.join(root, '..', 'app_crm')] }); }
+  try { playwright = require.resolve(process.env.PLAYWRIGHT_CORE || 'playwright-core', { paths: [root] }); }
   catch { throw Error('playwright-core not found. Run "npm i --no-save playwright-core" in this repository or set PLAYWRIGHT_CORE.'); }
   const { chromium } = require(playwright);
   const browser = await chromium.launch({ executablePath: chrome });

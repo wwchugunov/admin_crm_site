@@ -1,7 +1,7 @@
-// LOMVIKO in the browser (app.lomviko.com): the same screens as the former desktop app.
+// LOMVIKO in the browser (app.lomviko.com).
 // The browser holds only HttpOnly cookies; this server keeps no state of its own. The device key
 // is derived from a per-browser secret cookie, so one browser is one device seat, and every API
-// call is signed here exactly as the desktop app signed it.
+// call to the API is signed here.
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {signRequest}=require('./request-proof.cjs');
 const {encryptBackup}=require('../src/security.cjs');

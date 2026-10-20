@@ -17,7 +17,7 @@ class AccountDeletion{
   const{user,owner,users,businesses}=this.plan(userId),ids=users.map(u=>u.id),emails=users.map(u=>u.email.toLowerCase());
   for(const b of businesses){const runtime=this.accounts.businesses.instances.get(b.id);if(runtime?.telegram.busy||this.accounts.botWorkers?.work.has(b.id))this.fail(409,'Бот компанії зараз працює, спробуйте за хвилину / Company bot is busy, try again in a minute');}
   const each=(sql,values)=>{const statement=this.db.prepare(sql);for(const v of values)statement.run(v);};
-  // Tables left by the archived desktop app exist only in databases created before the web version.
+  // Some older databases still hold tables that newer ones never create.
   const legacy=table=>Boolean(this.db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table));
   this.store.transaction(()=>{
    for(const b of businesses){for(const table of ['web_requests','bot_workers','bot_messages','bot_updates',...(legacy('update_backups')?['update_backups']:[]),'memberships'])this.db.prepare(`DELETE FROM ${table} WHERE business_id=?`).run(b.id);}

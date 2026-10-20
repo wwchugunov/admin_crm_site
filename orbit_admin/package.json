@@ -1,7 +1,7 @@
 {
   "name": "biz-platform-api",
-  "version": "2.1.0",
-  "description": "LOMVIKO API, company licensing and browser administration",
+  "version": "2.1.1",
+  "description": "LOMVIKO API, web app and browser administration",
   "main": "owner/server.cjs",
   "private": true,
   "scripts": {

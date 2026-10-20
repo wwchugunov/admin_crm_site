@@ -1,7 +1,5 @@
 const OrbitI18n = require('./ui/i18n.js');
-const http = require('node:http');
 const crypto = require('node:crypto');
-const { encryptBackup } = require('./security.cjs');
 async function request(url, options = {}) {
   let response;
   try { response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) }); }
@@ -125,60 +123,4 @@ class Telegram {
     } catch (e) { this.state = e.message; } finally { this.busy = false; }
   }
 }
-class Drive {
-  constructor(store, vault, openExternal, options = {}) { this.store = store; this.vault = vault; this.openExternal = openExternal; this.oauthClient = options.oauthClient; this.request = options.request || request; this.busy = false; this.connecting = false; this.state = vault.has('google') ? OrbitI18n.t('m189') : OrbitI18n.t('m217'); }
-  async connect() {
-    if (this.connecting) throw Error(OrbitI18n.t('m620'));
-    if (this.busy) throw Error(OrbitI18n.t('m621'));
-    const client = typeof this.oauthClient === 'function' ? this.oauthClient() : this.oauthClient;
-    if (!client) throw Error(OrbitI18n.t('m622'));
-    require('./google-config.cjs').googleClient({ installed: client });
-    if (!this.vault.available()) throw Error(OrbitI18n.t('m623'));
-    const password = this.vault.get('backup_password') || crypto.randomBytes(32).toString('base64url');
-    this.connecting = true; this.state = OrbitI18n.t('m228');
-    const verifier = crypto.randomBytes(48).toString('base64url'), state = crypto.randomBytes(32).toString('base64url');
-    let server, timer;
-    try {
-      const codePromise = new Promise((resolve, reject) => {
-        this.cancelAuthorization = () => reject(Error(OrbitI18n.t('m624')));
-        server = http.createServer((req, res) => {
-          const url = new URL(req.url, 'http://127.0.0.1');
-          if (url.pathname !== '/' || url.searchParams.get('state') !== state) { res.writeHead(400); res.end('Invalid callback'); return; }
-          if (!url.searchParams.get('code')) { res.end('Authorization cancelled'); reject(Error(OrbitI18n.t('m624'))); return; }
-          res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(`<p>${OrbitI18n.t('m625')}</p>`); resolve(url.searchParams.get('code'));
-        });
-        server.on('error', () => reject(Error(OrbitI18n.t('m626'))));
-        timer = setTimeout(() => reject(Error(OrbitI18n.t('m627'))), 180000);
-      });
-      // Attach a rejection handler while the listener is starting.
-      codePromise.catch(() => {});
-      await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
-      const redirect = `http://127.0.0.1:${server.address().port}/`;
-      const params = new URLSearchParams({ client_id: client.client_id, redirect_uri: redirect, response_type: 'code', scope: 'https://www.googleapis.com/auth/drive.file', access_type: 'offline', prompt: 'consent', state, code_challenge: crypto.createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' });
-      await this.openExternal(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
-      const code = await codePromise;
-      const tokens = await this.request('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ client_id: client.client_id, client_secret: client.client_secret, code, code_verifier: verifier, redirect_uri: redirect, grant_type: 'authorization_code' }) });
-      if (!tokens.refresh_token) throw Error(OrbitI18n.t('m628'));
-      this.vault.put('google', JSON.stringify({ client_id: client.client_id, client_secret: client.client_secret, refresh_token: tokens.refresh_token }));
-      this.vault.put('backup_password', password); this.store.set('drive_enabled', true); this.state = OrbitI18n.t('m189');
-      return { recoveryKey: password };
-    } catch (e) { this.state = this.vault.has('google') ? OrbitI18n.t('m629') : OrbitI18n.t('m630'); throw e; } finally { clearTimeout(timer); server?.close(); this.cancelAuthorization = null; this.connecting = false; }
-  }
-  cancel() { this.cancelAuthorization?.(); }
-  async backup(exportedData) {
-    if (this.busy || this.connecting) throw Error(OrbitI18n.t('m520')); this.busy = true;
-    try {
-      const config = JSON.parse(this.vault.get('google') || 'null'), password = this.vault.get('backup_password');
-      if (!config || !password) throw Error(OrbitI18n.t('m517'));
-      const token = await this.request('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ ...config, grant_type: 'refresh_token' }) });
-      const encrypted = encryptBackup(exportedData||this.store.export(), password);
-      const boundary = `orbit-${crypto.randomBytes(16).toString('hex')}`;
-      const metadata = { name: `Orbit-${new Date().toISOString().replace(/[:.]/g, '-')}.orbit`, description: 'Encrypted LOMVIKO backup. Restore in LOMVIKO.' };
-      const body = Buffer.concat([Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`), encrypted, Buffer.from(`\r\n--${boundary}--`)]);
-      await this.request('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body });
-      this.store.set('drive_last', Date.now()); this.state = OrbitI18n.t('m339');
-    } catch (e) { this.state = e.message; throw e; } finally { this.busy = false; }
-  }
-  async tick() { if (this.store.get('drive_enabled') && this.vault.has('google') && Date.now() - (this.store.get('drive_last') || 0) > 3600000 && !this.busy) { try { await this.backup(); } catch {} } }
-}
-module.exports = { Telegram, Drive, request };
+module.exports = { Telegram, request };

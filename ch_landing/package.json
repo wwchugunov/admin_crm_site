@@ -1,6 +1,6 @@
 {
   "name": "ch-landing",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "LOMVIKO marketing website and public API gateway",
   "engines": {

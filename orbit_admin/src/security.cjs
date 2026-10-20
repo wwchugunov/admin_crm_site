@@ -31,14 +31,4 @@ function decryptBackup(buffer, password) {
     return JSON.parse(Buffer.concat([decipher.update(Buffer.from(e.data, 'base64')), decipher.final()]).toString('utf8'));
   } catch { throw Error(OrbitI18n.t('m577')); }
 }
-function verifyLicense(license, publicKey, installation, now = Date.now()) {
-  try {
-    const parts = license.trim().split('.'); if (parts.length !== 2) throw Error();
-    const payload = Buffer.from(parts[0], 'base64url');
-    if (!crypto.verify(null, payload, publicKey, Buffer.from(parts[1], 'base64url'))) throw Error();
-    const claims = JSON.parse(payload);
-    if (claims.installation !== installation || !Number.isSafeInteger(claims.expires) || claims.expires <= now || !Number.isSafeInteger(claims.issued) || claims.issued > now || typeof claims.customer !== 'string') throw Error();
-    return claims;
-  } catch { throw Error(OrbitI18n.t('m578')); }
-}
-module.exports = { Vault, encryptBackup, decryptBackup, verifyLicense };
+module.exports = { Vault, encryptBackup, decryptBackup };

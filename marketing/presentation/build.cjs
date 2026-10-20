@@ -101,7 +101,7 @@ function document(c) {
 (async () => {
   // playwright-core is a build-time tool only; it is not a dependency of the deployed services.
   let playwright;
-  try { playwright = require.resolve(process.env.PLAYWRIGHT_CORE || 'playwright-core', { paths: [root, path.join(root, '..', 'app_crm')] }); }
+  try { playwright = require.resolve(process.env.PLAYWRIGHT_CORE || 'playwright-core', { paths: [root] }); }
   catch { throw Error('playwright-core not found. Run "npm i --no-save playwright-core" in this repository or set PLAYWRIGHT_CORE.'); }
   const { chromium } = require(playwright);
   if (!fs.existsSync(screenshot)) throw Error(`App screenshot not found: ${screenshot}`);

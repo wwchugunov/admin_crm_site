@@ -59,12 +59,10 @@ async function request(base, route, body, cookie = "") {
   assert.deepEqual(Object.keys(compose.services).sort(), [
     "api",
     "app-admin",
+    "app-web",
     "site-admin",
     "website",
   ]);
-  for (const service of Object.values(compose.services)) {
-    if (service.build) assert(!service.build.context.includes("app_crm"));
-  }
   for (const [service, route] of [
     ["api", "/healthz"],
     ["website", "/healthz"],
@@ -80,28 +78,6 @@ async function request(base, route, body, cookie = "") {
   assert.equal(website.status, 200);
   assert.deepEqual(await website.json(), await api.json());
   assert.equal((await request(origin("api"), "/admin/snapshot")).status, 401);
-  const serverImage = JSON.parse(
-    execFileSync(
-      "docker",
-      [
-        "compose",
-        "-f",
-        path.join(root, "compose.yaml"),
-        "exec",
-        "-T",
-        "api",
-        "node",
-        "-e",
-        "const fs=require('node:fs');process.stdout.write(JSON.stringify({desktopMain:fs.existsSync('/app/src/main.cjs'),desktopUi:fs.existsSync('/app/src/ui/views.js'),electron:fs.existsSync('/app/node_modules/electron')}))",
-      ],
-      { cwd: root, encoding: "utf8" },
-    ),
-  );
-  assert.deepEqual(serverImage, {
-    desktopMain: false,
-    desktopUi: false,
-    electron: false,
-  });
   const access = credentials();
   const counter = Math.floor(Date.now() / 30000);
   const first = Math.max(access.last + 1, counter - 1);

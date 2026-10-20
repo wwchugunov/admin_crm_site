@@ -608,10 +608,6 @@
     "uk": "Локальний режим",
     "en": "Local mode"
   },
-  "m151": {
-    "uk": "Доступ ліцензується сервером і прив’язаний до ключа пристрою.",
-    "en": "Access is licensed by the server and tied to the device key."
-  },
   "m152": {
     "uk": "Збірка для оцінювання. Комерційний захист вмикається зі штатним ключем видавця.",
     "en": "Evaluation build. Commercial protection is enabled with the publisher trust key."
@@ -952,10 +948,7 @@
     "uk": "Вмикається у профілі компанії. Публікуйте послуги для сайту окремо від Telegram. Сервер сайту отримує каталог і вільний час, а потім створює запис.",
     "en": "Enable it in the company profile. Publish website services separately from Telegram. Your website server loads services and availability, then creates a booking."
   },
-  "m237": {
-    "uk": "Записи та послуги спільні для застосунків і бота. Бот працює, поки сервер увімкнений. Google Drive зберігає резервні копії вибраної компанії через цей застосунок.",
-    "en": "Apps and the bot share bookings and services. The bot runs while the server is available. This app saves company backups to Google Drive."
-  },
+  "m237": {"uk": "Записи та послуги спільні для всієї команди й бота. Бот і сторінка запису працюють цілодобово на сервері LOMVIKO.", "en": "Bookings and services are shared by the whole team and the bot. The bot and the booking page run 24/7 on the LOMVIKO server."},
   "m238": {
     "uk": "У локальному режимі бот працює лише з відкритим застосунком. Для спільної бази й серверного бота увійдіть за логіном і паролем.",
     "en": "The local bot requires the app to stay open. Sign in for a shared database and a server bot."
@@ -980,21 +973,9 @@
     "uk": "Бот має бути виділений цій CRM. Клієнт сам запускає бота й дає згоду.",
     "en": "Use a dedicated bot for this CRM. Clients start the bot and give consent themselves."
   },
-  "m244": {
-    "uk": "Google Drive власника",
-    "en": "Owner’s Google Drive"
-  },
-  "m245": {
-    "uk": "Повна зашифрована копія бази щогодини, поки застосунок відкритий. Кожна копія — окремий файл на Google Drive власника.",
-    "en": "A complete encrypted backup every hour while the app is open. Each backup is a separate file in the owner’s Google Drive."
-  },
   "m246": {
     "uk": "Копії не містять токенів.",
     "en": "Backups do not include tokens."
-  },
-  "m247": {
-    "uk": "Режим роботи настільної версії.",
-    "en": "Desktop operating mode."
   },
   "m248": {
     "uk": "Уся база · JSON",
@@ -1064,10 +1045,6 @@
     "uk": "Вхід і резервний ключ",
     "en": "Sign-in and backup key"
   },
-  "m265": {
-    "uk": "Основний спосіб доступу — логін і пароль. Ліцензія пристрою видається автоматично. Для окремої локальної компанії можна застосувати підписаний ключ.",
-    "en": "Sign in with your email and password. The device license is issued automatically. A separate local company can use a signed key."
-  },
   "m266": {
     "uk": "Увійти за логіном",
     "en": "Sign in"
@@ -1083,10 +1060,6 @@
   "m269": {
     "uk": "Зберігання даних",
     "en": "Data storage"
-  },
-  "m270": {
-    "uk": "Google Drive — незалежні зашифровані резервні копії. Excel підходить для експорту й аналізу, але не для спільної робочої бази.",
-    "en": "Google Drive stores independent encrypted backups. Use Excel for export and analysis, not as a shared working database."
   },
   "m271": {
     "uk": "Зберегти",
@@ -1139,10 +1112,6 @@
   "m283": {
     "uk": "Запис створено",
     "en": "Booking created"
-  },
-  "m284": {
-    "uk": "⌘ на Mac або Ctrl на Windows — вибрати кілька.",
-    "en": "Hold ⌘ on Mac or Ctrl on Windows for multiple selection."
   },
   "m285": {
     "uk": "Не вдалося визначити час",
@@ -1332,10 +1301,6 @@
     "uk": "Бота відключено від цієї CRM",
     "en": "Bot disconnected from this CRM"
   },
-  "m332": {
-    "uk": "Google Drive підключено",
-    "en": "Google Drive connected"
-  },
   "m333": {
     "uk": "Резервні копії зберігатимуться на підключеному диску. Збережіть ключ відновлення окремо від застосунку: він потрібен на іншому комп’ютері.",
     "en": "Backups will be saved to the connected Drive. Save the recovery key separately; it is required on another computer."
@@ -1355,10 +1320,6 @@
   "m337": {
     "uk": "Ключ збережено. Зберігайте його окремо від застосунку.",
     "en": "Key saved. Keep it separate from the app."
-  },
-  "m338": {
-    "uk": "Зберігаємо копію на Google Drive…",
-    "en": "Saving a Google Drive backup…"
   },
   "m339": {
     "uk": "Копію збережено",
@@ -1396,10 +1357,6 @@
     "uk": "Пароль або ключ відновлення",
     "en": "Password or recovery key"
   },
-  "m348": {
-    "uk": "Виберіть .orbit з комп’ютера або Google Drive. Перед заміною бази застосунок запитає підтвердження.",
-    "en": "Choose an .orbit file from your computer or Google Drive. The app will ask for confirmation before replacing the database."
-  },
   "m349": {
     "uk": "Базу відновлено",
     "en": "Database restored"
@@ -1407,18 +1364,6 @@
   "m350": {
     "uk": "Вибрати копію",
     "en": "Choose backup"
-  },
-  "m351": {
-    "uk": "Активація",
-    "en": "Activation"
-  },
-  "m352": {
-    "uk": "Ключ активації",
-    "en": "Activation key"
-  },
-  "m353": {
-    "uk": "Ліцензію активовано",
-    "en": "License activated"
   },
   "m354": {
     "uk": "Активувати",
@@ -1492,10 +1437,7 @@
     "uk": "Пристрій вимкнено",
     "en": "Device disabled"
   },
-  "m372": {
-    "uk": "Запит інсталятора",
-    "en": "Installer requested"
-  },
+  "m372": {"uk": "Скачування (архів)", "en": "Download (archive)"},
   "m373": {
     "uk": "Файл передано",
     "en": "File delivered"
@@ -1532,10 +1474,7 @@
     "uk": "Завантаження",
     "en": "Downloads"
   },
-  "m382": {
-    "uk": "Історія персональних посилань на інсталятори.",
-    "en": "History of personal installer links."
-  },
+  "m382": {"uk": "Архів подій скачування.", "en": "Archived download events."},
   "m383": {
     "uk": "Сервер і експорт",
     "en": "Server and export"
@@ -1672,10 +1611,7 @@
     "uk": "ПРИСТРІЙ",
     "en": "DEVICE"
   },
-  "m417": {
-    "uk": "АКТИВАЦІЯ",
-    "en": "ACTIVATION"
-  },
+  "m417": {"uk": "ПЕРШИЙ ВХІД", "en": "FIRST SIGN-IN"},
   "m418": {
     "uk": "ОСТАННІЙ ЗВ’ЯЗОК",
     "en": "LAST CONNECTION"
@@ -1732,10 +1668,6 @@
     "uk": "Це дані для аналізу. Повна аварійна копія сервера потребує окремого захищеного збереження бази й ключів.",
     "en": "This export is for analysis. A complete disaster recovery backup also requires secure copies of server databases and keys."
   },
-  "m432": {
-    "uk": "Опублікувати інсталятори",
-    "en": "Publish installers"
-  },
   "m433": {
     "uk": "Для локального сервера виберіть DMG та EXE на комп’ютері. Для віддаленого сервера шляхи задаються в конфігурації.",
     "en": "Choose local DMG and EXE files for a local server. Configure file paths on a remote server."
@@ -1748,17 +1680,9 @@
     "uk": "Вибрати EXE",
     "en": "Choose EXE"
   },
-  "m436": {
-    "uk": "Інсталятори видаються за персональними посиланнями. Для комерційного поширення підпишіть їх сертифікатами.",
-    "en": "Installers are delivered through personal links. Sign them with certificates for commercial distribution."
-  },
   "m437": {
     "uk": "Що бачить власник",
     "en": "What the owner sees"
-  },
-  "m438": {
-    "uk": "Контакт і компанія, завантаження через сервер, ключ пристрою, ОС, версія, час активації й останнього підключення.",
-    "en": "Contact, company, server downloads, device key, OS, version, activation and connection times."
   },
   "m439": {
     "uk": "Записи відвідувачів, телефони клієнтів, Google OAuth і Telegram-токени залишаються в CRM бізнесу та не передаються цій панелі.",
@@ -1800,10 +1724,7 @@
     "uk": "＋ Компанія",
     "en": "＋ Company"
   },
-  "m449": {
-    "uk": "Створіть головного користувача з логіном і паролем, підготуйте компанію та передайте застосунок. Після входу завантажаться профіль і послуги. Ключ активації не потрібен.",
-    "en": "Create an owner account, prepare the company and provide the app. The profile and services load after sign-in. No activation key is needed."
-  },
+  "m449": {"uk": "Створіть головного користувача з логіном і паролем і підготуйте компанію. Після входу на app.lomviko.com профіль і послуги вже будуть на місці.", "en": "Create the main user with a login and password and prepare the company. After signing in at app.lomviko.com the profile and services are already there."},
   "m450": {
     "uk": "Хвилин",
     "en": "Minutes"
@@ -1960,18 +1881,7 @@
     "uk": "Адреса сервера для застосунку",
     "en": "App server address"
   },
-  "m489": {
-    "uk": "Одноразовий код активації",
-    "en": "One-time activation code"
-  },
-  "m490": {
-    "uk": "Персональне посилання · macOS",
-    "en": "Personal link · macOS"
-  },
-  "m491": {
-    "uk": "Персональне посилання · Windows",
-    "en": "Personal link · Windows"
-  },
+  "m489": {"uk": "Одноразовий ключ доступу", "en": "One-time access key"},
   "m492": {
     "uk": "Діє до",
     "en": "Valid until"
@@ -2008,14 +1918,6 @@
     "uk": "Дані експортовано",
     "en": "Data exported"
   },
-  "m501": {
-    "uk": "Інсталятор macOS підключено",
-    "en": "macOS installer connected"
-  },
-  "m502": {
-    "uk": "Інсталятор Windows підключено",
-    "en": "Windows installer connected"
-  },
   "m503": {
     "uk": "Некоректна дата",
     "en": "Invalid date"
@@ -2023,22 +1925,6 @@
   "m504": {
     "uk": "Виберіть коректний період",
     "en": "Choose a valid period"
-  },
-  "m505": {
-    "uk": "Версія для оцінювання · сервер ліцензій не підключено",
-    "en": "Evaluation version · license server not connected"
-  },
-  "m506": {
-    "uk": "Ліцензія:",
-    "en": "License:"
-  },
-  "m507": {
-    "uk": "Потрібна активація · експорт доступний",
-    "en": "Activation required · export available"
-  },
-  "m508": {
-    "uk": "Активуйте ліцензію. Експорт бази доступний без активації.",
-    "en": "Activate your license. Database export remains available without activation."
   },
   "m509": {
     "uk": "Недопустиме джерело запиту",
@@ -2072,21 +1958,9 @@
     "uk": "Клієнт уже підключений",
     "en": "Client already linked"
   },
-  "m517": {
-    "uk": "Спочатку підключіть Google Drive",
-    "en": "Connect Google Drive first"
-  },
-  "m518": {
-    "uk": "LOMVIKO · ключ відновлення копій Google Drive",
-    "en": "LOMVIKO · Google Drive backup recovery key"
-  },
   "m519": {
     "uk": "Зберігайте окремо від застосунку. Цей ключ є паролем для відновлення .orbit.",
     "en": "Keep this separate from the app. This key is the password for restoring .orbit backups."
-  },
-  "m520": {
-    "uk": "Дочекайтеся завершення операції Google Drive",
-    "en": "Wait for the Google Drive operation to finish"
   },
   "m521": {
     "uk": "Відключено · доступ можна відкликати в Google",
@@ -2316,10 +2190,6 @@
     "uk": "Неправильний пароль або пошкоджена копія",
     "en": "Wrong password or damaged backup"
   },
-  "m578": {
-    "uk": "Ліцензія недійсна, прострочена або видана для іншого пристрою",
-    "en": "The license is invalid, expired or issued to a different device"
-  },
   "m579": {
     "uk": "Сервіс недоступний. Перевірте інтернет.",
     "en": "Service unavailable. Check your internet connection."
@@ -2368,10 +2238,7 @@
     "uk": "Погоджуюсь · записатися",
     "en": "I agree · book"
   },
-  "m591": {
-    "uk": "Власник бізнесу зберігає ім’я, Telegram ID та історію записів у CRM. Зашифровані копії можуть зберігатися на його Google Drive. Для видалення даних зверніться до власника. /stop відключає Telegram.",
-    "en": "The business owner stores your name, Telegram ID and booking history in the CRM. Encrypted backups may be saved in their Google Drive. Contact the owner to delete your data. /stop disconnects Telegram."
-  },
+  "m591": {"uk": "Власник бізнесу зберігає ім’я, Telegram ID та історію записів у CRM LOMVIKO. Для видалення даних зверніться до власника. /stop відключає Telegram.", "en": "The business owner stores your name, Telegram ID and booking history in the LOMVIKO CRM. Contact the owner to delete your data. /stop disconnects Telegram."},
   "m592": {
     "uk": "Сповіщення вимкнено. Для нового запису: /start",
     "en": "Notifications disabled. Start again with /start"
@@ -2547,10 +2414,6 @@
   "m635": {
     "uk": "Перевірте ключ адміністратора",
     "en": "Check the administrator key"
-  },
-  "m636": {
-    "uk": "На віддаленому сервері задайте шляхи до інсталяторів у конфігурації",
-    "en": "Configure installer paths on the remote server"
   },
   "m637": {
     "uk": "Некоректна платформа",
@@ -2736,17 +2599,9 @@
     "uk": "Підписка спливла",
     "en": "Subscription expired"
   },
-  "m683": {
-    "uk": "Запит активації сплив",
-    "en": "Activation request expired"
-  },
   "m684": {
     "uk": "Немає підтвердження ключа пристрою",
     "en": "Device key proof missing"
-  },
-  "m685": {
-    "uk": "Активація недоступна",
-    "en": "Activation unavailable"
   },
   "m686": {
     "uk": "Пристрій уже зареєстрований або вимкнений",
@@ -2755,10 +2610,6 @@
   "m687": {
     "uk": "Досягнуто ліміту пристроїв",
     "en": "Device limit reached"
-  },
-  "m688": {
-    "uk": "Інсталятор ще не опублікований",
-    "en": "Installer not published yet"
   },
   "m689": {
     "uk": "Не вдалося виконати операцію",
@@ -3011,10 +2862,6 @@
     "uk": "Некоректна конфігурація Google у видавця застосунку",
     "en": "Invalid publisher Google configuration"
   },
-  "googleDesktop": {
-    "uk": "Потрібен Google OAuth Desktop app",
-    "en": "A Google OAuth Desktop app client is required"
-  },
 "calendarMonth":{"uk": "Місяць", "en": "Month"},
 "calendarYear":{"uk": "Рік", "en": "Year"},
 "calendarHour":{"uk": "Година", "en": "Hour"},
@@ -3037,7 +2884,6 @@
 "clearPolicy":{"uk": "Скасувати вимогу", "en": "Clear requirement"},
 "releaseVersion":{"uk": "Версія", "en": "Version"},
 "releaseNotes":{"uk": "Що нового", "en": "Release notes"},
-"releaseFile":{"uk": "Файл інсталятора", "en": "Installer file"},
 "releasePublished":{"uk": "Версію опубліковано", "en": "Release published"},
 "releaseWithdraw":{"uk": "Відкликати версію", "en": "Withdraw release"},
 "demoCreate":{"uk": "Створити демодоступ", "en": "Create demo access"},
@@ -3054,17 +2900,12 @@
 "updateBackupPassword":{"uk": "Пароль резервної копії (від 12 символів)", "en": "Backup password (at least 12 characters)"},
 "updateBackupHint":{"uk": "Спочатку збережемо зашифровану копію даних та налаштувань. Серверна база не переміщується. Після завантаження встановіть нову версію та відкрийте CRM.", "en": "First we save an encrypted backup of data and settings. The server database stays in place. Install the downloaded version and reopen the CRM."},
 "updateAvailable":{"uk": "Доступне оновлення", "en": "Update available"},
-"updateSaved":{"uk": "Копію збережено, інсталятор перевірено. Встановіть нову версію.", "en": "Backup saved and installer verified. Install the new version."},
 "updateCancelled":{"uk": "Оновлення скасовано", "en": "Update cancelled"},
 "updateCurrent":{"uk": "Поточна версія", "en": "Current version"},
 "updateNoRelease":{"uk": "Для цього пристрою немає нової версії.", "en": "No newer release is available for this device."},
-"updateChooseFolder":{"uk": "Оберіть папку для копії та інсталятора", "en": "Choose a folder for the backup and installer"},
-"keyRevokeQuestion":{"uk": "Відкликати одноразовий ключ? Уже активована ліцензія керується окремо.", "en": "Revoke this one-time key? Already activated licenses are managed separately."},
-"updateWithdrawQuestion":{"uk": "Відкликати інсталятор? Клієнти більше не зможуть його завантажити.", "en": "Withdraw this installer? Customers will no longer be able to download it."},
+"keyRevokeQuestion":{"uk": "Відкликати посилання доступу? Воно більше не спрацює.", "en": "Revoke the access link? It will no longer work."},
 "updateBlockedBanner":{"uk": "Оновлення обов’язкове. Перегляд та експорт доступні; зміни заблоковано.", "en": "An update is required. Viewing and export remain available; changes are blocked."},
 "pendingUpdate":{"uk": "Оновіть до", "en": "Update by"},
-"activationKeys":{"uk": "Одноразові ключі", "en": "One-time keys"},
-"policySafety":{"uk": "Спершу опублікуйте перевірений інсталятор для кожної платформи. Скасування вимоги повертає доступ старим версіям.", "en": "Publish a verified installer for each platform first. Clearing the policy restores access for older versions."},
 "siteTitle":{"uk": "Лендинг", "en": "Landing page"},
 "siteSubtitle":{"uk": "Тексти, анонси, завантаження та заявки на демо.", "en": "Content, announcements, downloads and demo requests."},
 "securityTitle":{"uk": "Безпека", "en": "Security"},

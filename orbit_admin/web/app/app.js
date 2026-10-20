@@ -87,7 +87,6 @@ const knownErrors = [
     /invalid or expired access key|request (was )?already used/i,
     "errAccessKey",
   ],
-  [/update required/i, "errUpdateRequired"],
   [/device proof|invalid device key/i, "m649"],
   [/invalid signature/i, "m676"],
   [/too many/i, "m681"],

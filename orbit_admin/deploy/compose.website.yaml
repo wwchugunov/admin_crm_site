@@ -1,6 +1,6 @@
 services:
   landing:
-    image: lomviko-landing:1.2.2
+    image: lomviko-landing:1.2.3
     build:
       context: ${CH_LANDING_CONTEXT:-../../ch_landing}
       dockerfile: deploy/Dockerfile
@@ -42,7 +42,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:2.1.0
+    image: lomviko-platform:2.1.1
     pull_policy: never
     command: [node, web/server.cjs]
     restart: unless-stopped
@@ -68,9 +68,9 @@ services:
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
-  # LOMVIKO in the browser: the company workspace (former desktop app).
+  # LOMVIKO in the browser: the company workspace at app.lomviko.com.
   app-web:
-    image: lomviko-platform:2.1.0
+    image: lomviko-platform:2.1.1
     pull_policy: never
     command: [node, web/app-server.cjs]
     restart: unless-stopped
@@ -97,7 +97,7 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   site-admin:
-    image: lomviko-site-admin:0.2.0
+    image: lomviko-site-admin:0.2.1
     build:
       context: ${CH_SITE_ADMIN_CONTEXT:-../../landing_admin}
       dockerfile: deploy/Dockerfile

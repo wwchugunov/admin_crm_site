@@ -11,7 +11,6 @@ function download(data,name){const url=URL.createObjectURL(new Blob([JSON.string
 window.owner={call:async(channel,...args)=>{
  if(channel==='owner:appearance'){if(args[0]?.reload)location.reload();return true;}
  await authenticated;
- if(channel==='owner:release:publish'){const d=args[0],file=await chooseFile(d.platform==='mac'?'.dmg':'.exe');if(!file)return false;if(file.size>512*1024*1024)throw Error('Installer exceeds 512 MiB');await request('/web/upload?'+new URLSearchParams({version:d.version,platform:d.platform,arch:d.arch,notes:d.notes||''}),{method:'PUT',body:file});return true;}
  if(channel==='owner:document:upload'){const d=args[0]||{},file=d.file;if(!(file instanceof File)||!file.size)throw Error('Choose a PDF, DOC or DOCX file / Оберіть файл');if(file.size>25*1024*1024)throw Error('Document exceeds 25 MiB / Файл більший за 25 МБ');return request('/web/document?'+new URLSearchParams({kind:d.kind,language:d.language,title:d.title,filename:file.name,activate:d.activate?'1':'0'}),{method:'PUT',body:file});}
  if(channel==='owner:logo'){const file=await chooseFile('image/png,image/jpeg');if(!file)return null;if(file.size>2*1024*1024)throw Error('Logo exceeds 2 MiB');return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});}
  if(['owner:connect','owner:local','owner:release'].includes(channel))throw Error('Server connection is configured by deployment');

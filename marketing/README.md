@@ -11,7 +11,7 @@ CONTACT_EMAIL=hello@lomviko.com npm run presentation   # email на послед
 PREVIEW=1 npm run presentation    # дополнительно PNG каждого слайда
 ```
 
-Результат: `.runtime/presentation/LOMVIKO-presentation-uk.pdf` и `-en.pdf`. Нужны Google Chrome и `playwright-core` (ищется в этом репозитории или в соседнем `app_crm`; иначе `npm i --no-save playwright-core`).
+Результат: `.runtime/presentation/LOMVIKO-presentation-uk.pdf` и `-en.pdf`. Нужны Google Chrome и `playwright-core` (ищется в этом репозитории; иначе `npm i --no-save playwright-core` или переменная `PLAYWRIGHT_CORE`).
 
 - Тексты: `presentation/content.cjs`. Вёрстка: `presentation/build.cjs`, стили: `presentation/presentation.css` (шрифты и цвета общие с сайтом).
 - Скриншот приложения на слайде 14: `presentation/assets/app.png`. После редизайна CRM замените файл и пересоберите.

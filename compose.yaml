@@ -25,12 +25,10 @@ services:
       CH_LOCAL_TEST_MODE: "1"
       ORBIT_OWNER_DATA: /data
       ORBIT_OWNER_HOST: 0.0.0.0
-      ORBIT_RELEASES_DIR: /releases
       PORT: "4545"
     ports: ["127.0.0.1:${CH_API_PORT:-4545}:4545"]
     volumes:
       - api-data:/data
-      - releases:/releases
     stop_grace_period: 60s
     healthcheck:
       test:
@@ -129,6 +127,33 @@ services:
       retries: 6
       start_period: 10s
 
+  app-web:
+    <<: *service
+    image: ch-platform-api:local
+    pull_policy: never
+    command: [node, web/app-server.cjs]
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4549"
+      CH_API_URL: http://api:4545
+      CH_PUBLIC_API_URL: http://127.0.0.1:${CH_API_PORT:-4545}
+      CH_WEB_APP_ORIGIN: http://127.0.0.1:${CH_WEB_APP_PORT:-4549}
+    ports: ["127.0.0.1:${CH_WEB_APP_PORT:-4549}:4549"]
+    depends_on:
+      api: { condition: service_healthy }
+    stop_grace_period: 20s
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:4549/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
 volumes:
   api-data:
-  releases:

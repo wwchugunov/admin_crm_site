@@ -3,7 +3,7 @@ module.exports = {
   uk: {
     lang: 'uk', locale: 'uk-UA', file: 'LOMVIKO-presentation-uk.pdf', docTitle: 'LOMVIKO — презентація продукту',
     footer: 'lomviko.com',
-    cover: { title: ['Ваш день —', 'в ідеальному ритмі.'], body: 'CRM для бізнесу, що працює за записом. Онлайн-запис через Telegram, нагадування клієнтам, розклад команди й фінанси — в одному застосунку для macOS і Windows.', note: 'Презентація продукту · 2026' },
+    cover: { title: ['Ваш день —', 'в ідеальному ритмі.'], body: 'CRM для бізнесу, що працює за записом. Онлайн-запис через Telegram, нагадування клієнтам, розклад команди й фінанси — в одному сервісі в браузері, з комп’ютера чи телефона.', note: 'Презентація продукту · 2026' },
     problem: {
       title: ['Бізнес за записом втрачає гроші', 'там, де їх не видно.'],
       items: [
@@ -78,9 +78,9 @@ module.exports = {
     security: {
       title: ['Ваші дані —', 'тільки ваші.'], body: 'Клієнтська база — найцінніше, що є у бізнесу. Тому вона захищена й завжди залишається у вас.',
       items: [
-        ['lock', 'Шифровані копії', 'Резервні копії на Google Drive шифруються AES-256. Ключ відновлення є тільки у вас.'],
-        ['cloud', 'Ваш власний диск', 'Копії зберігаються на Google Drive власника бізнесу.'],
-        ['key', 'Захищені доступи', 'Токени бота й ключі — у системному сховищі macOS і Windows.'],
+        ['lock', 'Копія бази будь-коли', 'Повна копія у JSON, CSV або зашифрованому файлі — одним натисканням.'],
+        ['cloud', 'Доступ за ролями', 'Майстер бачить розклад і клієнтів, фінанси — лише власник і адміністратор.'],
+        ['key', 'Захищені доступи', 'Токени бота й ключі банків зберігаються зашифрованими на сервері й більше не показуються.'],
         ['download', 'Експорт будь-коли', 'Вивантажте базу у JSON або CSV — без запитів і очікування.'],
       ],
     },
@@ -93,17 +93,17 @@ module.exports = {
         ['Сервіс', ['Автосервіси', 'Ремонт техніки', 'Фотостудії', 'Грумінг']],
       ],
     },
-    product: { title: ['Відкрили. Побачили день.', 'До роботи.'], chips: ['macOS і Windows', 'Українська та English', 'Світла й темна тема', 'Працює й без мережі — перегляд розкладу'], caption: 'Справжній інтерфейс застосунку. На зображенні — демонстраційні дані.' },
+    product: { title: ['Відкрили. Побачили день.', 'До роботи.'], chips: ['Комп’ютер і телефон', 'Українська та English', 'Світла й темна тема', '399 грн на місяць · 30 днів безкоштовно'], caption: 'Справжній інтерфейс LOMVIKO. На зображенні — демонстраційні дані.' },
     start: {
       title: ['Почніть новий день', 'з LOMVIKO.'],
-      steps: [['Заявка', 'Залиште заявку на lomviko.com або напишіть нам.'], ['Демонстрація', 'Покажемо LOMVIKO на прикладі вашого бізнесу й допоможемо з налаштуванням.'], ['Працюєте', 'Встановіть застосунок для macOS або Windows — і приймайте записи.']],
+      steps: [['Реєстрація', 'Натисніть «Спробувати безкоштовно» на lomviko.com і підтвердьте пошту.'], ['Налаштування', 'Додайте послуги, майстрів і графік — або попросіть нас допомогти.'], ['Працюєте', 'Діліться сторінкою запису й ботом — і приймайте записи.']],
       contact: 'Сайт', word: 'РИТМ',
     },
   },
   en: {
     lang: 'en', locale: 'en-GB', file: 'LOMVIKO-presentation-en.pdf', docTitle: 'LOMVIKO — product presentation',
     footer: 'lomviko.com',
-    cover: { title: ['Your day,', 'perfectly in rhythm.'], body: 'The CRM for appointment-based businesses. Telegram booking, client reminders, a team schedule and finances — in one app for macOS and Windows.', note: 'Product presentation · 2026' },
+    cover: { title: ['Your day,', 'perfectly in rhythm.'], body: 'The CRM for appointment-based businesses. Telegram booking, client reminders, a team schedule and finances — in one service in your browser, on a computer or a phone.', note: 'Product presentation · 2026' },
     problem: {
       title: ['Appointment businesses lose money', 'where no one is looking.'],
       items: [
@@ -178,9 +178,9 @@ module.exports = {
     security: {
       title: ['Your data —', 'yours alone.'], body: 'Your client base is the most valuable thing your business owns. That’s why it’s protected and always stays with you.',
       items: [
-        ['lock', 'Encrypted backups', 'Backups on Google Drive are encrypted with AES-256. Only you hold the recovery key.'],
-        ['cloud', 'Your own Drive', 'Backups live on the business owner’s Google Drive.'],
-        ['key', 'Protected credentials', 'Bot tokens and keys stay in the macOS and Windows keychain.'],
+        ['lock', 'A copy anytime', 'A full copy as JSON, CSV or an encrypted file — in one click.'],
+        ['cloud', 'Role-based access', 'Staff see the schedule and clients; finances are for the owner and admins only.'],
+        ['key', 'Protected credentials', 'Bot tokens and bank keys are stored encrypted on the server and never shown again.'],
         ['download', 'Export anytime', 'Download your database as JSON or CSV — no requests, no waiting.'],
       ],
     },
@@ -193,10 +193,10 @@ module.exports = {
         ['Services', ['Car service', 'Device repair', 'Photo studios', 'Pet grooming']],
       ],
     },
-    product: { title: ['Open it. See your day.', 'Get to work.'], chips: ['macOS and Windows', 'Ukrainian and English', 'Light and dark theme', 'View the schedule offline'], caption: 'The real app interface. The image shows illustrative demo data.' },
+    product: { title: ['Open it. See your day.', 'Get to work.'], chips: ['Computer and phone', 'Ukrainian and English', 'Light and dark theme', '399 UAH a month · 30 days free'], caption: 'The real LOMVIKO interface. The image shows illustrative demo data.' },
     start: {
       title: ['Start a new day', 'with LOMVIKO.'],
-      steps: [['Request', 'Leave a request at lomviko.com or write to us.'], ['Demo', 'We’ll show LOMVIKO on your own business and help you set it up.'], ['Get to work', 'Install the app for macOS or Windows and start taking bookings.']],
+      steps: [['Sign up', 'Press “Try it free” at lomviko.com and confirm your email.'], ['Set up', 'Add services, staff and hours — or ask us to help.'], ['Get to work', 'Share your booking page and bot and start taking bookings.']],
       contact: 'Website', word: 'RHYTHM',
     },
   },
