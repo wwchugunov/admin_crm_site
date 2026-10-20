@@ -108,6 +108,9 @@ Object.assign(OrbitI18n.messages, {
   clientDiscountHint: { uk: "Нові записи клієнта рахуються зі знижкою.", en: "New visits of this client are priced with the discount." },
   delete: { uk: "Видалити", en: "Delete" },
   clientPet: { uk: "Тварина", en: "Pet" },
+  serviceDeposit: { uk: "Передоплата при онлайн-записі (0 — без неї)", en: "Prepayment for online bookings (0 — none)" },
+  serviceDepositHint: { uk: "Потрібен підключений monobank або LiqPay. Хто записався онлайн, має оплатити протягом 30 хвилин — інакше запис скасується, а час звільниться. Записи, які ви створюєте самі, без передоплати.", en: "Needs monobank or LiqPay connected. Clients who book online pay within 30 minutes, otherwise the booking is cancelled and the time is freed. Bookings you create yourself need no prepayment." },
+  depositWaiting: { uk: "Чекає передоплату до {time}", en: "Waiting for prepayment until {time}" },
   clientBirthdayAdd: { uk: "Додати", en: "Add" },
   discountShort: { uk: "знижка", en: "discount" },
   discountLabel: { uk: "Знижка", en: "Discount" },
@@ -343,6 +346,8 @@ function serviceExtraFields(s = {}) {
   if (data.role === "staff") return "";
   const used = new Map((data.service_materials || []).filter((m) => m.service_id === s.id).map((m) => [m.material_id, m.quantity]));
   return (
+    field(ft("serviceDeposit"), "deposit", "number", `min="0" step="0.01" value="${(s.deposit || 0) / 100}"`) +
+    `<p class="hint">${ft("serviceDepositHint")}</p>` +
     field(ft("servicePayPercent"), "pay_percent", "number", `min="0" max="100" step="0.01" value="${s.pay_percent ?? ""}"`) +
     ((data.materials || []).length
       ? `<fieldset class="service-materials"><legend>${ft("matPerVisit")}</legend><p class="hint">${ft("matPerVisitHint")}</p>${data.materials

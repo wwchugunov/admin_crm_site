@@ -453,6 +453,7 @@ class Store {
       this.setServiceStaff(id, data.resource_ids);
     this.setServiceMaterials(id, data.materials);
     this.setPay("services", id, data);
+    this.setDeposit(id, data);
     this.audit("service.created", id);
     return id;
   }
@@ -496,6 +497,7 @@ class Store {
       this.setServiceStaff(text(data.id), data.resource_ids);
     this.setServiceMaterials(text(data.id), data.materials);
     this.setPay("services", text(data.id), data);
+    this.setDeposit(text(data.id), data);
     this.audit("service.updated", data.id);
   }
   addResource(data) {
@@ -1296,6 +1298,7 @@ class Store {
           "INSERT INTO payments(id,appointment_id,amount,at,method,voucher_id) VALUES(?,?,?,?,?,?)",
         )
         .run(id, appointment, value, at, method, voucher);
+      this.depositSettled(appointment);
     });
     this.audit("payment.created", id);
     return id;
@@ -1362,7 +1365,10 @@ class Store {
         )
         .run(String(state.status), target, modified || link.modified, link.id);
     });
-    if (delta) this.audit("payment_link.settled", link.id);
+    if (delta) {
+      this.audit("payment_link.settled", link.id);
+      this.depositSettled(link.appointment_id);
+    }
     return { ...link, status: state.status, credited: target, delta, payment_id: paymentId };
   }
   // Usual gap between a client's completed visits in days (median); none with fewer than two visit days.

@@ -1,6 +1,9 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const messages={
+    "botDepositAsk": {"uk": "Щоб підтвердити запис, внесіть передоплату {amount} протягом 30 хвилин. Інакше запис скасується, а час звільниться.", "en": "To confirm the booking, pay a prepayment of {amount} within 30 minutes. Otherwise the booking is cancelled and the time is freed."},
+    "botDepositPay": {"uk": "Оплатити передоплату", "en": "Pay the prepayment"},
+    "botDepositExpired": {"uk": "Запис скасовано: передоплату не отримано вчасно. Ви можете записатися знову.", "en": "The booking was cancelled: the prepayment did not arrive in time. You can book again."},
     "botPhoneAsk": {"uk": "Щоб майстер міг зв’язатися з вами щодо запису, поділіться номером телефону: натисніть кнопку нижче або надішліть номер повідомленням.", "en": "So the specialist can reach you about the booking, share your phone number: tap the button below or send the number as a message."},
     "botPhoneButton": {"uk": "Поділитися номером", "en": "Share my number"},
     "botPhoneThanks": {"uk": "Дякуємо, номер збережено.", "en": "Thank you, your number is saved."},

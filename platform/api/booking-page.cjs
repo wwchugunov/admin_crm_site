@@ -133,7 +133,8 @@ class BookingPage{
    if(!this.checkToken(m[1],data.token))this.fail(400,'Сторінка застаріла — оновіть її і спробуйте ще раз / The page is outdated, reload it');
    const r=this.booking.create(c.business,c.store,{...data,request_id:data.request_id},req.clientAddress||req.socket.remoteAddress,'page');
    const a=c.store.db.prepare('SELECT a.start,a.end,s.name service FROM appointments a JOIN services s ON s.id=a.service_id WHERE a.id=?').get(r.appointment_id);
-   reply(r.status,{ok:true,start:a?.start,end:a?.end,service:a?.service,manage:a?`${this.base}/b/${m[1]}?visit=${this.visitLink(c.store,r.appointment_id)}`:null});return true;
+   const deposit=r.status===201?await this.accounts.deposits?.request(c.business,c.runtime,r.appointment_id).catch(()=>null):null;
+   reply(r.status,{ok:true,start:a?.start,end:a?.end,service:a?.service,deposit,manage:a?`${this.base}/b/${m[1]}?visit=${this.visitLink(c.store,r.appointment_id)}`:null});return true;
   }
   if(m[2]==='wait'&&req.method==='POST'){
    const data=req.parsedBody||{};

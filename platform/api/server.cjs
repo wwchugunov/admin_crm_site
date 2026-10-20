@@ -18,6 +18,7 @@ const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
 const {Fiscal}=require('./fiscal.cjs');
 const {Lapsed}=require('./lapsed.cjs');
+const {Deposits}=require('./deposits.cjs');
 const {LiqPay}=require('./liqpay.cjs');
 const {BookingPage}=require('./booking-page.cjs');
 const {Notify}=require('./notify.cjs');
@@ -97,6 +98,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, busines
   // Fiscal receipts through Checkbox for companies that switched them on; failed ones are retried in the background.
   const fiscal=new Fiscal({accounts,fail,api:process.env.CH_CHECKBOX_API,vchasnoApi:process.env.CH_VCHASNO_API});accounts.fiscal=fiscal;
   const lapsed=new Lapsed({accounts,fail});accounts.lapsed=lapsed;
+  const deposits=new Deposits({accounts});accounts.deposits=deposits;
   // Morning summaries, reports and instant news for the company team (Telegram and email).
   const notify=new Notify({db:store.db,accounts,mail,fail});accounts.notify=notify;
   // Booking pages live on the website domain (lomviko.com/b/<address>); the API domain serves them too.
@@ -196,7 +198,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
   const mailTimer=setInterval(()=>mail.tick().catch(()=>{}),5000);mailTimer.unref();
   const notifyTimer=setInterval(()=>notify.tick().catch(()=>{}),60000);notifyTimer.unref();
   const payTimer=setInterval(()=>{monobank.poll().catch(()=>{});liqpay.poll().catch(()=>{});},180000);payTimer.unref();
-  const fiscalTimer=setInterval(()=>fiscal.tick().catch(()=>{}),60000);fiscalTimer.unref();
+  const fiscalTimer=setInterval(()=>{fiscal.tick().catch(()=>{});deposits.tick().catch(()=>{});},60000);fiscalTimer.unref();
   const lapsedTimer=setInterval(()=>lapsed.tick().catch(()=>{}),3600000);lapsedTimer.unref();
   server.once('listening',()=>mail.tick().catch(()=>{}));
   let botWork = null, stopping = false;

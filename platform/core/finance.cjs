@@ -98,6 +98,10 @@ const finance = {
       ["payments", "voucher_id", "TEXT"],
       // Where the client opens the receipt (each provider has its own receipt page).
       ["fiscal_receipts", "url", "TEXT"],
+      // Prepayment a service asks for when booked online, and what a visit still waits for.
+      ["services", "deposit", "INTEGER NOT NULL DEFAULT 0"],
+      ["appointments", "deposit", "INTEGER NOT NULL DEFAULT 0"],
+      ["appointments", "deposit_until", "INTEGER"],
     ])
       if (!this.db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column))
         this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
@@ -342,6 +346,27 @@ const finance = {
     if (!Number.isInteger(d) || d < 0 || d > 100)
       fail("Знижка — ціле число від 0 до 100", "The discount is a whole number from 0 to 100");
     this.db.prepare("UPDATE clients SET discount=? WHERE id=?").run(d, clientId);
+  },
+  setDeposit(serviceId, data) {
+    if (data.deposit === undefined || data.deposit === null) return;
+    this.db.prepare("UPDATE services SET deposit=? WHERE id=?").run(amountOf(data.deposit || 0, { zero: true }), serviceId);
+  },
+  // An online booking of a service with a prepayment waits for it until `until`.
+  requireDeposit(appointmentId, amount, until) {
+    this.db.prepare("UPDATE appointments SET deposit=?,deposit_until=? WHERE id=? AND status='confirmed'").run(amount, until, appointmentId);
+  },
+  // Payments reaching the prepayment end the wait.
+  depositSettled(appointmentId) {
+    this.db
+      .prepare("UPDATE appointments SET deposit_until=NULL WHERE id=? AND deposit_until IS NOT NULL AND COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=appointments.id),0)>=deposit")
+      .run(appointmentId);
+  },
+  // Confirmed visits whose prepayment time ran out unpaid; the caller cancels them.
+  expiredDeposits(now = Date.now()) {
+    return this.db
+      .prepare("SELECT id FROM appointments WHERE status='confirmed' AND deposit_until IS NOT NULL AND deposit_until<? AND COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=appointments.id),0)<deposit")
+      .all(now)
+      .map((r) => r.id);
   },
   // Discount of the client who books, applied to the list price of a new visit.
   discounted(price, clientId) {
