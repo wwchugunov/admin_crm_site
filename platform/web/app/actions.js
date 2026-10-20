@@ -268,11 +268,7 @@ const actions = {
       : "all";
     render();
   },
-  "lapsed-invite": async (b) => {
-    await window.orbit.call("lapsed:invite", b.dataset.id);
-    toast(OrbitI18n.t("lapsedSent"));
-    await refresh();
-  },
+  "lapsed-invite": (b) => lapsedInviteModal(b.dataset.id),
   "client-open": (b) => clientModal(b.dataset.id),
   "client-book": (b) => {
     closeModal();
@@ -353,7 +349,7 @@ const actions = {
   telegram: () =>
     modal(
       OrbitI18n.t("m327"),
-      `<p class="hint">${OrbitI18n.t("m328")}</p>` +
+      botGuide() +
         field(
           OrbitI18n.t("m329"),
           "token",

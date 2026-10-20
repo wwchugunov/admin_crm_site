@@ -13,7 +13,7 @@
     "clientDeletedName": {"uk":"Видалений клієнт","en":"Deleted client"},
     "clientBirthdayInvalid": {"uk":"Перевірте дату народження","en":"Check the date of birth"},
     "clientEmailInvalid": {"uk":"Перевірте email","en":"Check the email"},
-    "lapsedDaysInvalid": {"uk":"Вкажіть від 7 до 365 днів","en":"Enter from 7 to 365 days"},
+    "lapsedDaysInvalid": {"uk":"Вкажіть від 3 до 365 днів","en":"Enter from 3 to 365 days"},
     "waitDateInvalid": {"uk":"Оберіть дату від сьогодні й не пізніше ніж за рік","en":"Choose a date from today and within a year"},
     "waitMissing": {"uk":"Цього запису в листі очікування вже немає","en":"This waiting list entry is no longer there"},
     "botCome": {"uk":"✅ Прийду","en":"✅ I'll come"},

@@ -141,7 +141,7 @@ test('Visit rhythm: the usual gap between visits and upcoming visits per client'
  assert.equal(stats['Іван'].rhythm,0,'one visit has no rhythm yet');
  f.store.book({client_id:anna,service_id:f.service,resource_ids:[f.olena],start:local(f.day,'10:00')});
  assert.equal(f.store.snapshot().clients.find(c=>c.name==='Анна').stats.upcoming,1);
- assert.throws(()=>f.store.setLapsedDays(3),/від 7 до 365/);
+ assert.throws(()=>f.store.setLapsedDays(2),/від 3 до 365/);
  f.store.setLapsedDays(45);assert.equal(f.store.snapshot().lapsed_days,45);
 });
 

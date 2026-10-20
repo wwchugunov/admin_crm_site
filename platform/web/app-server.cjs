@@ -15,12 +15,12 @@ const CRM={'client:add':'client','client:update':'client/update','client:delete'
  'waitlist:add':'waitlist','waitlist:remove':'waitlist/remove','telegram:disconnect':'telegram/disconnect','monobank:invoice':'monobank/invoice','monobank:cancel':'monobank/cancel',
  'liqpay:connect':'liqpay/connect','liqpay:invoice':'liqpay/invoice','liqpay:cancel':'liqpay/cancel','monobank:disconnect':'monobank/disconnect','liqpay:disconnect':'liqpay/disconnect',
  'expense:add':'expense','expense:delete':'expense/delete','material:add':'material','material:update':'material/update','material:delete':'material/delete','material:move':'material/move',
- 'certificate:sell':'certificate','certificate:void':'certificate/void','pass:sell':'pass','pass:void':'pass/void','payroll:get':'payroll',
+ 'certificate:sell':'certificate','certificate:void':'certificate/void','pass:sell':'pass','pass:void':'pass/void','payroll:get':'payroll','lapsed:settings':'lapsed/settings','lapsed:invite-all':'lapsed/invite-all',
  'fiscal:connect':'fiscal/connect','fiscal:disconnect':'fiscal/disconnect','fiscal:settings':'fiscal/settings','fiscal:retry':'fiscal/retry',
  'notify:save':'notify/save','notify:unlink':'notify/unlink','notify:test':'notify/test','booking:save':'booking/save','account:user:add':'users/add','account:user:update':'users/update'};
 const WHOLE=new Set(['account:user:add','account:user:update']);
 // Calls whose single argument is not the request body itself.
-const SHAPE={'booking:status':(id,status)=>({id,status}),'lapsed:days':days=>({days}),'lapsed:invite':id=>({id}),'telegram:connect':token=>({token}),'telegram:link':id=>({id}),'monobank:connect':token=>({token}),'client:history':id=>({id}),'crm:range':r=>({from:r?.from,to:r?.to})};
+const SHAPE={'booking:status':(id,status)=>({id,status}),'lapsed:days':days=>({days}),'lapsed:invite':x=>x&&typeof x==='object'?{id:x.id,template_id:x.template_id}:{id:x},'telegram:connect':token=>({token}),'telegram:link':id=>({id}),'monobank:connect':token=>({token}),'client:history':id=>({id}),'crm:range':r=>({from:r?.from,to:r?.to})};
 const SHAPED={'booking:status':'status','lapsed:days':'lapsed/days','lapsed:invite':'lapsed/invite','telegram:connect':'telegram/connect','telegram:link':'telegram/link','monobank:connect':'monobank/connect'};
 const TYPES={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'application/javascript; charset=utf-8',woff2:'font/woff2',png:'image/png',svg:'image/svg+xml',webmanifest:'application/manifest+json',txt:'text/plain; charset=utf-8'};
 function problem(status,message,extra={}){throw Object.assign(Error(message),{status,...extra});}
@@ -45,6 +45,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
  (function load(dir,prefix){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name),name=prefix+entry.name;if(entry.isDirectory())load(full,name+'/');else add(name,full);}})(publicDirectory,'');
  // Role rules are shared with the API so the browser and the server decide permissions the same way.
  add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));
+ add('industries.js',path.join(__dirname,'..','shared','industries.js'));
  const drafts=new Map();
  const cookies=req=>Object.fromEntries((req.headers.cookie||'').split(';').map(s=>s.trim().split('=')).filter(p=>p.length===2));
  const cookie=(name,value,maxAge)=>`${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${Math.floor(maxAge/1000)}${secure?'; Secure':''}`;

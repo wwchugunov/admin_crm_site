@@ -404,7 +404,7 @@ function scheduleView() {
     { day: "numeric", month: "long", weekday: "long" },
   );
   const list = rows.length
-    ? `<div class="agenda-labels" aria-hidden="true"><span>${OrbitI18n.t("m170")}</span><span>${OrbitI18n.t("m171")}</span><span>${data.industry === "auto" ? OrbitI18n.t("m164") : OrbitI18n.t("m165")}</span><span>${OrbitI18n.t("m141")}</span></div><div class="agenda-list">${rows.map(scheduleAppointment).join("")}</div>`
+    ? `<div class="agenda-labels" aria-hidden="true"><span>${OrbitI18n.t("m170")}</span><span>${OrbitI18n.t("m171")}</span><span>${OrbitI18n.t("m165")}</span><span>${OrbitI18n.t("m141")}</span></div><div class="agenda-list">${rows.map(scheduleAppointment).join("")}</div>`
     : empty(
         OrbitI18n.t("m172"),
         OrbitI18n.t("m173"),
@@ -415,7 +415,11 @@ function scheduleView() {
 // Clients who have stayed away longer than usual for them: over one and a half of their own gap
 // between visits, and never less than the company's minimum. Clients with a visit ahead are fine.
 function lapsedClients() {
-  const minimum = data.lapsed_days || 30,
+  const settings = data.integrations?.lapsed || {
+      days: data.lapsed_days || 30,
+      rhythm: true,
+    },
+    minimum = settings.days,
     now = Date.now();
   return data.clients
     .map((c) => {
@@ -424,7 +428,8 @@ function lapsedClients() {
       if (!s.last || ahead) return null;
       const away = Math.floor((now - s.last) / 86400000),
         usual = s.rhythm || 0;
-      return away >= Math.max(minimum, Math.round(usual * 1.5))
+      return away >=
+        Math.max(minimum, settings.rhythm ? Math.round(usual * 1.5) : 0)
         ? { client: c, away, usual }
         : null;
     })
@@ -437,14 +442,15 @@ function lapsedView(rows) {
       `${c.name} ${c.phone}`.toLowerCase().includes(search.toLowerCase()),
     shown = rows.filter((r) => match(r.client)),
     day = (ms) => businessDate(ms).split("-").reverse().join(".");
-  const note = `<p class="hint lapsed-note">${OrbitI18n.t("lapsedNote")}${manage ? ` <label class="inline-number">${OrbitI18n.t("lapsedMin")} <input type="number" id="lapsed-days" min="7" max="365" step="1" value="${data.lapsed_days || 30}"> ${OrbitI18n.t("lapsedDaysUnit")}</label>` : ""}</p>`;
+  const note = lapsedToolbar(rows, manage);
   if (!shown.length)
     return (
       note + empty(OrbitI18n.t("lapsedEmpty"), OrbitI18n.t("lapsedEmptyHint"))
     );
   return `${note}<table class="table clients-table lapsed-table"><thead><tr><th>${OrbitI18n.t("m191")}</th><th>${OrbitI18n.t("m192")}</th><th>${OrbitI18n.t("clientLast")}</th><th>${OrbitI18n.t("lapsedUsual")}</th><th></th></tr></thead><tbody>${shown
     .map(({ client: c, away, usual }) => {
-      const invited = c.invited_at && Date.now() - c.invited_at < 14 * 86400000;
+      // One invitation per absence: invited after the last visit means already done.
+      const invited = c.invited_at && c.invited_at > (c.stats.last || 0);
       const invite = !manage
         ? ""
         : invited
@@ -493,10 +499,10 @@ function clientsView() {
       : "all";
   const tabs = `<div class="segmented" role="group" aria-label="${OrbitI18n.t("clientsFilter")}"><button type="button" data-action="client-filter" data-filter="all" aria-pressed="${filter === "all"}">${OrbitI18n.t("clientsAll")}</button><button type="button" data-action="client-filter" data-filter="lapsed" aria-pressed="${filter === "lapsed"}">${OrbitI18n.t("lapsedTitle")}${lapsed.length ? ` <span class="count">${lapsed.length}</span>` : ""}</button><button type="button" data-action="client-filter" data-filter="birthdays" aria-pressed="${filter === "birthdays"}">${OrbitI18n.t("birthdaysTitle")}${birthdays.length ? ` <span class="count">${birthdays.length}</span>` : ""}</button></div>`;
   if (filter === "birthdays")
-    return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(data.industry === "auto" ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${birthdaysView(birthdays)}</section>`;
+    return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${birthdaysView(birthdays)}</section>`;
   if (filter === "lapsed")
-    return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(data.industry === "auto" ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${lapsedView(lapsed)}</section>`;
-  return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(data.industry === "auto" ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"><button class="secondary" data-action="client">${OrbitI18n.t("m197")}</button></div><section class="panel">${
+    return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${lapsedView(lapsed)}</section>`;
+  return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"><button class="secondary" data-action="client">${OrbitI18n.t("m197")}</button></div><section class="panel">${
     clients.length
       ? `<table class="table clients-table"><thead><tr><th>${OrbitI18n.t("m191")}</th><th>${OrbitI18n.t("m192")}</th><th>${OrbitI18n.t("clientVisits")}</th><th>${OrbitI18n.t("clientLast")}</th>${staff ? "" : `<th>${OrbitI18n.t("clientPaid")}</th>`}<th>Telegram</th></tr></thead><tbody>${clients
           .map((c) => {
@@ -536,7 +542,7 @@ function catalogView() {
           )
           .join("")
       : empty(OrbitI18n.t("m207"), OrbitI18n.t("m208"))
-  }</section><section class="card"><div class="panel-head"><h2>${data.industry === "auto" ? OrbitI18n.t("m209") : OrbitI18n.t("m210")}</h2><button class="secondary" data-action="resource">${OrbitI18n.t("m215")}</button></div>${
+  }</section><section class="card"><div class="panel-head"><h2>${OrbitI18n.t("m210")}</h2><button class="secondary" data-action="resource">${OrbitI18n.t("m215")}</button></div>${
     data.resources.length
       ? data.resources
           .map((r) => {
@@ -609,7 +615,7 @@ function integrationsView() {
     controls: t.connected
       ? `<button class="secondary" data-action="telegram-check">${OrbitI18n.t("m219")}</button><button class="secondary" data-action="telegram">${OrbitI18n.t("m220")}</button><button class="danger" data-action="telegram-off">${OrbitI18n.t("m221")}</button>`
       : `<button class="primary" data-action="telegram">${OrbitI18n.t("m222")}</button>`,
-    more: `<p>${OrbitI18n.t("m240")}</p><p>${OrbitI18n.t("botHosting")}: ${OrbitI18n.t(t.hosting === "external" ? "botExternal" : "botHosted")}</p>${t.connected ? `<p>${OrbitI18n.t("m218")}</p>` : ""}<p>${OrbitI18n.t("m242")} ${data.mode === "server" ? OrbitI18n.t("m223") : OrbitI18n.t("m224")} ${OrbitI18n.t("m243")}</p>`,
+    more: `<p>${OrbitI18n.t("botRoles")}</p><p>${OrbitI18n.t("m240")}</p><p>${OrbitI18n.t("botHosting")}: ${OrbitI18n.t(t.hosting === "external" ? "botExternal" : "botHosted")}</p>${t.connected ? `<p>${OrbitI18n.t("m218")}</p>` : ""}<p>${OrbitI18n.t("m242")} ${data.mode === "server" ? OrbitI18n.t("m223") : OrbitI18n.t("m224")} ${OrbitI18n.t("m243")}</p>`,
   });
   const b = data.integrations.booking;
   const booking = integrationRow({
@@ -695,9 +701,10 @@ function settingsCompany() {
   return settingsGroup(
     OrbitI18n.t("m259"),
     `<form id="settings-form" class="settings-form"><label for="business">${OrbitI18n.t("m260")}</label><input id="business" name="business" maxlength="120" value="${escape(data.business)}" required><label for="industry">${OrbitI18n.t("m063")}</label><select name="industry" id="industry">${[
-      ["beauty", OrbitI18n.t("m064")],
-      ["auto", OrbitI18n.t("m065")],
-      ["universal", OrbitI18n.t("m066")],
+      ...OrbitIndustries.TYPES.map((t) => [
+        t.id,
+        OrbitI18n.language === "en" ? t.en : t.uk,
+      ]),
     ]
       .map(
         ([id, label]) =>

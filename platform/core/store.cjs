@@ -5,6 +5,7 @@ const { randomUUID, randomBytes } = require("node:crypto");
 const { mkdirSync, chmodSync } = require("node:fs");
 const { dirname } = require("node:path");
 const { finance } = require("./finance.cjs");
+const OrbitIndustries = require("../shared/industries.js");
 
 const TABLES = [
   "clients",
@@ -46,6 +47,7 @@ const PROFILE = [
   "onboarded",
   "website_enabled",
   "lapsed_days",
+  "lapsed_settings",
 ];
 function text(value, max = 500) {
   if (typeof value !== "string" || !value.trim() || value.length > max)
@@ -1393,7 +1395,7 @@ class Store {
   // Minimum days without a visit before a client shows in "Haven't visited for a while".
   setLapsedDays(days) {
     const n = Number(days);
-    if (!Number.isInteger(n) || n < 7 || n > 365)
+    if (!Number.isInteger(n) || n < 3 || n > 365)
       throw Error(OrbitI18n.t("lapsedDaysInvalid"));
     this.set("lapsed_days", n);
   }
@@ -1578,7 +1580,7 @@ class Store {
     });
   }
   saveProfile(data) {
-    if (!["beauty", "auto", "universal"].includes(data.industry))
+    if (!OrbitIndustries.IDS.includes(data.industry))
       throw Error(OrbitI18n.t("m552"));
     text(data.business, 120);
     if (data.timezone) {

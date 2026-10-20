@@ -107,6 +107,20 @@ Object.assign(OrbitI18n.messages, {
   clientDiscount: { uk: "Особиста знижка, %", en: "Personal discount, %" },
   clientDiscountHint: { uk: "Нові записи клієнта рахуються зі знижкою.", en: "New visits of this client are priced with the discount." },
   delete: { uk: "Видалити", en: "Delete" },
+  clientPet: { uk: "Тварина", en: "Pet" },
+  clientBirthdayAdd: { uk: "Додати", en: "Add" },
+  discountShort: { uk: "знижка", en: "discount" },
+  discountLabel: { uk: "Знижка", en: "Discount" },
+  botRoles: { uk: "Один бот на компанію працює у двох ролях. Для клієнтів: запис 24/7, нагадування з кнопками «Прийду / Перенести / Скасувати», лист очікування, запрошення повернутися, посилання на оплату й чек. Для команди: власник і адміністратори підключають свій Telegram у «Налаштування та дані → Сповіщення» — і бот надсилає їм план дня, нові записи, скасування, оплати й звіти.", en: "One bot per company has two roles. For clients: 24/7 booking, reminders with “I'll come / Reschedule / Cancel”, the waitlist, come-back invitations, payment and receipt links. For the team: the owner and administrators link their Telegram in Settings and data → Notifications, and the bot sends them the day plan, new bookings, cancellations, payments and reports." },
+  botGuideTitle: { uk: "Як створити бота — 2 хвилини", en: "How to create the bot — 2 minutes" },
+  botGuide1: { uk: "Відкрийте в Telegram @BotFather (офіційний бот Telegram із синьою галочкою).", en: "Open @BotFather in Telegram (the official Telegram bot with a blue check mark)." },
+  botGuide2: { uk: "Надішліть /newbot і введіть назву, яку бачитимуть клієнти, наприклад «Студія Ліра — запис».", en: "Send /newbot and enter the name clients will see, for example “Lira Studio — booking”." },
+  botGuide3: { uk: "Придумайте адресу латиницею, що закінчується на bot, наприклад lira_booking_bot.", en: "Choose an address in Latin letters ending in bot, for example lira_booking_bot." },
+  botGuide4: { uk: "BotFather надішле токен вигляду 1234567890:AAH…. Скопіюйте його повністю й вставте нижче.", en: "BotFather sends a token like 1234567890:AAH…. Copy all of it and paste it below." },
+  botGuide5: { uk: "Після підключення поділіться посиланням t.me/ваш_бот в Instagram, Google Картах і на візитках, а свій Telegram підключіть у «Налаштування та дані → Сповіщення», щоб отримувати звіти.", en: "After connecting, share t.me/your_bot in Instagram, Google Maps and on business cards, and link your own Telegram in Settings and data → Notifications to get reports." },
+  botGuideSafe: { uk: "Токен — як пароль від бота: не публікуйте його. Після збереження ми його не показуємо.", en: "The token is the bot's password: do not publish it. Once saved, it is not shown again." },
+  bookingClientFound: { uk: "Клієнт уже є в базі", en: "Client found in the base" },
+  clientPetHint: { uk: "Кличка, порода, вік", en: "Name, breed, age" },
   paySaved: { uk: "Оплату збережено", en: "Payment saved" },
   edit: { uk: "Змінити", en: "Edit" },
 });
@@ -347,6 +361,10 @@ function serviceExtraValues(values) {
       delete values[k];
     }
   return { ...values, materials };
+}
+// Step-by-step: creating the company bot in @BotFather, shown in the connect window.
+function botGuide() {
+  return `<div class="bot-guide"><strong>${ft("botGuideTitle")}</strong><ol>${[1, 2, 3, 4, 5].map((n) => `<li>${ft("botGuide" + n)}</li>`).join("")}</ol><p class="hint">${ft("botGuideSafe")}</p><p class="hint">${ft("botRoles")}</p></div>`;
 }
 function staffPayFields(r) {
   if (data.role === "staff") return "";

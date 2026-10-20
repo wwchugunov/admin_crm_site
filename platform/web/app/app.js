@@ -223,6 +223,8 @@ async function refresh({ preserveView = false } = {}) {
     data = next;
     windowData = Object.fromEntries(DATED.map((k) => [k, next[k] || []]));
   }
+  // A company of another business type uses other words; the page reloads once to switch them.
+  if (window.OrbitIndustryWords?.follow(data.industry)) return;
   if (older.business && older.business !== data.business_id)
     older = emptyOlder();
   mergeOlder();

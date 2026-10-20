@@ -216,3 +216,12 @@ html[data-theme] .subscription-banner.ended {
 .fiscal-receipts h4 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; }
 .fiscal-error { display: block; color: var(--c-cancelled); }
 .consent-line { align-items: flex-start; line-height: 1.45; }
+.bot-guide { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; margin-bottom: 8px; }
+.bot-guide ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.booking-client-found:empty, .client-birthday-add:empty { display: none; }
+.lapsed-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.lapsed-toolbar .lapsed-note { margin: 0; flex: 1 1 320px; }
+.lapsed-template { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.lapsed-template textarea { width: 100%; resize: vertical; }
+.tpl-remove-cell { display: flex; align-items: flex-end; justify-content: flex-end; }
+.lapsed-preview { margin: 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; white-space: pre-wrap; }

@@ -48,9 +48,9 @@
     birthdayIn: { uk: "через {days} дн.", en: "in {days} days" },
     birthdaysTitle: { uk: "Іменинники", en: "Birthdays" },
     birthdaysEmpty: { uk: "Цього тижня днів народження немає", en: "No birthdays this week" },
-    birthdaysEmptyHint: { uk: "Додайте дату народження в картці клієнта — тут з’являться ті, кого варто привітати.", en: "Add the date of birth in a client's card — the ones to congratulate will show here." },
+    birthdaysEmptyHint: { uk: "Відкрийте клієнта → «Змінити» → «Дата народження». Тут з’являться ті, кого варто привітати.", en: "Add the date of birth in a client's card — the ones to congratulate will show here." },
     // 1.9: waiting list, buttons in reminders, clients who have not come for a while
-    lapsedDaysInvalid: { uk: "Вкажіть від 7 до 365 днів", en: "Enter from 7 to 365 days" },
+    lapsedDaysInvalid: { uk: "Вкажіть від 3 до 365 днів", en: "Enter from 3 to 365 days" },
     waitDateInvalid: { uk: "Оберіть дату від сьогодні й не пізніше ніж за рік", en: "Choose a date from today and within a year" },
     waitMissing: { uk: "Цього запису в листі очікування вже немає", en: "This waiting list entry is no longer there" },
     botCome: { uk: "✅ Прийду", en: "✅ I'll come" },
@@ -203,7 +203,7 @@
       en: "Choose a specialist for this service.",
     },
     slotBusy: { uk: "зайнято", en: "busy" },
-    slotOutside: { uk: "поза графіком", en: "outside hours" },
+    slotOutside: { uk: "поза робочим часом", en: "outside working hours" },
     slotBusyHint: {
       uk: "Обраний спеціаліст у цей час уже зайнятий — оберіть інший час або іншого спеціаліста.",
       en: "The chosen specialist is busy at this time — pick another time or specialist.",
@@ -1557,8 +1557,8 @@
       en: "Total appointment value",
     },
     m281: {
-      uk: "Витрати на матеріали",
-      en: "Material costs",
+      uk: "Додаткові витрати на візит",
+      en: "Extra costs of the visit",
     },
     m282: {
       uk: "Коментар",

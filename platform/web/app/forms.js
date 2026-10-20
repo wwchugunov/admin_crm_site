@@ -68,7 +68,6 @@ function bookingModal(options = {}) {
       ) +
       `<p class="hint">${OrbitI18n.t("bookingPeopleHint")}</p></div>` +
       `<div>${field(OrbitI18n.t("m280"), "total", "number", `required min="0" step="0.01" value="${service.price / 100}"`)}</div>` +
-      `<div>${field(OrbitI18n.t("m281"), "cost", "number", 'min="0" step="0.01" value="0"')}</div>` +
       "</div>" +
       field(OrbitI18n.t("m282"), "notes", "text", 'maxlength="2000"') +
       (options.waitId
@@ -862,13 +861,36 @@ function forgotPasswordModal() {
 }
 
 function bookingClientFields() {
-  return `<div class="booking-client-picker"><label for="field-client_query">${OrbitI18n.t("bookingClientSearch")}</label><input id="field-client_query" name="client_query" type="text" maxlength="120" autocomplete="off" required aria-controls="booking-client-suggestions"><div id="booking-client-suggestions"></div><div id="booking-client-selected"></div><label for="field-new_client_phone">${OrbitI18n.t("bookingClientPhone")}</label><input id="field-new_client_phone" name="new_client_phone" type="tel" maxlength="40" autocomplete="off"><p class="hint">${OrbitI18n.t("bookingClientHint")}</p><select id="field-client_ids" name="client_ids" multiple hidden>${data.clients.map((c) => `<option value="${escape(c.id)}">${escape(c.name)}</option>`).join("")}</select></div>`;
+  return `<div class="booking-client-picker"><label for="field-client_query">${OrbitI18n.t("bookingClientSearch")}</label><input id="field-client_query" name="client_query" type="text" maxlength="120" autocomplete="off" required aria-controls="booking-client-suggestions"><div id="booking-client-suggestions"></div><p class="hint booking-client-found" id="booking-client-found" role="status"></p><div id="booking-client-selected"></div><label for="field-new_client_phone">${OrbitI18n.t("bookingClientPhone")}</label><input id="field-new_client_phone" name="new_client_phone" type="tel" maxlength="40" autocomplete="off"><p class="hint">${OrbitI18n.t("bookingClientHint")}</p><select id="field-client_ids" name="client_ids" multiple hidden>${data.clients.map((c) => `<option value="${escape(c.id)}">${escape(c.name)}</option>`).join("")}</select></div>`;
 }
 function setupBookingClients() {
   const query = $("#field-client_query"),
     phone = $("#field-new_client_phone"),
     selected = $("#field-client_ids");
   function update() {
+    // A full phone number of a client already in the base picks that client with all their details.
+    const typed = (phone.value || query.value).replace(/[^0-9]/g, "");
+    if (typed.length >= 9) {
+      const tail = typed.slice(-9),
+        found = data.clients.filter(
+          (c) => c.phone.replace(/[^0-9]/g, "").slice(-9) === tail,
+        );
+      const option =
+        found.length === 1 &&
+        Array.from(selected.options).find((o) => o.value === found[0].id);
+      if (option && !option.selected) {
+        option.selected = true;
+        query.value = "";
+        phone.value = "";
+        const c = found[0];
+        $("#booking-client-found").textContent =
+          `${OrbitI18n.t("bookingClientFound")}: ${c.name}` +
+          [c.discount > 0 ? `${OrbitI18n.t("discountShort")} ${c.discount}%` : "", c.vehicle, c.plate, c.alert ? `⚠ ${c.alert}` : ""]
+            .filter(Boolean)
+            .map((x) => ` · ${x}`)
+            .join("");
+      }
+    }
     const term = query.value.trim().toLocaleLowerCase(),
       digits = (phone.value || term).replace(/[^0-9]/g, "");
     const ids = new Set(Array.from(selected.selectedOptions, (o) => o.value));
@@ -1064,10 +1086,20 @@ function clientDetails(c) {
       OrbitI18n.t("source_" + c.source),
     ],
     (c.vehicle || c.plate) && [
-      OrbitI18n.t("clientVehicle"),
+      OrbitI18n.t(
+        OrbitIndustries.fields(data.industry).includes("pet")
+          ? "clientPet"
+          : "clientVehicle",
+      ),
       [c.vehicle, c.plate].filter(Boolean).join(" · "),
     ],
+    c.discount > 0 && [OrbitI18n.t("discountLabel"), `${c.discount}%`],
   ].filter(Boolean);
+  // Without a birthday the card offers to add one, so birthday greetings can find the client.
+  const addBirthday =
+    !c.birthday && data.role !== "staff"
+      ? `<p class="hint client-birthday-add">${OrbitI18n.t("clientBirthday")}: — <button type="button" class="link-button" data-action="client-edit" data-id="${escape(c.id)}">${OrbitI18n.t("clientBirthdayAdd")}</button></p>`
+      : "";
   return `${c.alert ? `<p class="client-alert">⚠ ${escape(c.alert)}</p>` : ""}${
     c.tags
       ? `<p class="client-tags">${c.tags
@@ -1075,7 +1107,7 @@ function clientDetails(c) {
           .map((t) => `<span class="tag">${escape(t.trim())}</span>`)
           .join("")}</p>`
       : ""
-  }${rows.length ? `<dl class="client-details">${rows.map(([k, val]) => `<dt>${escape(k)}</dt><dd>${escape(val)}</dd>`).join("")}</dl>` : ""}`;
+  }${rows.length ? `<dl class="client-details">${rows.map(([k, val]) => `<dt>${escape(k)}</dt><dd>${escape(val)}</dd>`).join("")}</dl>` : ""}${addBirthday}`;
 }
 function clientModal(id) {
   const c = data.clients.find((x) => x.id === id);
@@ -1389,7 +1421,15 @@ function clientFields(c = {}) {
         `max="${businessDate(Date.now())}" ${v("birthday")}`,
       ),
     ) +
-    (data.industry === "auto"
+    (OrbitIndustries.fields(data.industry).includes("pet")
+      ? field(
+          OrbitI18n.t("clientPet"),
+          "vehicle",
+          "text",
+          `maxlength="80" placeholder="${OrbitI18n.t("clientPetHint")}" ${v("vehicle")}`,
+        )
+      : "") +
+    (OrbitIndustries.fields(data.industry).includes("vehicle")
       ? pair(
           field(
             OrbitI18n.t("clientVehicle"),
