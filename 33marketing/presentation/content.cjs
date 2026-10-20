@@ -93,7 +93,7 @@ module.exports = {
         ['Сервіс', ['Автосервіси', 'Ремонт техніки', 'Фотостудії', 'Грумінг']],
       ],
     },
-    product: { title: ['Відкрили. Побачили день.', 'До роботи.'], chips: ['Комп’ютер і телефон', 'Українська та English', 'Світла й темна тема', '499 грн/міс · безкоштовно до 1 березня 2027'], caption: 'Справжній інтерфейс LOMVIKO. На зображенні — демонстраційні дані.' },
+    product: { title: ['Відкрили. Побачили день.', 'До роботи.'], chips: ['Комп’ютер і телефон', 'Українська та English', 'Світла й темна тема', '199 грн/міс · безкоштовно до 1 березня 2027'], caption: 'Справжній інтерфейс LOMVIKO. На зображенні — демонстраційні дані.' },
     start: {
       title: ['Почніть новий день', 'з LOMVIKO.'],
       steps: [['Реєстрація', 'Натисніть «Спробувати безкоштовно» на lomviko.com і підтвердьте пошту.'], ['Налаштування', 'Додайте послуги, майстрів і графік — або попросіть нас допомогти.'], ['Працюєте', 'Діліться сторінкою запису й ботом — і приймайте записи.']],
@@ -193,7 +193,7 @@ module.exports = {
         ['Services', ['Car service', 'Device repair', 'Photo studios', 'Pet grooming']],
       ],
     },
-    product: { title: ['Open it. See your day.', 'Get to work.'], chips: ['Computer and phone', 'Ukrainian and English', 'Light and dark theme', 'UAH 499 a month · free until 1 March 2027'], caption: 'The real LOMVIKO interface. The image shows illustrative demo data.' },
+    product: { title: ['Open it. See your day.', 'Get to work.'], chips: ['Computer and phone', 'Ukrainian and English', 'Light and dark theme', 'UAH 199 a month · free until 1 March 2027'], caption: 'The real LOMVIKO interface. The image shows illustrative demo data.' },
     start: {
       title: ['Start a new day', 'with LOMVIKO.'],
       steps: [['Sign up', 'Press “Try it free” at lomviko.com and confirm your email.'], ['Set up', 'Add services, staff and hours — or ask us to help.'], ['Get to work', 'Share your booking page and bot and start taking bookings.']],
