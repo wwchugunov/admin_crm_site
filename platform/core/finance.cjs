@@ -96,6 +96,8 @@ const finance = {
       ["services", "pay_percent", "REAL"],
       // Which certificate or pass a payment was taken from.
       ["payments", "voucher_id", "TEXT"],
+      // Where the client opens the receipt (each provider has its own receipt page).
+      ["fiscal_receipts", "url", "TEXT"],
     ])
       if (!this.db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column))
         this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
@@ -331,7 +333,7 @@ const finance = {
       service_materials: this.db.prepare("SELECT sm.* FROM service_materials sm JOIN materials m ON m.id=sm.material_id WHERE m.archived=0").all(),
       certificates: this.db.prepare("SELECT * FROM certificates WHERE sold_at>=? OR (status='active' AND balance>0) ORDER BY sold_at DESC").all(from),
       passes: this.db.prepare("SELECT * FROM passes WHERE sold_at>=? OR (status='active' AND used<visits) ORDER BY sold_at DESC").all(from),
-      fiscal_receipts: this.db.prepare("SELECT id,source,source_id,kind,amount,method,title,status,error,fiscal_code,is_test,created_at FROM fiscal_receipts ORDER BY created_at DESC LIMIT 50").all(),
+      fiscal_receipts: this.db.prepare("SELECT id,source,source_id,kind,amount,method,title,status,error,fiscal_code,is_test,url,created_at FROM fiscal_receipts ORDER BY created_at DESC LIMIT 50").all(),
     };
   },
   setDiscount(clientId, value) {

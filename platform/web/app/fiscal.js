@@ -22,8 +22,25 @@ Object.assign(OrbitI18n.messages, {
   fiscalHow2: { uk: "Створіть касу. Щоб спершу спробувати, візьміть тестову касу — її чеки не йдуть у податкову.", en: "Create a cash register. To try first, use a test register — its receipts do not go to the tax service." },
   fiscalHow3: { uk: "Додайте касира й задайте йому логін і пароль або PIN-код.", en: "Add a cashier and give them a login and password or a PIN." },
   fiscalHow4: { uk: "Скопіюйте ключ ліцензії каси й вставте все нижче.", en: "Copy the register licence key and paste everything below." },
+  fiscalConnectVchasno: { uk: "Підключити Вчасно.Касу", en: "Connect Vchasno.Kasa" },
+  fiscalOtherConnected: { uk: "Зараз чеки видає інша каса. Щоб перейти, спершу вимкніть її.", en: "Another register issues receipts now. To switch, turn it off first." },
+  fiscalVchasnoPrice: { uk: "Вчасно.Каса: за даними їхнього сайту є безкоштовний тариф з обмеженнями; умови й ціни дивіться на kasa.vchasno.ua.", en: "Vchasno.Kasa: according to their website there is a free plan with limits; see kasa.vchasno.ua for terms and prices." },
+  fiscalVchasnoHowTitle: { uk: "Як підключити Вчасно.Касу", en: "How to connect Vchasno.Kasa" },
+  fiscalVchasnoHow1: { uk: "Зареєструйтеся на kasa.vchasno.ua. Тестова каса з’являється сама — на ній можна спробувати: її чеки не йдуть у податкову й не видаються клієнтам.", en: "Sign up at kasa.vchasno.ua. A test register appears by itself — try it first: its receipts do not go to the tax service and are not for clients." },
+  fiscalVchasnoHow2: { uk: "Додайте ключ КЕП у «Сховище ключів» у кабінеті.", en: "Add your qualified e-signature key in Key storage in the account." },
+  fiscalVchasnoHow3: { uk: "Каса → «Налаштування каси» → блок «Токен» → «Згенерувати токен». Токен показується лише один раз — скопіюйте його одразу.", en: "Register → Register settings → Token → Generate token. The token is shown only once — copy it right away." },
+  fiscalVchasnoHow4: { uk: "Там само увімкніть автозакриття зміни, щоб зміна закривалася щодня сама.", en: "Turn on automatic shift closing there too, so the shift closes every day by itself." },
+  fiscalVchasnoHow5: { uk: "Вставте токен нижче й оберіть податкову групу.", en: "Paste the token below and choose the tax group." },
+  fiscalVchasnoToken: { uk: "Токен каси", en: "Register token" },
+  fiscalTaxGroup: { uk: "Податкова група", en: "Tax group" },
+  fiscalTax2: { uk: "Без ПДВ (звичайно для ФОП-неплатника ПДВ)", en: "No VAT (usual for a sole proprietor not paying VAT)" },
+  fiscalTax7: { uk: "Не є об’єктом ПДВ", en: "Not subject to VAT" },
+  fiscalTax1: { uk: "ПДВ 20%", en: "VAT 20%" },
+  fiscalTaxHint: { uk: "Група має бути налаштована у вашій касі. Яку обрати — скаже бухгалтер.", en: "The group must be set up in your register. Your accountant will tell you which to choose." },
+  fiscalConsentVchasno: { uk: "Я розумію, що відповідальність за видачу чеків несу я, фіскалізацію виконує Вчасно.Каса, а LOMVIKO лише передає дані про продаж.", en: "I understand that I am responsible for issuing receipts, Vchasno.Kasa performs the fiscalisation, and LOMVIKO only passes on the sale data." },
+  fiscalConnectedVchasno: { uk: "Вчасно.Касу підключено", en: "Vchasno.Kasa connected" },
   fiscalSoon: { uk: "Незабаром", en: "Coming soon" },
-  fiscalVchasnoShort: { uk: "Підключення з’явиться найближчим часом. За даними їхнього сайту, є безкоштовний тариф з обмеженнями.", en: "Coming soon. According to their website, there is a free plan with limits." },
+  fiscalVchasnoShort: { uk: "Чек на кожну оплату через вашу касу у Вчасно.Касі: готівкою, карткою, онлайн, на сертифікати й повернення.", en: "A receipt for every payment through your Vchasno.Kasa register: cash, card, online, certificates and refunds." },
   fiscalLicence: { uk: "Ключ ліцензії каси", en: "Cash register licence key" },
   fiscalLicenceHint: { uk: "Кабінет Checkbox → Каси → ваша каса → «Ключ ліцензії». Для перевірки можна взяти тестову касу.", en: "Checkbox account → Cash registers → your register → “Licence key”. A test register works for trying it out." },
   fiscalLogin: { uk: "Логін касира", en: "Cashier login" },
@@ -58,17 +75,23 @@ function fiscalGroup() {
     owner = data.role === "owner",
     receipts = data.fiscal_receipts || [],
     failed = receipts.filter((r) => r.status === "failed").length;
-  const checkbox = integrationRow({
-    icon: "₴",
-    name: ft("fiscalCheckbox"),
-    on: f.connected,
-    status: f.connected ? ft("fiscalOn") : ft("fiscalOff"),
-    short: f.connected ? `${ft("fiscalCashier")}: ${escape(f.cashier || "")}${f.consent_at ? ` · ${ft("fiscalSince")} ${dayText(f.consent_at)}` : ""}` : ft("fiscalShort"),
-    controls: !owner ? "" : f.connected ? `<button class="secondary" data-action="fiscal-settings">${ft("fiscalSettings")}</button><button class="danger" data-action="fiscal-off">${ft("fiscalDisconnect")}</button>` : `<button class="primary" data-action="fiscal-connect">${ft("fiscalConnect")}</button>`,
-    more: `<p>${ft("fiscalCheckboxPrice")}</p><p>${ft("fiscalNote")}</p>`,
-  });
-  const why = `<div class="fiscal-why"><strong>${ft("fiscalWhyTitle")}</strong><ul><li>${ft("fiscalWhy1")}</li><li>${ft("fiscalWhy2")}</li><li>${ft("fiscalWhy3")}</li></ul></div>`;
-  const vchasno = integrationRow({ icon: "◷", name: ft("fiscalVchasno"), on: false, status: ft("fiscalSoon"), short: ft("fiscalVchasnoShort"), controls: "", more: "" });
+  // One provider at a time: the connected one shows its settings, the other explains how to switch.
+  const row = (provider, icon) => {
+    const mine = f.connected && f.provider === provider,
+      other = f.connected && f.provider !== provider,
+      name = ft(provider === "vchasno" ? "fiscalVchasno" : "fiscalCheckbox");
+    return integrationRow({
+      icon,
+      name,
+      on: mine,
+      status: mine ? ft("fiscalOn") : ft("fiscalOff"),
+      short: mine ? `${ft("fiscalCashier")}: ${escape(f.cashier || "")}${f.consent_at ? ` · ${ft("fiscalSince")} ${dayText(f.consent_at)}` : ""}` : other ? ft("fiscalOtherConnected") : ft(provider === "vchasno" ? "fiscalVchasnoShort" : "fiscalShort"),
+      controls: !owner || other ? "" : mine ? `<button class="secondary" data-action="fiscal-settings">${ft("fiscalSettings")}</button><button class="danger" data-action="fiscal-off">${ft("fiscalDisconnect")}</button>` : `<button class="primary" data-action="fiscal-connect" data-provider="${provider}">${ft(provider === "vchasno" ? "fiscalConnectVchasno" : "fiscalConnect")}</button>`,
+      more: `<p>${ft(provider === "vchasno" ? "fiscalVchasnoPrice" : "fiscalCheckboxPrice")}</p><p>${ft("fiscalNote")}</p>`,
+    });
+  };
+  const checkbox = row("checkbox", "₴"),
+    vchasno = row("vchasno", "◷");
   const list =
     f.connected || receipts.length
       ? `<div class="fiscal-receipts"><h4>${ft("fiscalReceipts")}</h4>${failed ? `<div class="callout">${ft("fiscalFailedNote")}</div>` : ""}${
@@ -77,7 +100,7 @@ function fiscalGroup() {
                 .slice(0, 20)
                 .map(
                   (r) =>
-                    `<tr><td>${dayText(r.created_at)}</td><td>${escape(r.title)}${r.kind === "return" ? ` · ${ft("fiscalReturn")}` : ""}${r.is_test ? ` · <span class="tag">${ft("fiscalTest")}</span>` : ""}${r.status === "failed" && r.error ? `<small class="fiscal-error">${escape(r.error)}</small>` : ""}</td><td class="num">${r.kind === "return" ? "−" : ""}${money(r.amount)}</td><td><span class="badge ${r.status === "failed" ? "cancelled" : ""}">${ft("fiscalStatus_" + r.status)}</span></td><td>${r.status === "done" ? `<a class="link-button" href="${escape(fiscalReceiptUrl(r.id))}" target="_blank" rel="noopener">${ft("fiscalOpen")}</a>` : r.status === "failed" ? `<button class="link-button" data-action="fiscal-retry" data-id="${escape(r.id)}">${ft("fiscalRetry")}</button>` : ""}</td></tr>`,
+                    `<tr><td>${dayText(r.created_at)}</td><td>${escape(r.title)}${r.kind === "return" ? ` · ${ft("fiscalReturn")}` : ""}${r.is_test ? ` · <span class="tag">${ft("fiscalTest")}</span>` : ""}${r.status === "failed" && r.error ? `<small class="fiscal-error">${escape(r.error)}</small>` : ""}</td><td class="num">${r.kind === "return" ? "−" : ""}${money(r.amount)}</td><td><span class="badge ${r.status === "failed" ? "cancelled" : ""}">${ft("fiscalStatus_" + r.status)}</span></td><td>${r.status === "done" ? `<a class="link-button" href="${escape(r.url || fiscalReceiptUrl(r.id))}" target="_blank" rel="noopener">${ft("fiscalOpen")}</a>` : r.status === "failed" ? `<button class="link-button" data-action="fiscal-retry" data-id="${escape(r.id)}">${ft("fiscalRetry")}</button>` : ""}</td></tr>`,
                 )
                 .join("")}</tbody></table></div>`
             : `<p class="hint">${ft("fiscalNone")}</p>`
@@ -103,8 +126,22 @@ const fiscalChoices = () => ({
   telegram: Boolean($('#modal-fields [name="fiscal_telegram"]')?.checked),
 });
 Object.assign(actions, {
-  "fiscal-connect": () =>
-    modal(
+  "fiscal-connect": (b) =>
+    b?.dataset?.provider === "vchasno"
+      ? modal(
+          ft("fiscalConnectVchasno"),
+          `<div class="bot-guide"><strong>${ft("fiscalVchasnoHowTitle")}</strong><ol>${[1, 2, 3, 4, 5].map((n) => `<li>${ft("fiscalVchasnoHow" + n)}</li>`).join("")}</ol><p class="hint">${ft("fiscalWhy2")}</p><p class="hint">${ft("fiscalVchasnoPrice")}</p></div>` +
+            field(ft("fiscalVchasnoToken"), "token", "password", 'required autocomplete="off" spellcheck="false" maxlength="300"') +
+            `<label for="field-taxgrp">${ft("fiscalTaxGroup")}</label><select id="field-taxgrp" name="taxgrp">${[2, 7, 1].map((g) => `<option value="${g}">${ft("fiscalTax" + g)}</option>`).join("")}</select><p class="hint">${ft("fiscalTaxHint")}</p>` +
+            fiscalMethodFields() +
+            `<label class="checkbox-line consent-line"><input type="checkbox" name="consent" required>${ft("fiscalConsentVchasno")}</label>`,
+          async (v) => {
+            await window.orbit.call("fiscal:connect", { provider: "vchasno", token: v.token, taxgrp: Number(v.taxgrp), consent: v.consent === "on", ...fiscalChoices() });
+            toast(ft("fiscalConnectedVchasno"));
+          },
+          ft("fiscalConnectVchasno"),
+        )
+      : modal(
       ft("fiscalConnect"),
       `<div class="bot-guide"><strong>${ft("fiscalHowTitle")}</strong><ol>${[1, 2, 3, 4].map((n) => `<li>${ft("fiscalHow" + n)}</li>`).join("")}</ol><p class="hint">${ft("fiscalWhy2")}</p><p class="hint">${ft("fiscalCheckboxPrice")}</p></div>` +
         field(ft("fiscalLicence"), "license_key", "password", 'required autocomplete="off" spellcheck="false" maxlength="200"') +
@@ -118,7 +155,7 @@ Object.assign(actions, {
         toast(ft("fiscalConnected"));
       },
       ft("fiscalConnect"),
-    ),
+      ),
   "fiscal-settings": () => {
     const f = data.integrations.fiscal || {};
     modal(ft("fiscalSettings"), fiscalMethodFields(f), async () => {

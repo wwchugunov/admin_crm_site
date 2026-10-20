@@ -101,3 +101,52 @@ test('Online payments get receipts only when the owner turns them on; a bank ref
  const ret=receipts(f.store).find(x=>x.source_id===back.payment_id);
  assert.deepEqual([ret.kind,ret.amount,f.cb.state.receipts.get(ret.id).related_receipt_id],['return',60000,r.id]);
 });
+
+// A fake Vchasno.Kasa Cloud API: one endpoint, the register token in Authorization, idempotent by tag.
+async function vchasno(t){
+ const state={calls:[],byTag:new Map(),fail:0};
+ const server=http.createServer(async(req,res)=>{let body='';for await(const c of req)body+=c;const d=JSON.parse(body||'{}');state.calls.push({headers:req.headers,data:d});
+  const send=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
+  if(req.url!=='/api/v3/fiscal/execute')return send(404,{});
+  if(req.headers.authorization!=='vk-token')return send(401,{res:401,errortxt:'Unauthorized'});
+  if(state.fail){state.fail--;return send(200,{res:5,res_action:1,errortxt:'ДПС тимчасово недоступна',info:{}});}
+  if(d.fiscal.task===18)return send(200,{res:0,res_action:0,device:'99990001',errortxt:'',info:{}});
+  if(d.fiscal.receipt.rows[0].price>1e5)return send(200,{res:12,res_action:3,errortxt:'Сума перевищує ліміт',info:{}});
+  if(!state.byTag.has(d.tag))state.byTag.set(d.tag,{doccode:'TEST_'+(state.byTag.size+1),qr:'https://kasa.vchasno.ua/c/TEST_'+(state.byTag.size+1)});
+  const r=state.byTag.get(d.tag);send(200,{res:0,res_action:0,errortxt:'',info:{task:d.fiscal.task,doccode:r.doccode,dtype:0,qr:r.qr}});
+ });
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));
+ process.env.CH_VCHASNO_API='http://127.0.0.1:'+server.address().port;t.after(()=>{delete process.env.CH_VCHASNO_API;});
+ return state;
+}
+
+test('Vchasno.Kasa: the token is checked, sales and refunds go out with the right codes, the receipt link reaches the client',async t=>{
+ const vk=await vchasno(t),f=await fixture(t);
+ await assert.rejects(f.fiscal.connect(f.runtime,f.user,{provider:'vchasno',token:'wrong',consent:true}),/не прийняла токен/);
+ assert.equal(f.runtime.vault.has('fiscal'),false);
+ const status=await f.fiscal.connect(f.runtime,f.user,{provider:'vchasno',token:'vk-token',taxgrp:7,consent:true});
+ assert.deepEqual([status.connected,status.provider,status.cashier],[true,'vchasno','Вчасно.Каса 99990001']);
+ const a=f.visit(),cash=f.store.payment({appointment_id:a,amount:450,method:'cash'});
+ await f.fiscal.queuePayment(f.business,f.runtime,cash)&&await f.fiscal.work(f.business,f.runtime);
+ const sale=vk.calls.at(-1).data;
+ assert.deepEqual([sale.fiscal.task,sale.fiscal.receipt.sum,sale.fiscal.receipt.rows[0].taxgrp,sale.fiscal.receipt.pays[0].type],[1,450,7,0]);
+ const r=receipts(f.store)[0];assert.deepEqual([r.status,r.fiscal_code,r.is_test,r.url],['done','TEST_1',1,'https://kasa.vchasno.ua/c/TEST_1']);
+ assert.equal(f.sent.at(-1).reply_markup.inline_keyboard[0][0].url,'https://kasa.vchasno.ua/c/TEST_1');
+ const refund=f.store.payment({appointment_id:a,amount:-150,method:'card'});
+ await f.fiscal.queuePayment(f.business,f.runtime,refund);
+ const card=f.store.payment({appointment_id:a,amount:100,method:'card'});await f.fiscal.queuePayment(f.business,f.runtime,card)&&await f.fiscal.work(f.business,f.runtime);
+ assert.ok(vk.calls.some(c=>c.data.fiscal?.task===2&&c.data.fiscal.receipt.pays[0].type===2),'a card refund is a return receipt');
+});
+
+test('Vchasno.Kasa: a temporary error retries with the same tag, an error needing manual action stops',async t=>{
+ const vk=await vchasno(t),f=await fixture(t);await f.fiscal.connect(f.runtime,f.user,{provider:'vchasno',token:'vk-token',consent:true});
+ vk.fail=1;const a=f.visit(),p=f.store.payment({appointment_id:a,amount:200,method:'cash'});
+ await f.fiscal.queuePayment(f.business,f.runtime,p)&&await f.fiscal.work(f.business,f.runtime);
+ let r=receipts(f.store)[0];assert.deepEqual([r.status,r.attempts],['pending',1]);assert.match(r.error,/ДПС тимчасово/);
+ f.store.db.prepare('UPDATE fiscal_receipts SET next_at=0').run();await f.fiscal.tick();
+ r=receipts(f.store)[0];assert.equal(r.status,'done');
+ const tags=vk.calls.filter(c=>c.data.fiscal?.task===1).map(c=>c.data.tag);assert.equal(new Set(tags).size,1,'the retry repeats the same tag');
+ f.store.db.prepare('UPDATE appointments SET total=? WHERE id=?').run(2e7,a);
+ const big=f.store.payment({appointment_id:a,amount:150000,method:'cash'});await f.fiscal.queuePayment(f.business,f.runtime,big)&&await f.fiscal.work(f.business,f.runtime);
+ assert.equal(receipts(f.store).find(x=>x.source_id===big).status,'failed');
+});

@@ -95,7 +95,7 @@ function createProductServer({ store, adminToken, privateKey, publicKey, busines
   const monobank=new Monobank({db:store.db,accounts,fail,api:process.env.CH_MONOBANK_API,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.monobank=monobank;
   const liqpay=new LiqPay({db:store.db,accounts,fail,api:process.env.CH_LIQPAY_API,sender:monobank,publicUrl:process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')});accounts.liqpay=liqpay;
   // Fiscal receipts through Checkbox for companies that switched them on; failed ones are retried in the background.
-  const fiscal=new Fiscal({accounts,fail,api:process.env.CH_CHECKBOX_API});accounts.fiscal=fiscal;
+  const fiscal=new Fiscal({accounts,fail,api:process.env.CH_CHECKBOX_API,vchasnoApi:process.env.CH_VCHASNO_API});accounts.fiscal=fiscal;
   const lapsed=new Lapsed({accounts,fail});accounts.lapsed=lapsed;
   // Morning summaries, reports and instant news for the company team (Telegram and email).
   const notify=new Notify({db:store.db,accounts,mail,fail});accounts.notify=notify;

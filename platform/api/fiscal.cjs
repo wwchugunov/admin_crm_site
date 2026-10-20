@@ -1,5 +1,5 @@
 const crypto=require('node:crypto');
-// Fiscal receipts (ПРРО) through a licensed provider, Checkbox first. LOMVIKO never registers receipts with the
+// Fiscal receipts (ПРРО) through a licensed provider: Checkbox or Vchasno.Kasa. LOMVIKO never registers receipts with the
 // tax service itself: the provider does, under the company's own licence key and cashier. The owner turns this on
 // with an explicit statement that they are responsible for receipts; it is off for everyone else.
 //
@@ -9,10 +9,14 @@ const crypto=require('node:crypto');
 const CHECKBOX='https://api.checkbox.in.ua';
 const CLIENT={'X-Client-Name':'LOMVIKO','X-Client-Version':'2.4'};
 const RETRY=[60e3,5*60e3,15*60e3,60*60e3,3*60*60e3,6*60*60e3];
-const PROVIDERS=['checkbox'];
+const VCHASNO='https://kasa.vchasno.ua';
+const PROVIDERS=['checkbox','vchasno'];
+// Vchasno.Kasa payment type codes and tax groups from its Cloud API.
+const VCHASNO_PAY={cash:0,card:2,online:16};
+const TAX_GROUPS=[2,7,1];
 function receiptUrl(base,id){return `${base}/api/v1/receipts/${id}/html`;}
 class Fiscal{
- constructor({accounts,fail,request,api,pause}){Object.assign(this,{accounts,fail,request:request||fetch,base:(api||CHECKBOX).replace(/\/$/,''),pause:pause||(ms=>new Promise(r=>setTimeout(r,ms)))});this.running=new Map();}
+ constructor({accounts,fail,request,api,vchasnoApi,pause}){Object.assign(this,{accounts,fail,request:request||fetch,base:(api||CHECKBOX).replace(/\/$/,''),vchasnoBase:(vchasnoApi||VCHASNO).replace(/\/$/,''),pause:pause||(ms=>new Promise(r=>setTimeout(r,ms)))});this.running=new Map();}
  settings(store){return{provider:store.get('fiscal_provider')||null,methods:store.get('fiscal_methods')||['cash','card'],telegram:store.get('fiscal_telegram')!==false,consent:store.get('fiscal_consent')||null,cashier:store.get('fiscal_cashier')||null};}
  status(runtime){const s=this.settings(runtime.store);return{connected:Boolean(s.provider&&runtime.vault.has('fiscal')),provider:s.provider,methods:s.methods,telegram:s.telegram,cashier:s.cashier,consent_at:s.consent?.at||null};}
  credentials(runtime){try{return JSON.parse(runtime.vault.get('fiscal')||'null');}catch{return null;}}
@@ -35,6 +39,7 @@ class Fiscal{
   if(data?.consent!==true)this.fail(400,'Підтвердіть, що відповідальність за чеки несете ви / Confirm that you are responsible for receipts');
   const provider=PROVIDERS.includes(data.provider)?data.provider:'checkbox';
   const text=(v,max)=>typeof v==='string'&&v.trim()&&v.length<=max?v.trim():'';
+  if(provider==='vchasno')return this.connectVchasno(runtime,user,data,text);
   const c={license:text(data.license_key,200),login:text(data.login,200),password:typeof data.password==='string'&&data.password.length<=200?data.password:'',pin:text(data.pin,20)};
   if(!c.license)this.fail(400,'Вставте ключ ліцензії каси з кабінету Checkbox / Paste the cash register licence key from Checkbox');
   if(!c.pin&&!(c.login&&c.password))this.fail(400,'Вкажіть PIN-код касира або логін і пароль / Enter the cashier PIN or login and password');
@@ -43,8 +48,33 @@ class Fiscal{
   catch(e){runtime.vault.remove('fiscal');this.fail(400,e.status===401||e.status===403||e.status===422?'Checkbox не прийняв ці дані касира / Checkbox did not accept these cashier details':e.message);}
   const store=runtime.store;
   store.set('fiscal_provider',provider);store.set('fiscal_cashier',String(me?.full_name||me?.name||c.login||'Checkbox').slice(0,120));
-  store.set('fiscal_consent',{at:Date.now(),user_id:user.id,name:user.name,text:'Відповідальність за видачу чеків несу я; фіскалізацію виконує провайдер ПРРО.'});
-  this.configure(runtime,data);store.audit('fiscal.connected',provider);
+  this.accepted(runtime,user,data,provider);
+  return this.status(runtime);
+ }
+ accepted(runtime,user,data,provider){
+  runtime.store.set('fiscal_provider',provider);
+  runtime.store.set('fiscal_consent',{at:Date.now(),user_id:user.id,name:user.name,text:'Відповідальність за видачу чеків несу я; фіскалізацію виконує провайдер ПРРО.'});
+  this.configure(runtime,data);runtime.store.audit('fiscal.connected',provider);
+ }
+ // Vchasno.Kasa works with one cash register token; the status task checks it before anything is saved.
+ async vchasno(c,payload){
+  let res;
+  try{res=await this.request(this.vchasnoBase+'/api/v3/fiscal/execute',{method:'POST',headers:{'Content-Type':'application/json',Authorization:c.token},body:JSON.stringify({source:'LOMVIKO',...payload}),redirect:'error',signal:AbortSignal.timeout(25000)});}
+  catch{throw Object.assign(Error('Вчасно.Каса не відповідає / Vchasno.Kasa is not responding'),{retry:true});}
+  const text=await res.text();let data=null;try{data=text?JSON.parse(text):null;}catch{}
+  if(res.status===401||res.status===403)throw Object.assign(Error('Вчасно.Каса не прийняла токен каси / Vchasno.Kasa did not accept the token'),{status:res.status,retry:false});
+  if(!res.ok||!data)throw Object.assign(Error('Вчасно.Каса: '+String(data?.errortxt||res.status).slice(0,300)),{status:res.status,retry:res.status>=500||res.status===429});
+  if(data.res!==0)throw Object.assign(Error('Вчасно.Каса: '+String(data.errortxt||('код '+data.res)).slice(0,300)),{retry:data.res_action===1||data.res_action===2});
+  return data;
+ }
+ async connectVchasno(runtime,user,data,text){
+  const c={provider:'vchasno',token:text(data.token,300),taxgrp:TAX_GROUPS.includes(Number(data.taxgrp))?Number(data.taxgrp):2};
+  if(!c.token)this.fail(400,'Вставте токен каси з кабінету Вчасно.Каса / Paste the cash register token from Vchasno.Kasa');
+  let status;
+  try{status=await this.vchasno(c,{fiscal:{task:18}});}catch(e){this.fail(400,e.message);}
+  runtime.vault.put('fiscal',JSON.stringify(c));
+  runtime.store.set('fiscal_cashier',`Вчасно.Каса ${String(status.device||status.info?.fisid||'').slice(0,40)}`.trim());
+  this.accepted(runtime,user,data,'vchasno');
   return this.status(runtime);
  }
  configure(runtime,data){
@@ -53,7 +83,7 @@ class Fiscal{
   return this.status(runtime);
  }
  async disconnect(runtime){
-  const c=this.credentials(runtime);if(c?.token)await this.call(c,'POST','/api/v1/cashier/signout').catch(()=>{});
+  const c=this.credentials(runtime);if(c?.token&&c.provider!=='vchasno')await this.call(c,'POST','/api/v1/cashier/signout').catch(()=>{});
   runtime.vault.remove('fiscal');for(const k of ['fiscal_provider','fiscal_cashier','fiscal_consent'])runtime.store.set(k,null);runtime.store.audit('fiscal.disconnected','');
  }
  // A visit payment just saved. Only cash and card taken at the place are fiscalised, and only the methods the owner chose.
@@ -66,7 +96,7 @@ class Fiscal{
   if(!['cash','card','online'].includes(group)||!s.methods.includes(group))return null;
   const methods=online?['monobank','liqpay']:[p.method];
   const related=p.amount<0?runtime.store.db.prepare(`SELECT f.id FROM fiscal_receipts f JOIN payments x ON x.id=f.source_id WHERE f.source='payment' AND f.kind='sell' AND f.status='done' AND x.appointment_id=? AND x.method IN (${methods.map(()=>'?').join(',')}) ORDER BY f.created_at DESC LIMIT 1`).get(p.visit,...methods)?.id||null:null;
-  return this.enqueue(business,runtime,{source:'payment',source_id:p.id,kind:p.amount<0?'return':'sell',amount:Math.abs(p.amount),method:online?'card':p.method,title:p.service_name,related});
+  return this.enqueue(business,runtime,{source:'payment',source_id:p.id,kind:p.amount<0?'return':'sell',amount:Math.abs(p.amount),method:online?'online':p.method,title:p.service_name,related});
  }
  // A bank callback only knows the company's store; find its business and runtime for the receipt.
  queueFromStore(store,paymentId){for(const [id,runtime] of this.accounts.businesses.instances){if(runtime.store!==store)continue;const business=this.accounts.db.prepare('SELECT * FROM businesses WHERE id=?').get(id);return business?this.queuePayment(business,runtime,paymentId):null;}return null;}
@@ -111,6 +141,7 @@ class Fiscal{
  zoneOffset(runtime,day){const zone=runtime.store.get('timezone')||'Europe/Kyiv',probe=Date.parse(`${day}T12:00:00Z`);return Date.parse(new Date(probe).toLocaleString('en-US',{timeZone:zone})+' UTC')-probe;}
  async process(business,runtime,row){
   const db=runtime.store.db;
+  if(this.credentials(runtime)?.provider==='vchasno')return this.processVchasno(business,runtime,row);
   try{
    const receipt=await this.withToken(runtime,async c=>{
     if(row.status==='pending'){
@@ -125,23 +156,36 @@ class Fiscal{
    });
    if(!receipt){db.prepare('UPDATE fiscal_receipts SET next_at=? WHERE id=?').run(Date.now()+60e3,row.id);return;}
    if(receipt.status==='ERROR')throw Object.assign(Error('Checkbox відхилив чек / Checkbox rejected the receipt'),{retry:false});
-   db.prepare("UPDATE fiscal_receipts SET status='done',fiscal_code=?,is_test=?,done_at=?,error='' WHERE id=?").run(String(receipt.fiscal_code||''),receipt.is_test?1:0,Date.now(),row.id);
-   await this.deliver(business,runtime,row,receipt).catch(()=>{});
-  }catch(e){
-   const attempts=row.attempts+1,give=e.retry===false||(e.status>=400&&e.status<500&&!e.auth&&e.status!==429)||attempts>RETRY.length;
-   db.prepare("UPDATE fiscal_receipts SET status=?,attempts=?,next_at=?,error=? WHERE id=?").run(give?'failed':row.status,attempts,Date.now()+(RETRY[attempts-1]||RETRY.at(-1)),String(e.message).slice(0,300),row.id);
-  }
+   await this.done(business,runtime,row,String(receipt.fiscal_code||''),receipt.is_test,receipt.tax_url||receiptUrl(this.base,row.id));
+  }catch(e){this.failed(runtime,row,e);}
+ }
+ // Vchasno.Kasa answers synchronously; repeating the same tag never makes a second receipt, so retries are safe.
+ async processVchasno(business,runtime,row){
+  const c=this.credentials(runtime),sum=Math.round(row.amount)/100;
+  try{
+   const r=await this.vchasno(c,{tag:row.id,fiscal:{task:row.kind==='return'?2:1,receipt:{sum,rows:[{code:row.source_id.slice(0,32),name:row.title,cnt:1,price:sum,disc:0,taxgrp:c.taxgrp}],pays:[{type:VCHASNO_PAY[row.method]??2,sum}]}}});
+   await this.done(business,runtime,row,String(r.info?.doccode||''),r.info?.dtype===0,r.info?.qr||null);
+  }catch(e){this.failed(runtime,row,e);}
+ }
+ async done(business,runtime,row,code,test,url){
+  runtime.store.db.prepare("UPDATE fiscal_receipts SET status='done',fiscal_code=?,is_test=?,url=?,done_at=?,error='' WHERE id=?").run(code,test?1:0,url,Date.now(),row.id);
+  await this.deliver(business,runtime,row,url).catch(()=>{});
+ }
+ failed(runtime,row,e){
+  const attempts=row.attempts+1,give=e.retry===false||(e.status>=400&&e.status<500&&!e.auth&&e.status!==429)||attempts>RETRY.length;
+  runtime.store.db.prepare("UPDATE fiscal_receipts SET status=?,attempts=?,next_at=?,error=? WHERE id=?").run(give?'failed':row.status,attempts,Date.now()+(RETRY[attempts-1]||RETRY.at(-1)),String(e.message).slice(0,300),row.id);
  }
  // The client gets the receipt link in the company bot, if the owner wants that and the client is connected.
- async deliver(business,runtime,row,receipt){
+ async deliver(business,runtime,row,url){
   if(!this.settings(runtime.store).telegram||row.source!=='payment')return;
   const c=runtime.store.db.prepare('SELECT c.chat_id FROM payments p JOIN appointments a ON a.id=p.appointment_id JOIN clients c ON c.id=a.client_id WHERE p.id=?').get(row.source_id);
   if(!c?.chat_id)return;
-  const telegram=runtime.telegram,url=receipt.tax_url||receiptUrl(this.base,row.id),en=telegram.language?.(c.chat_id)==='en';
+  if(!url)return;
+  const telegram=runtime.telegram,en=telegram.language?.(c.chat_id)==='en';
   const payload={chat_id:c.chat_id,text:`${row.kind==='return'?(en?'Refund receipt':'Чек повернення'):(en?'Your receipt':'Ваш чек')} · ${(row.amount/100).toFixed(2)} ${runtime.store.get('currency')||'UAH'}\n${row.title}\n${runtime.store.get('business')||business.name}`,reply_markup:{inline_keyboard:[[{text:en?'Open receipt':'Відкрити чек',url}]]}};
   if(this.accounts.botWorkers?.status(business).hosting==='external')this.accounts.botWorkers.queue(business.id,'sendMessage',payload);
   else if(runtime.vault.has('telegram'))await telegram.call('sendMessage',payload);
  }
- recent(runtime){return runtime.store.db.prepare('SELECT * FROM fiscal_receipts ORDER BY created_at DESC LIMIT 50').all().map(r=>({...r,url:r.status==='done'?receiptUrl(this.base,r.id):null}));}
+ recent(runtime){return runtime.store.db.prepare('SELECT * FROM fiscal_receipts ORDER BY created_at DESC LIMIT 50').all();}
 }
 module.exports={Fiscal,receiptUrl};
