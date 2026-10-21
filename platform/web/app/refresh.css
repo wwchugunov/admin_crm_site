@@ -24,15 +24,15 @@
   --ink: #16181d;
   --muted: #5f6573;
   --line: #e5e7ec;
-  --accent: #5048e5;
-  --accent-strong: #4038c8;
-  --accent-soft: #eef0ff;
+  --accent: #1f7a55;
+  --accent-strong: #17633f;
+  --accent-soft: #e9f4ee;
   --on-accent: #ffffff;
   --field: #ffffff;
   --hover: #f2f3f6;
-  --focus: #5048e559;
+  --focus: #1f7a5559;
   --elevation: 0 1px 2px #1018280a, 0 8px 24px #1018280d;
-  --c-confirmed: #5048e5;
+  --c-confirmed: #1f7a55;
   --c-completed: #64748b;
   --c-cancelled: #e11d48;
   --c-noshow: #d97706;
@@ -51,14 +51,14 @@ html[data-theme="dark"] {
   --ink: #eceef2;
   --muted: #a3a9b5;
   --line: #272b34;
-  --accent: #6b64f5;
-  --accent-strong: #7d77ff;
-  --accent-soft: #23234a;
+  --accent: #3fae7c;
+  --accent-strong: #55c08f;
+  --accent-soft: #1d3529;
   --field: #12151a;
   --hover: #1e222a;
-  --focus: #8b85ff66;
+  --focus: #55c08f66;
   --elevation: 0 1px 2px #0006, 0 10px 30px #0005;
-  --c-confirmed: #8b85ff;
+  --c-confirmed: #55c08f;
   --c-completed: #8a94a6;
   --c-cancelled: #fb7185;
   --c-noshow: #fbbf24;
@@ -1418,11 +1418,11 @@ html[data-theme] {
   --line: #e9e7e3;
   --hover: #f0efec;
   --selected: #e8e6e2;
-  --accent: #5a54d6;
-  --accent-strong: #4b45c4;
-  --accent-soft: #eeedfb;
+  --accent: #1f7a55;
+  --accent-strong: #17633f;
+  --accent-soft: #e7f2ec;
   --field: #ffffff;
-  --focus: #5a54d655;
+  --focus: #1f7a5555;
 }
 html[data-theme="dark"] {
   --canvas: #1b1b1a;
@@ -1433,11 +1433,11 @@ html[data-theme="dark"] {
   --line: #2d2c2a;
   --hover: #252523;
   --selected: #2e2d2b;
-  --accent: #7a74ec;
-  --accent-strong: #8b86f2;
-  --accent-soft: #2a2950;
+  --accent: #3fae7c;
+  --accent-strong: #55c08f;
+  --accent-soft: #1f3a2d;
   --field: #212120;
-  --focus: #7a74ec66;
+  --focus: #3fae7c66;
 }
 html[data-theme] main {
   background: var(--canvas);
@@ -1981,7 +1981,7 @@ html[data-theme="dark"] .pay-state.done {
   background: var(--hover, #f5f5f5);
 }
 .support-row.unread {
-  border-color: #5b5bd6;
+  border-color: var(--accent);
 }
 .support-row-text {
   flex: 1;
@@ -2024,7 +2024,7 @@ html[data-theme] .badge.support-status.closed {
 }
 .support-msg.client {
   justify-self: end;
-  background: color-mix(in srgb, #5b5bd6 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 .support-meta {
   margin-bottom: 3px;

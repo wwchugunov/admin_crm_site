@@ -28,16 +28,15 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="index, follow, max-image-preview:large">
-<meta name="theme-color" content="#07080a">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#06664c">
+<meta name="color-scheme" content="light">
 <meta name="format-detection" content="telephone=no">
 <meta name="application-name" content="LOMVIKO">
 <meta name="apple-mobile-web-app-title" content="LOMVIKO">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/assets/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-<link rel="preload" href="/fonts/onest-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/cormorant-garamond-cyrillic-500-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/geologica-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/style.css">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lomviko.com/#organization","name":"LOMVIKO","url":"https://lomviko.com/","logo":"https://lomviko.com/assets/icon-512.png"},{"@type":"WebSite","@id":"https://lomviko.com/#website","url":"https://lomviko.com/","name":"LOMVIKO","inLanguage":["uk","en"],"publisher":{"@id":"https://lomviko.com/#organization"}},{"@type":"SoftwareApplication","name":"LOMVIKO","url":"https://lomviko.com/","applicationCategory":"BusinessApplication","operatingSystem":"Web","inLanguage":["uk","en"],"description":"CRM для бізнесу за записом: онлайн-запис через Telegram 24/7, нагадування клієнтам, спільний розклад команди, клієнтська база та фінансові звіти.","publisher":{"@id":"https://lomviko.com/#organization"},"offers":{"@type":"Offer","price":"199","priceCurrency":"UAH","description":"Підписка за компанію: 199 грн на місяць або 1 990 грн на рік; безкоштовно до 1 березня 2027","url":"https://lomviko.com/#start"}},{"@type":"FAQPage","@id":"https://lomviko.com/#faq","inLanguage":"uk","mainEntity":[{"@type":"Question","name":"Скільки це коштує?","acceptedAnswer":{"@type":"Answer","text":"199 грн на місяць або 1 990 грн на рік за компанію — усі функції, без доплат за бота, сторінку запису чи нагадування. До 1 березня 2027 — безкоштовно й без картки."}},{"@type":"Question","name":"Що буде після пробного періоду?","acceptedAnswer":{"@type":"Answer","text":"Нічого не зникне. Без оплати зміни зупиняються, але переглядати й експортувати дані можна ще 30 днів."}},{"@type":"Question","name":"Чи підійде моєму бізнесу?","acceptedAnswer":{"@type":"Answer","text":"Так, якщо ви працюєте за записом: салони, барбершопи, клініки, масаж, студії, репетитори, СТО. Підтримуються групові заняття, кабінети й обладнання."}},{"@type":"Question","name":"Чи потрібен свій сайт?","acceptedAnswer":{"@type":"Answer","text":"Ні. Ви отримуєте власну сторінку запису з логотипом і QR-кодом. Якщо сайт є — кнопка «Записатися» додається одним рядком коду (Tilda, Wix, WordPress, Хорошоп)."}},{"@type":"Question","name":"Бот працює, коли комп’ютер вимкнено?","acceptedAnswer":{"@type":"Answer","text":"Так. Бот, сторінка запису й нагадування працюють на сервері LOMVIKO цілодобово — вмикати нічого не треба."}},{"@type":"Question","name":"Як приймати оплату онлайн?","acceptedAnswer":{"@type":"Answer","text":"Інтеграції з monobank і LiqPay (ПриватБанк) уже зроблені — вам не потрібен програміст. Вставте ключ зі свого кабінету банку. Клієнт платить за посиланням чи QR-кодом, гроші надходять прямо на ваш рахунок, а візит позначається оплаченим."}},{"@type":"Question","name":"Що потрібно встановити?","acceptedAnswer":{"@type":"Answer","text":"Нічого. LOMVIKO працює в браузері на комп’ютері, планшеті й телефоні. На телефоні додайте іконку на головний екран — і відкривайте як застосунок."}},{"@type":"Question","name":"Чи можна забрати всі свої дані?","acceptedAnswer":{"@type":"Answer","text":"Так. Експорт усієї бази в JSON, CSV або зашифрований файл — будь-коли."}},{"@type":"Question","name":"Як з вами зв’язатися?","acceptedAnswer":{"@type":"Answer","text":"Напишіть на info@lomviko.com або прямо з LOMVIKO: розділ «Підтримка». Відповідь прийде на пошту."}}]}]}</script>
 <script src="/app.js" defer></script>
@@ -83,67 +82,50 @@
   </section>
 
   <section class="hero">
-    <div class="bg-word bg-word-hero" aria-hidden="true">LOMVIKO</div>
-    <div class="wrap hero-copy">
-      <h1 id="hero-title">Клієнти записуються самі. <em>Ви — працюєте.</em></h1>
-      <p id="hero-description" class="lead">Клієнти записуються самі через Telegram, нагадування приходять вчасно, а розклад, оплати й команда — в одному вікні. LOMVIKO бере рутину на себе, щоб ви займалися своєю справою.</p>
-      <div class="hero-actions">
-        <a class="btn btn-light" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
-        <a class="btn btn-ghost" href="#how" data-t="seeHow">Як це працює</a>
-      </div>
-      <p class="hero-login"><span data-t="haveAccount">Вже є акаунт?</span> <a href="https://app.lomviko.com/" data-login data-t="navDownload">Увійти</a></p>
-      <ul class="hero-trust">
-        <li data-t="trustOne">Усі функції безкоштовно до 1 березня</li>
-        <li data-t="trustTwo">Без банківської картки</li>
-        <li data-t="trustThree">Браузер і телефон — без встановлення</li>
-      </ul>
-    </div>
-
-    <div class="wrap board-stage" id="board-stage">
-      <div class="board" aria-hidden="true">
-        <div class="board-bar">
-          <span class="board-dots"><i></i><i></i><i></i></span>
-          <span class="board-name" data-m="boardTitle">Розклад · сьогодні</span>
-          <span class="board-live"><i></i>LIVE</span>
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1 id="hero-title">Клієнти записуються самі. <em>Ви — працюєте.</em></h1>
+        <p id="hero-description" class="lead">Клієнти записуються самі через Telegram, нагадування приходять вчасно, а розклад, оплати й команда — в одному вікні. LOMVIKO бере рутину на себе, щоб ви займалися своєю справою.</p>
+        <div class="hero-actions">
+          <a class="btn btn-light" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+          <a class="btn btn-ghost" href="#how" data-t="seeHow">Як це працює</a>
         </div>
-        <div class="board-body">
-          <aside class="board-side">
-            <p class="board-date" data-m="boardDate">Четвер, 14 жовтня</p>
-            <div class="board-stat"><span data-m="statBookings">Записів</span><strong>18</strong><i class="meter m-72"></i></div>
-            <div class="board-stat"><span data-m="statRevenue">Виручка</span><strong data-m="statRevenueValue">24 600 грн</strong><i class="meter m-64"></i></div>
-            <div class="board-stat"><span data-m="statLoad">Завантаженість</span><strong>86%</strong><i class="meter m-86"></i></div>
-          </aside>
-          <div class="board-grid">
-            <span class="board-head c1" data-m="memberOne">Олена</span>
-            <span class="board-head c2" data-m="memberTwo">Максим</span>
-            <span class="board-head c3" data-m="memberThree">Ірина</span>
-            <span class="board-head c4" data-m="memberFour">Софія</span>
-            <span class="board-time r1">09:00</span><span class="board-line r1"></span>
-            <span class="board-time r2">10:00</span><span class="board-line r2"></span>
-            <span class="board-time r3">11:00</span><span class="board-line r3"></span>
-            <span class="board-time r4">12:00</span><span class="board-line r4"></span>
-            <span class="board-time r5">13:00</span><span class="board-line r5"></span>
-            <span class="board-time r6">14:00</span><span class="board-line r6"></span>
-            <div class="bk tone-gold c1 r1 d2"><span>09:00 — 11:00</span><strong data-m="bkOne">Фарбування</strong><small data-m="bkOneClient">Ірина К.</small></div>
-            <div class="bk tone-blue c1 r4 d1"><span>12:00 — 13:00</span><strong data-m="bkTwo">Стрижка</strong><small data-m="bkTwoClient">Дмитро</small></div>
-            <div class="bk tone-violet c2 r2 d2"><span>10:00 — 12:00</span><strong data-m="bkThree">Масаж спини</strong><small data-m="bkThreeClient">Олег</small></div>
-            <div class="bk tone-rose c2 r5 d2"><span>13:00 — 15:00</span><strong data-m="bkFour">SPA-догляд</strong><small data-m="bkFourClient">Марія</small></div>
-            <div class="bk tone-blue c3 r1 d1"><span>09:00 — 10:00</span><strong data-m="bkFive">Манікюр</strong><small data-m="bkFiveClient">Вікторія</small></div>
-            <div class="bk tone-gold c3 r3 d2 bk-new"><span>11:00 — 13:00</span><strong data-m="bkSix">Манікюр + покриття</strong><small data-m="bkSixClient">Анна · Telegram</small></div>
-            <div class="bk tone-violet c4 r2 d1"><span>10:00 — 11:00</span><strong data-m="bkSeven">Корекція брів</strong><small data-m="bkSevenClient">Катерина</small></div>
-            <div class="bk tone-rose c4 r4 d3"><span>12:00 — 15:00</span><strong data-m="bkEight">Догляд за обличчям</strong><small data-m="bkEightClient">Юлія</small></div>
+        <p class="hero-login"><span data-t="haveAccount">Вже є акаунт?</span> <a href="https://app.lomviko.com/" data-login data-t="navDownload">Увійти</a></p>
+        <ul class="hero-trust">
+          <li data-t="trustOne">Усі функції безкоштовно до 1 березня</li>
+          <li data-t="trustTwo">Без банківської картки</li>
+          <li data-t="trustThree">Браузер і телефон — без встановлення</li>
+        </ul>
+      </div>
+
+      <div class="board-stage" id="board-stage">
+        <div class="board" aria-hidden="true">
+          <div class="ph-screen">
+            <div class="ph-status"><span>9:41</span><i class="ph-island"></i><span class="ph-icons"><i></i><i></i><i></i></span></div>
+            <div class="ph-head"><small data-m="boardDate">Четвер, 14 жовтня</small><strong data-m="boardTitle">Розклад · сьогодні</strong></div>
+            <div class="ph-stats">
+              <div><span data-m="statBookings">Записів</span><strong>18</strong></div>
+              <div><span data-m="statRevenue">Виручка</span><strong data-m="statRevenueValue">24 600 грн</strong></div>
+            </div>
+            <div class="ph-list">
+              <div class="bk tone-gold"><span>09:00</span><strong data-m="bkOne">Фарбування</strong><small data-m="bkOneClient">Ірина К.</small></div>
+              <div class="bk tone-blue"><span>10:00</span><strong data-m="bkThree">Масаж спини</strong><small data-m="bkThreeClient">Олег</small></div>
+              <div class="bk tone-gold bk-new"><span>11:00</span><strong data-m="bkSix">Манікюр + покриття</strong><small data-m="bkSixClient">Анна · Telegram</small></div>
+              <div class="bk tone-violet"><span>12:00</span><strong data-m="bkTwo">Стрижка</strong><small data-m="bkTwoClient">Дмитро</small></div>
+              <div class="bk tone-rose"><span>13:00</span><strong data-m="bkFour">SPA-догляд</strong><small data-m="bkFourClient">Марія</small></div>
+            </div>
+          </div>
+          <div class="float float-booking">
+            <span class="float-icon"><svg viewBox="0 0 24 24"><path d="m21 4-18 7 6 2m12-9-3 16-9-7m12-9-12 9v6l3-4"/></svg></span>
+            <span><strong data-m="toastBooking">Новий запис через Telegram</strong><small data-m="toastBookingDetail">Анна · Манікюр · 11:00</small></span>
+          </div>
+          <div class="float float-reminder">
+            <span class="float-icon"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zm4 4h4"/></svg></span>
+            <span><strong data-m="toastReminder">Нагадування надіслано</strong><small data-m="toastReminderDetail">Ігор · завтра о 10:00</small></span>
           </div>
         </div>
-        <div class="float float-booking">
-          <span class="float-icon"><svg viewBox="0 0 24 24"><path d="m21 4-18 7 6 2m12-9-3 16-9-7m12-9-12 9v6l3-4"/></svg></span>
-          <span><strong data-m="toastBooking">Новий запис через Telegram</strong><small data-m="toastBookingDetail">Анна · Манікюр · 11:00</small></span>
-        </div>
-        <div class="float float-reminder">
-          <span class="float-icon"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zm4 4h4"/></svg></span>
-          <span><strong data-m="toastReminder">Нагадування надіслано</strong><small data-m="toastReminderDetail">Ігор · завтра о 10:00</small></span>
-        </div>
+        <p class="board-note" data-m="boardNote">Демонстрація сценарію · вигадані дані</p>
       </div>
-      <p class="board-note" data-m="boardNote">Демонстрація сценарію · вигадані дані</p>
     </div>
   </section>
 
@@ -164,6 +146,27 @@
       <div class="compare-col compare-after glass reveal">
         <h3 data-t="afterTitle">З LOMVIKO</h3>
         <ul id="gains"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="launch" class="wrap section launch">
+    <header class="section-head">
+      <h2 data-h="launchTitle">Перший онлайн-запис <em>за три кроки.</em></h2>
+      <p class="section-intro" data-t="launchIntro">Без дзвінків менеджера й без встановлення. Більшість власників приймають перший запис у день реєстрації.</p>
+    </header>
+    <div class="launch-grid">
+      <ol class="launch-steps">
+        <li class="launch-step" data-step="1"><span class="launch-num">1</span><h3 data-t="stepOneTitle">Відкрийте LOMVIKO</h3><p data-t="stepOne">Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.</p></li>
+        <li class="launch-step" data-step="2"><span class="launch-num">2</span><h3 data-t="stepTwoTitle">Створіть компанію</h3><p data-t="stepTwo">Вкажіть назву бізнесу, email і пароль, підтвердьте email кодом із листа.</p></li>
+        <li class="launch-step" data-step="3"><span class="launch-num">3</span><h3 data-t="stepThreeTitle">Поділіться посиланням</h3><p data-t="stepThree">Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.</p></li>
+      </ol>
+      <div class="launch-stage" aria-hidden="true">
+        <div class="launch-phone" id="launch-phone" data-active="1">
+          <div class="ls ls-1"><span class="ls-logo">L</span><strong data-m="scrWelcome">Вітаємо в LOMVIKO</strong><span class="ls-note" data-m="scrBrowser">Працює в браузері на комп’ютері й телефоні</span><span class="ls-btn" data-m="scrStart">Спробувати безкоштовно</span></div>
+          <div class="ls ls-2"><strong data-m="scrCompany">Нова компанія</strong><span class="ls-field">Studio Nova</span><span class="ls-field" data-m="scrEmail">olena@studio.ua</span><span class="ls-note" data-m="scrCode">Код із листа</span><span class="ls-code"><i>4</i><i>8</i><i>1</i><i>5</i></span></div>
+          <div class="ls ls-3"><strong data-m="scrShare">Ваше посилання</strong><span class="ls-link">lomviko.com/b/studio</span><span class="ls-qr"></span><span class="ls-toast" data-m="toastBooking">Новий запис через Telegram</span></div>
+        </div>
       </div>
     </div>
   </section>
@@ -258,7 +261,7 @@
     </header>
     <figure class="peek-frame reveal">
       <div class="peek-bar" aria-hidden="true"><span class="board-dots"><i></i><i></i><i></i></span><span>LOMVIKO</span><span></span></div>
-      <img src="/assets/app-dark.png" width="1400" height="900" loading="lazy" decoding="async" alt="Інтерфейс LOMVIKO: розклад на день із записами клієнтів" data-t-alt="peekAlt">
+      <img src="/assets/app.png" width="1400" height="900" loading="lazy" decoding="async" alt="Інтерфейс LOMVIKO: розклад на день із записами клієнтів" data-t-alt="peekAlt">
       <figcaption data-t="peekCaption">Справжній інтерфейс застосунку. На зображенні — демонстраційні дані.</figcaption>
     </figure>
   </section>
@@ -302,11 +305,6 @@
     <div class="demo-copy">
       <h2 id="site-price">199 грн на місяць. <em>До 1 березня 2027 — безкоштовно.</em></h2>
       <p class="section-intro" id="site-price-note">Без картки й без дзвінків менеджера. Встановіть застосунок, зареєструйтеся — і приймайте перші онлайн-записи вже сьогодні.</p>
-      <ol class="steps">
-        <li><span>01</span><span data-t="stepOne">Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.</span></li>
-        <li><span>02</span><span data-t="stepTwo">Натисніть «Спробувати безкоштовно» і підтвердіть email кодом із листа.</span></li>
-        <li><span>03</span><span data-t="stepThree">Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.</span></li>
-      </ol>
     </div>
     <div class="demo-side">
       <div class="glass plan reveal">

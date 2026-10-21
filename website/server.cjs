@@ -11,7 +11,7 @@ const STATIC = new Map([
   ['/favicon.svg', ['favicon.svg', 'image/svg+xml', DAY]],
   ['/assets/crm.png', ['assets/crm.png', 'image/png', DAY]],
   ['/assets/icon.png', ['assets/icon.png', 'image/png', DAY]],
-  ['/assets/app-dark.png', ['assets/app-dark.png', 'image/png', DAY]],
+  ['/assets/app.png', ['assets/app.png', 'image/png', DAY]],
   ['/assets/og.png', ['assets/og.png', 'image/png', DAY]],
   ['/assets/og-en.png', ['assets/og-en.png', 'image/png', DAY]],
   ['/assets/icon-192.png', ['assets/icon-192.png', 'image/png', DAY]],
@@ -20,7 +20,7 @@ const STATIC = new Map([
   ['/robots.txt', ['robots.txt', 'text/plain; charset=utf-8', DAY]],
   ['/sitemap.xml', ['sitemap.xml', 'application/xml; charset=utf-8', DAY]],
   ['/fonts/OFL.txt', ['fonts/OFL.txt', 'text/plain; charset=utf-8', DAY]],
-  ...['onest-cyrillic-wght-normal', 'onest-latin-wght-normal', 'cormorant-garamond-cyrillic-500-italic', 'cormorant-garamond-latin-500-italic', 'jetbrains-mono-cyrillic-400-normal', 'jetbrains-mono-latin-400-normal', 'jetbrains-mono-cyrillic-500-normal', 'jetbrains-mono-latin-500-normal'].map(name => [`/fonts/${name}.woff2`, [`fonts/${name}.woff2`, 'font/woff2', YEAR]]),
+  ...['onest-cyrillic-wght-normal', 'onest-latin-wght-normal', 'geologica-cyrillic-wght-normal', 'geologica-latin-wght-normal', 'jetbrains-mono-cyrillic-400-normal', 'jetbrains-mono-latin-400-normal', 'jetbrains-mono-cyrillic-500-normal', 'jetbrains-mono-latin-500-normal'].map(name => [`/fonts/${name}.woff2`, [`fonts/${name}.woff2`, 'font/woff2', YEAR]]),
 ]);
 const PAGES = new Map([['/', 'uk'], ['/en', 'en']]);
 // Short public addresses for replaceable documents managed in the website admin.
@@ -28,12 +28,12 @@ const DOCUMENTS = new Map([['privacy', 'site-privacy'], ['offer', 'site-offer'],
 const DOCUMENT_TYPES = new Set(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 function missingDocument(language) {
   const en = language === 'en';
-  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#07080a"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
 }
 // Unknown addresses opened in a browser get a page with a way back, not a JSON error.
 function notFound(language) {
   const en = language === 'en';
-  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#07080a"><title>${en ? 'Page not found' : 'Сторінку не знайдено'} · LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This page <em>does not exist.</em>' : 'Такої сторінки <em>немає.</em>'}</h2><p class="section-intro">${en ? 'The link may be outdated or mistyped. Everything about LOMVIKO is on the home page.' : 'Можливо, посилання застаріло або в ньому помилка. Усе про LOMVIKO — на головній сторінці.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>${en ? 'Page not found' : 'Сторінку не знайдено'} · LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This page <em>does not exist.</em>' : 'Такої сторінки <em>немає.</em>'}</h2><p class="section-intro">${en ? 'The link may be outdated or mistyped. Everything about LOMVIKO is on the home page.' : 'Можливо, посилання застаріло або в ньому помилка. Усе про LOMVIKO — на головній сторінці.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
 }
 // The English page reuses index.html with its own head metadata, so crawlers and link previews see English text.
 function page(directory, language) {

@@ -47,7 +47,7 @@ html[data-theme="dark"] .danger-note{background:#3a2422;color:#f1b8b2}
 .support-text{white-space:pre-wrap;margin:8px 0}
 .support-item pre{white-space:pre-wrap;font-size:11px;max-height:240px;overflow:auto}
 .support-item{display:block;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
-.support-item.open{border-left:3px solid var(--accent,#5b5bd6)}
+.support-item.open{border-left:3px solid var(--accent,#755827)}
 .support-preview{margin:4px 0 0;color:var(--muted,#666);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .support-status.open{background:#fde7e7;color:#b42318}.support-status.waiting{background:#e8eefc;color:#1d4ed8}.support-status.solved{background:#e7f6ec;color:#15803d}
 .support-rating{font-size:12px;margin-left:4px}
