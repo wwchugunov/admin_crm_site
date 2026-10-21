@@ -26,7 +26,8 @@
     const max = document.documentElement.scrollHeight - innerHeight;
     header.classList.toggle('is-scrolled', !hero || scrollY > 40);
     progress.style.setProperty('--progress', max > 0 ? Math.min(1, scrollY / max) : 0);
-    if (reduce) return;
+    // On phones the layout is a single column: shifting blocks only makes them overlap their neighbours.
+    if (reduce || innerWidth < 760) { if (layers.some((l) => l.el.style.translate)) for (const { el } of layers) { el.style.translate = ''; el.dataset.shift = 0; } return; }
     const middle = innerHeight / 2;
     for (const { el, depth } of layers) {
       const r = el.getBoundingClientRect();
