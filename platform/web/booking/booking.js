@@ -98,6 +98,8 @@
     if (!v) return `<section class="step"><h2>Ваш запис</h2>${state.error ? errorBox() : '<p class="loading">Завантажуємо запис…</p>'}</section>`;
     const when = `<p class="when">${esc(longDate(v.start))}, ${time(v.start)}</p><p>${esc(v.service)}</p><p class="empty">${esc(v.resource || '')}</p>`;
     if (v.status === 'cancelled') return `<section class="step done" role="status"><h2>Запис скасовано</h2>${when}<a class="secondary" href="${base}">Записатися знову</a></section>`;
+    // The visit time is over: say so plainly and offer a new booking instead of dead buttons.
+    if (v.status === 'completed' || v.status === 'no_show' || v.end <= Date.now()) return `<section class="step done" role="status"><h2>${v.status === 'completed' ? 'Дякуємо, що були у нас!' : 'Цей візит уже минув'}</h2>${when}<p class="empty">${v.status === 'completed' ? 'Будемо раді бачити вас знову.' : 'Час запису вже пройшов. Якщо не встигли — оберіть новий зручний час.'}</p><a class="primary" href="${base}">Записатися знову</a></section>`;
     if (!v.can_change) return `<section class="step done"><h2>Ваш запис</h2>${when}${cfg.phone ? `<p class="empty">Змінити його вже не можна онлайн. Телефонуйте: ${esc(cfg.phone)}</p>` : ''}</section>`;
     if (state.cancelAsk) return `<section class="step"><h2>Скасувати запис?</h2>${when}${errorBox()}<div class="actions-row"><button class="primary" type="button" data-act="m-cancel-ok" ${state.busy ? 'disabled' : ''}>Так, скасувати</button><button class="secondary" type="button" data-act="m-back">Ні, залишити</button></div></section>`;
     if (state.mv) {

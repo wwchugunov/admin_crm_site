@@ -3,7 +3,7 @@
 // colour and style. The owner shares it as a link, a QR code or a "Записатися" button for any website.
 const BOOKING_STYLES = ["minimal", "warm", "lux", "bright"];
 const BOOKING_COLORS = [
-  "#5b5bd6",
+  "#0a8f74",
   "#d6336c",
   "#c9a45c",
   "#2f9e77",

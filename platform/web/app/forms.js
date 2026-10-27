@@ -1009,7 +1009,7 @@ function registrationModal() {
       if (values.password !== values.password_again)
         throw Error(OrbitI18n.t("registerPasswordMismatch"));
       if (values.accept !== "on")
-        throw Error(OrbitI18n.t("legalAcceptRequired"));
+        throw Error(OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalAcceptRequiredPrivacy" : "legalAcceptRequired"));
       const { password_again, accept, ...fields } = values;
       fields.accept = true;
       await window.orbit.call("account:register:start", {
@@ -1020,7 +1020,7 @@ function registrationModal() {
         () =>
           modal(
             OrbitI18n.t("verifyEmail"),
-            `<p class="hint">${OrbitI18n.t("verifyEmailHint")}</p><p class="hint">${OrbitI18n.t("legalCodeSigns")}</p>` +
+            `<p class="hint">${OrbitI18n.t("verifyEmailHint")}</p><p class="hint">${OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalCodeSignsPrivacy" : "legalCodeSigns")}</p>` +
               field(
                 OrbitI18n.t("verificationCode"),
                 "code",

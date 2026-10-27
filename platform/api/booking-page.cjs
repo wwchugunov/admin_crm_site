@@ -25,7 +25,7 @@ class BookingPage{
   if(!row){db.prepare('INSERT OR IGNORE INTO booking_secret VALUES(1,?)').run(crypto.randomBytes(32).toString('base64url'));row=db.prepare('SELECT value FROM booking_secret WHERE id=1').get();}
   this.secret=row.value;
  }
- settings(store){const s=store.get('booking_page')||{};return{enabled:Boolean(s.enabled),style:STYLES.includes(s.style)?s.style:'minimal',color:/^#[0-9a-f]{6}$/i.test(s.color||'')?s.color:'#5b5bd6',about:s.about||'',instagram:s.instagram||'',button:s.button||''};}
+ settings(store){const s=store.get('booking_page')||{};return{enabled:Boolean(s.enabled),style:STYLES.includes(s.style)?s.style:'minimal',color:/^#[0-9a-f]{6}$/i.test(s.color||'')&&s.color.toLowerCase()!=='#5b5bd6'?s.color:'#0a8f74',about:s.about||'',instagram:s.instagram||'',button:s.button||''};}
  slug(businessId){return this.db.prepare('SELECT slug FROM booking_pages WHERE business_id=?').get(businessId)?.slug||null;}
  link(slug,origin=''){return slug?`${this.base||origin}/b/${slug}`:null;}
  // What the app shows in Інтеграції. Without a configured address (local tests) the server's own address is used.

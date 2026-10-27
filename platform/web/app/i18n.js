@@ -3641,6 +3641,14 @@
       uk: "Щоб зареєструватися, позначте, що приймаєте Публічну оферту та Політику конфіденційності.",
       en: "To register, tick that you accept the Public offer and the Privacy policy.",
     },
+    legalAcceptRequiredPrivacy: {
+      uk: "Щоб зареєструватися, позначте, що приймаєте Політику конфіденційності.",
+      en: "To register, tick that you accept the Privacy policy.",
+    },
+    legalCodeSignsPrivacy: {
+      uk: "Код із листа підтверджує вашу пошту і є вашим електронним підписом під згодою з Політикою конфіденційності.",
+      en: "The code from the email confirms your address and works as your electronic signature under the Privacy policy.",
+    },
     legalCodeSigns: {
       uk: "Код із листа підтверджує вашу пошту і є вашим електронним підписом під згодою з Публічною офертою та Політикою конфіденційності.",
       en: "The code from the email confirms your address and works as your electronic signature under the Public offer and Privacy policy.",

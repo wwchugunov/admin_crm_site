@@ -582,7 +582,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 @media (max-width:1180px){.story-panel{grid-template-columns:minmax(0,1fr);min-height:0}}
 @media (max-width:1080px){
   .nav{display:none}
-  .header-actions{margin-left:auto}
+  .header-actions,.nav + .header-actions{margin-left:auto}
   .float-booking{right:-40px}
   .float-reminder{left:-30px}
 }

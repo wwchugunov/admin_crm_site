@@ -679,8 +679,15 @@ html[data-theme] .week-day.selected small {
   padding-top: 2px;
   padding-bottom: 2px;
 }
-.grid-event.compact small {
+.grid-event.compact small,
+.grid-event.compact .grid-event-end {
   display: none;
+}
+.grid-event.compact .grid-event-time {
+  flex: none;
+}
+.grid-event.compact strong {
+  min-width: 0;
 }
 .grid-now {
   position: absolute;
@@ -2355,7 +2362,7 @@ html[data-theme] .booking-address input {
 }
 /* The app's security rules forbid inline colours, so the palette lives here (same order as BOOKING_COLORS). */
 .booking-swatch.swatch-0 span {
-  background: #5b5bd6;
+  background: #0a8f74;
 }
 .booking-swatch.swatch-1 span {
   background: #d6336c;

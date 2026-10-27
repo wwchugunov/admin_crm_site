@@ -28,6 +28,12 @@ async function fixture(t){
 test('A reminder offers "I\'ll come", "Reschedule" and "Cancel"; "I\'ll come" marks the visit',async t=>{
  const f=await fixture(t),anna=f.client('Анна',101);
  const id=f.store.book({client_id:anna,service_id:f.service,resource_ids:[f.olena],start:Date.now()+3600000});
+ // Booked an hour ahead: the client just got the confirmation, so no "reminder" right after it.
+ await f.bot.reminders();
+ assert.equal(f.sent.filter(m=>m.chat_id==='101').length,0);
+ // Booked a day earlier: the 2-hour reminder comes.
+ f.store.db.prepare("UPDATE appointments SET created_at=? WHERE id=?").run(Date.now()-DAY,id);
+ f.store.db.prepare("UPDATE reminder_deliveries SET status='pending' WHERE appointment_id=?").run(id);
  await f.bot.reminders();
  const reminder=f.sent.find(m=>m.chat_id==='101');
  assert.match(reminder.text,/Нагадуємо/);
@@ -38,6 +44,22 @@ test('A reminder offers "I\'ll come", "Reschedule" and "Cancel"; "I\'ll come" ma
  // Somebody else cannot confirm Anna's visit.
  const ivan=f.client('Іван',102);await f.press(102,`ok:${id}`);
  assert.doesNotMatch(f.sent.at(-1).text,/Чекаємо на вас/);
+});
+
+test('Buttons of an old reminder after the visit time say it has passed and offer a new booking',async t=>{
+ const f=await fixture(t),anna=f.client('Анна',101);
+ const id=f.store.book({client_id:anna,service_id:f.service,resource_ids:[f.olena],start:Date.now()+3600000});
+ f.store.db.prepare('UPDATE appointments SET start=?,end=? WHERE id=?').run(Date.now()-7200000,Date.now()-3600000,id);
+ for(const button of [`ok:${id}`,`mv:${id}`,`cancel:${id}`]){
+  await f.press(101,button);
+  assert.match(f.sent.at(-1).text,/вже минув/);
+  assert.deepEqual(f.buttons(f.sent.at(-1)),['book','menu']);
+ }
+ f.store.status(id,'completed');await f.press(101,`ok:${id}`);
+ assert.match(f.sent.at(-1).text,/відбувся/);
+ // Somebody else's visit gives nothing away.
+ f.client('Іван',102);await f.press(102,`ok:${id}`);
+ assert.doesNotMatch(f.sent.at(-1).text,/минув|відбувся/);
 });
 
 test('"Reschedule" shows the same specialist\'s free times, moves the visit and tells the team the old time',async t=>{

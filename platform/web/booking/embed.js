@@ -1,5 +1,5 @@
 /* LOMVIKO "Записатися" button for any website:
-   <script src="https://lomviko.com/b/embed.js" data-salon="studio-olena" data-color="#5b5bd6" async></script>
+   <script src="https://lomviko.com/b/embed.js" data-salon="studio-olena" data-color="#0a8f74" async></script>
    The button appears where the script is (data-float="1" pins it to the corner) and opens the booking
    page over the site. Styles are inline so the site's own CSS cannot break it. */
 (function () {
@@ -7,7 +7,7 @@
   if (!script || !script.dataset.salon) return;
   var origin = new URL(script.src).origin;
   var slug = String(script.dataset.salon).replace(/[^a-z0-9-]/g, '');
-  var color = /^#[0-9a-fA-F]{6}$/.test(script.dataset.color || '') ? script.dataset.color : '#5b5bd6';
+  var color = /^#[0-9a-fA-F]{6}$/.test(script.dataset.color || '') ? script.dataset.color : '#0a8f74';
   var hex = color.slice(1), light = (parseInt(hex.slice(0, 2), 16) * 299 + parseInt(hex.slice(2, 4), 16) * 587 + parseInt(hex.slice(4, 6), 16) * 114) / 1000 > 160;
   var button = document.createElement('button');
   button.type = 'button';

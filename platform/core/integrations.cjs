@@ -80,6 +80,10 @@ class Telegram {
     if(['book','/book'].includes(command)){this.sessions.delete(key);await this.services(chat);return;}
     if(/^services:\d{1,3}$/.test(command)){await this.services(chat,Number(command.slice(9)));return;}
     if(command==='/appointments'){await this.visits(chat,client);return;}
+    // A button from an old reminder after the visit time: explain that it is over and offer a new booking.
+    {const m=/^(?:ok|mv|cancel|cancel-confirm):(.+)$/.exec(command),past=m&&this.store.db.prepare("SELECT a.start,a.status,s.name service_name FROM appointments a JOIN services s ON s.id=a.service_id WHERE a.id=? AND EXISTS(SELECT 1 FROM appointment_clients c WHERE c.appointment_id=a.id AND c.client_id=?)").get(m[1],client.id);
+     if(past&&(past.start<=Date.now()||past.status==='completed'||past.status==='no_show')){await this.send(chat,`${this.text(chat,past.status==='completed'?'botVisitDone':'botVisitPassed')}\n${past.service_name} · ${this.date(chat,past.start)}`,[[this.button(chat,'botBook','book'),this.button(chat,'botHome','menu')]]);return;}
+     if(past&&past.status==='cancelled'){await this.send(chat,`${this.text(chat,'botVisitCancelled')}\n${past.service_name} · ${this.date(chat,past.start)}`,[[this.button(chat,'botBook','book'),this.button(chat,'botHome','menu')]]);return;}}
     if(command.startsWith('ok:')){const id=command.slice(3);try{this.store.clientConfirm(id,client.id);}catch{await this.send(chat,this.text(chat,'m551'),this.homeButtons(chat));return;}const a=this.store.upcoming().find(a=>a.id===id);await this.send(chat,`${this.text(chat,'botComeThanks')}${a?`\n\n${this.summary(chat,a)}`:''}`,[[this.button(chat,'botVisits','/appointments'),this.button(chat,'botHome','menu')]]);return;}
     if(command.startsWith('mv:')){const a=this.store.upcoming().find(a=>a.id===command.slice(3)&&a.client_id===client.id&&a.start>Date.now());if(!a){await this.send(chat,this.text(chat,'m551'),this.homeButtons(chat));return;}this.sessions.set(key,{service:a.service_id,resource:a.resource_id,people:a.people_count,move:a.id,expires:Date.now()+15*60000});await this.dates(chat);return;}
     if(command.startsWith('wl-stop:')){const w=this.store.db.prepare("SELECT id FROM waitlist WHERE id=? AND client_id=? AND status='waiting'").get(command.slice(8),client.id);if(w)this.store.removeWait({id:w.id});await this.send(chat,this.text(chat,'botWaitStopped'),this.homeButtons(chat));return;}
@@ -111,11 +115,11 @@ class Telegram {
   }
   async reminders() {
     const now = Date.now();
-    const rows = this.store.db.prepare(`SELECT q.*,a.start,a.end,a.status appointment_status,a.client_id main_client,c.chat_id,c.name,s.name service_name FROM reminder_deliveries q JOIN appointments a ON a.id=q.appointment_id JOIN clients c ON c.id=q.client_id JOIN services s ON s.id=a.service_id WHERE q.status='pending' AND q.next_at<=?`).all(now);
+    const rows = this.store.db.prepare(`SELECT q.*,a.start,a.end,a.created_at,a.status appointment_status,a.client_id main_client,c.chat_id,c.name,s.name service_name FROM reminder_deliveries q JOIN appointments a ON a.id=q.appointment_id JOIN clients c ON c.id=q.client_id JOIN services s ON s.id=a.service_id WHERE q.status='pending' AND q.next_at<=?`).all(now);
     for (const row of rows) {
       if (row.start <= now || row.appointment_status !== 'confirmed') { this.store.db.prepare("UPDATE reminder_deliveries SET status='skipped' WHERE appointment_id=? AND kind=? AND client_id=?").run(row.appointment_id, row.kind,row.client_id); continue; }
       const lead = row.kind === '24h' ? 86400000 : 7200000;
-      if (row.kind === '24h' && row.start - now <= 7200000) { this.store.db.prepare("UPDATE reminder_deliveries SET status='skipped' WHERE appointment_id=? AND kind=? AND client_id=?").run(row.appointment_id, row.kind,row.client_id); continue; }
+      if ((row.kind === '24h' && row.start - now <= 7200000) || row.created_at > row.start - lead) { this.store.db.prepare("UPDATE reminder_deliveries SET status='skipped' WHERE appointment_id=? AND kind=? AND client_id=?").run(row.appointment_id, row.kind,row.client_id); continue; }
       if (!row.chat_id || row.start - now > lead) continue;
       this.store.db.prepare("UPDATE reminder_deliveries SET status='sending' WHERE appointment_id=? AND kind=? AND client_id=?").run(row.appointment_id, row.kind,row.client_id);
       try {

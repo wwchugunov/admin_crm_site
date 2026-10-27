@@ -359,7 +359,7 @@ function dayGrid(rows) {
       return `<div class="grid-column" data-resource="${escape(r.id)}" aria-label="${escape(r.name)}">${events
         .map((a) => {
           const status = statuses[a.status] ? a.status : "confirmed";
-          return `<button type="button" class="grid-event ${status}" data-action="appointment-open" data-id="${escape(a.id)}" data-start-min="${dayMinutes(a.start)}" data-end-min="${dayMinutes(a.end) || 1440}"><span class="grid-event-time">${time(a.start)} – ${time(a.end)}${a.client_confirmed && status === "confirmed" ? ` <i class="grid-coming" title="${OrbitI18n.t("comingHint")}">✓</i>` : ""}</span><strong>${visitAlerts(a).length ? '<span class="grid-alert" aria-hidden="true">⚠</span> ' : ""}${escape(a.client_name)}</strong><small>${escape(a.service_name)}</small></button>`;
+          return `<button type="button" class="grid-event ${status}" data-action="appointment-open" data-id="${escape(a.id)}" data-start-min="${dayMinutes(a.start)}" data-end-min="${dayMinutes(a.end) || 1440}" title="${escape(`${time(a.start)} – ${time(a.end)} · ${a.client_name || ""} · ${a.service_name || ""}`)}"><span class="grid-event-time">${time(a.start)}<span class="grid-event-end"> – ${time(a.end)}</span>${a.client_confirmed && status === "confirmed" ? ` <i class="grid-coming" title="${OrbitI18n.t("comingHint")}">✓</i>` : ""}</span><strong>${visitAlerts(a).length ? '<span class="grid-alert" aria-hidden="true">⚠</span> ' : ""}${escape(a.client_name)}</strong><small>${escape(a.service_name)}</small></button>`;
         })
         .join("")}</div>`;
     })

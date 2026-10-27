@@ -184,6 +184,9 @@
     "payTooMuch": {"uk":"Сума більша за залишок до оплати ({due}). Якщо вартість візиту змінилася — спочатку натисніть «Змінити суму».","en":"The amount is more than what is due ({due}). If the visit price changed, use “Change amount” first."},
     "payNothingDue": {"uk":"Візит уже повністю оплачено. Щоб повернути гроші, введіть суму зі знаком мінус.","en":"The visit is already fully paid. To refund, enter the amount with a minus sign."},
     "refundTooMuch": {"uk":"Повернути можна не більше, ніж сплачено ({paid}).","en":"You can refund at most what was paid ({paid})."},
+    "botVisitPassed": {"uk":"⏰ Час цього візиту вже минув. Якщо не встигли — оберіть новий зручний час.","en":"⏰ This visit time has already passed. If you missed it, pick a new time."},
+    "botVisitDone": {"uk":"✅ Цей візит уже відбувся. Дякуємо, що були у нас! Будемо раді бачити вас знову.","en":"✅ This visit has already taken place. Thank you for coming — see you again!"},
+    "botVisitCancelled": {"uk":"Цей запис скасовано. Можна обрати новий час.","en":"This booking was cancelled. You can pick a new time."},
     "botReminder": {"uk":"🔔 Нагадуємо про ваш запис","en":"🔔 Your appointment reminder"}
   };
   let language='uk';try{if(globalThis.localStorage?.getItem('orbit.language')==='en')language='en';}catch{}
