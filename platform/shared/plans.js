@@ -20,9 +20,9 @@
     en: ["Schedule and client base", "Telegram booking bot 24/7", "Online booking page", "Client reminders"],
   };
   const PLANS = [
-    { id: "start", price: 199, yearly: 1990, uk: "Старт", en: "Start", for: { uk: "Для майстра, який працює сам або вдвох", en: "For a specialist working alone or in pairs" }, features: [] },
-    { id: "business", price: 499, yearly: 4990, uk: "Бізнес", en: "Business", for: { uk: "Для салону чи студії з командою", en: "For a salon or studio with a team" }, features: ["payments", "reports", "marketing"], popular: true },
-    { id: "pro", price: 899, yearly: 8990, uk: "Про", en: "Pro", for: { uk: "Для бізнесу з обліком, касою та філіями", en: "For businesses with accounting, receipts and branches" }, features: ["payments", "reports", "marketing", "vouchers", "stock", "payroll", "fiscal", "multi"] },
+    { id: "start", price: 199, uk: "Старт", en: "Start", for: { uk: "Для майстра, який працює сам або вдвох", en: "For a specialist working alone or in pairs" }, features: [] },
+    { id: "business", price: 499, uk: "Бізнес", en: "Business", for: { uk: "Для салону чи студії з командою", en: "For a salon or studio with a team" }, features: ["payments", "reports", "marketing"], popular: true },
+    { id: "pro", price: 899, uk: "Про", en: "Pro", for: { uk: "Для бізнесу з обліком, касою та філіями", en: "For businesses with accounting, receipts and branches" }, features: ["payments", "reports", "marketing", "vouchers", "stock", "payroll", "fiscal", "multi"] },
   ];
   const ALL = Object.keys(FEATURES);
   // CRM actions that need a plan feature.

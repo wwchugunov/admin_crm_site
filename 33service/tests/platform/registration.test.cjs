@@ -54,3 +54,17 @@ test('The product owner can close registration: new sign-ups are refused until i
  f.store.setProduct('registration',true);
  assert.equal((await f.call('/v1/register/start',start('open@example.test').data)).status,201);
 });
+
+test('Closing registration also stops a sign-up whose code was requested before closing',async t=>{
+ const f=await fixture(t),request=start('late@example.test');
+ const r=await f.call('/v1/register/start',request.data);assert.equal(r.status,201);await f.server.mail.tick();
+ const code=f.sent.findLast(m=>m.to==='late@example.test').text.match(/\b\d{6}\b/)[0],fields={registration_id:r.value.registration_id,code};
+ f.store.setProduct('registration',false);
+ const confirm=await f.call('/v1/register/confirm',{...fields,signature:crypto.sign(null,Buffer.from(JSON.stringify(fields)),request.pair.privateKey).toString('base64url')});
+ assert.equal(confirm.status,403);assert.equal(f.store.db.prepare('SELECT count(*) n FROM users').get().n,0);
+ // Signing in keeps working while registration is closed.
+ f.store.setProduct('registration',true);const done=await register(f,start('member@example.test'));assert.equal(done.result.status,201);
+ f.store.setProduct('registration',false);
+ const challenge=await f.call('/v1/auth/challenge',{login:'member@example.test',password:'long-trial-password',public_key:done.confirm&&start('x@x.test').data.public_key});
+ assert.equal(challenge.status,200,JSON.stringify(challenge.value));
+});

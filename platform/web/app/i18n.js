@@ -237,7 +237,7 @@
     subscriptionSoonHint: { uk: "Щоб працювати без перерви, продовжіть заздалегідь — новий місяць додасться після поточного терміну.", en: "Renew ahead to keep working without a break — the new month starts after the current one." },
     subscriptionEndedHint: { uk: "Дані збережені: можна переглядати й вивантажити базу. Нові записи, бот і сторінка запису відновляться після оплати.", en: "Your data is safe: you can view it and export it. New bookings, the bot and the booking page come back after payment." },
     subscriptionExtend: { uk: "Продовжити", en: "Renew" },
-    subscriptionPriceHint: { uk: "Тарифи: «Старт» 199, «Бізнес» 499, «Про» 899 грн на місяць; за рік — два місяці в подарунок.", en: "Plans: Start UAH 199, Business UAH 499, Pro UAH 899 a month; a year gets two months free." },
+    subscriptionPriceHint: { uk: "Тарифи: «Старт» 199, «Бізнес» 499, «Про» 899 грн на місяць.", en: "Plans: Start UAH 199, Business UAH 499, Pro UAH 899 a month." },
     subscriptionRequest: { uk: "Добрий день! Хочу продовжити LOMVIKO для «{business}». Мене цікавить тариф: «Старт» (199 грн/міс), «Бізнес» (499 грн/міс) або «Про» (899 грн/міс) — допоможіть обрати. Надішліть, будь ласка, реквізити для оплати.", en: "Hello! I would like to renew LOMVIKO for “{business}”. I am looking at Start (UAH 199/mo), Business (UAH 499/mo) or Pro (UAH 899/mo) — please help me choose and send the payment details." },
     forgotPasswordTitle: { uk: "Відновити пароль", en: "Reset your password" },
     forgotPasswordHint: { uk: "Вкажіть email, з яким входите. Надішлемо шестизначний код.", en: "Enter the email you sign in with. We will send a six-digit code." },

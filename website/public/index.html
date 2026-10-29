@@ -197,18 +197,17 @@
         <div class="range"><label for="calc-visits"><span data-t="calcVisits">Записів на день</span><output id="calc-visits-out" for="calc-visits"></output></label><input type="range" id="calc-visits" min="2" max="80" step="1" value="16"></div>
         <div class="range"><label for="calc-noshow"><span data-t="calcNoShow">Неявок і запізнілих скасувань</span><output id="calc-noshow-out" for="calc-noshow"></output></label><input type="range" id="calc-noshow" min="1" max="30" step="1" value="8"></div>
         <div class="range"><label for="calc-days"><span data-t="calcDays">Робочих днів на місяць</span><output id="calc-days-out" for="calc-days"></output></label><input type="range" id="calc-days" min="8" max="31" step="1" value="24"></div>
-        <div class="range"><label for="calc-saved"><span data-t="calcSaved">Скільки неявок повернуть нагадування</span><output id="calc-saved-out" for="calc-saved"></output></label><input type="range" id="calc-saved" min="10" max="80" step="5" value="40"></div>
       </form>
       <div class="calc-result" aria-live="polite">
         <p class="calc-label" data-t="calcLoss">Ви втрачаєте щомісяця</p>
         <strong class="calc-big" id="calc-loss">0</strong>
         <p class="calc-sub" id="calc-missed"></p>
         <div class="calc-save">
-          <span data-t="calcBack">Можна повернути з нагадуваннями LOMVIKO</span>
+          <span data-t="calcBack">Якщо нагадування збережуть третину цих візитів</span>
           <strong id="calc-back">0</strong>
           <small id="calc-year"></small>
         </div>
-        <p class="calc-note" data-t="calcNote">Це оцінка за вашими числами. Частку повернутих візитів ви задаєте самі. Бот нагадує клієнту за 24 і за 2 години до візиту.</p>
+        <p class="calc-note" data-t="calcNote">Це оцінка за вашими числами, а не обіцянка. Бот сам нагадує клієнту про візит у Telegram за добу і за 2 години.</p>
         <a class="btn btn-light btn-block" href="https://app.lomviko.com/?start=register" data-cta><span data-cta-label>Спробувати безкоштовно</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
       </div>
     </div>

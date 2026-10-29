@@ -74,10 +74,12 @@ class Documents{
  // Public metadata: the current version per kind and language, falling back to the other language.
  public(){
   const result={};
-  for(const k of KINDS){if(this.disabled(k))continue;const entry={};for(const lang of LANGUAGES){const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(row)entry[lang]={title:row.title,extension:row.extension,size:row.size,updatedAt:row.uploaded_at,language:row.language,path:`/public/documents/${k}/${lang}`};}if(Object.keys(entry).length)result[k]=entry;}
+  for(const k of KINDS){const entry={};for(const lang of LANGUAGES){const row=this.pick(k,lang);if(row)entry[lang]={title:row.title,extension:row.extension,size:row.size,updatedAt:row.uploaded_at,language:row.language,path:`/public/documents/${k}/${lang}`};}if(Object.keys(entry).length)result[k]=entry;}
   return result;
  }
- resolve(k,lang){kind(k);language(lang);if(this.disabled(k))fail('Document is not published',404);const row=this.current(k,lang)||this.current(k,LANGUAGES.find(l=>l!==lang));if(!row)fail('Document is not published',404);return row;}
+ // One privacy policy covers the site and the app: until a separate site version is uploaded, the site shows the app's.
+ pick(k,lang){const other=LANGUAGES.find(l=>l!==lang),get=x=>this.disabled(x)?null:this.current(x,lang)||this.current(x,other);return get(k)||(k==='site-privacy'?get('app-privacy'):null);}
+ resolve(k,lang){kind(k);language(lang);const row=this.pick(k,lang);if(!row)fail('Document is not published',404);return row;}
  async send(res,row,head=false){
   const file=this.path(row.id),digest=crypto.createHash('sha256');
   for await(const chunk of fs.createReadStream(file))digest.update(chunk);

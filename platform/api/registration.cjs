@@ -32,8 +32,9 @@ class Registration {
   async handle(req,url,reply) {
     if(req.method!=='POST'||!['/v1/register/start','/v1/register/confirm'].includes(url.pathname))return false;
     const data=req.parsedBody||{};
+    // Closed registration blocks both steps: a code requested just before closing cannot finish the sign-up.
+    if(this.store.product&&!this.store.product().registration)this.fail(403,'Реєстрацію тимчасово закрито. Залиште заявку на сайті — ми напишемо, щойно відкриємо / Registration is closed for now');
     if(url.pathname.endsWith('/start')) {
-      if(this.store.product&&!this.store.product().registration)this.fail(403,'Реєстрацію тимчасово закрито. Залиште заявку на сайті — ми напишемо, щойно відкриємо / Registration is closed for now');
       if(!this.mail.configured())this.fail(503,'Підтвердження пошти ще не налаштовано / Email verification is not configured');
       const email=this.string(data.email,254).toLowerCase();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))this.fail(400,'Перевірте email / Invalid email');

@@ -101,3 +101,10 @@ test('A switched-off document disappears from public links and comes back when s
  assert((await publicSite())['site-offer'].uk);
  const shown=await fetch(f.url+'/public/documents/site-offer/uk');assert.equal(shown.status,200);assert.equal(shown.headers.get('content-type'),'application/pdf');
 });
+
+test('The site shows the app privacy policy until a separate site policy is uploaded',async t=>{
+ const f=await fixture(t);assert.equal((await fetch(f.url+'/public/documents/site-privacy/uk')).status,404);
+ const r=await f.upload(PDF,{kind:'app-privacy'});assert.equal(r.status,201,JSON.stringify(r.value));
+ const site=await (await fetch(f.url+'/public/site')).json();assert.equal(site.documents['site-privacy'].uk.path,'/public/documents/site-privacy/uk');
+ const file=await fetch(f.url+'/public/documents/site-privacy/uk');assert.equal(file.status,200);assert.deepEqual(Buffer.from(await file.arrayBuffer()),PDF);
+});

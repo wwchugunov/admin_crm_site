@@ -644,10 +644,9 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 .tier{position:relative;display:flex;flex-direction:column;gap:6px;padding:30px 28px 28px;border-radius:28px;background:var(--soft);overflow:hidden}
 .tier h3{font-size:24px;letter-spacing:-.03em;margin:0}
 .tier-for{margin:0 0 14px;color:#5b616a;line-height:1.45;min-height:2.9em}
-.tier-price{display:flex;align-items:baseline;gap:10px;margin:0}
+.tier-price{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
 .tier-price strong{font-size:clamp(54px,5vw,68px);font-weight:800;letter-spacing:-.05em;line-height:.95}
 .tier-price span{font-size:15px;color:#5b616a}
-.tier-year{margin:2px 0 18px;font-size:14px;color:#5b616a}
 .tier .btn{margin-bottom:20px}
 .tier-includes,.plan-includes{margin:0 0 8px;font-size:14px;font-weight:700}
 .tier-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
@@ -656,7 +655,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 .tier-popular{background:var(--tile);color:#fff}
 .tier-popular::before{content:"";position:absolute;width:300px;height:300px;right:-120px;top:-150px;border-radius:50%;background:var(--grad);filter:blur(10px);opacity:.7}
 .tier-popular>*{position:relative}
-.tier-popular .tier-for,.tier-popular .tier-price span,.tier-popular .tier-year{color:#a8afb8}
+.tier-popular .tier-for,.tier-popular .tier-price span{color:#a8afb8}
 .tier-popular .tier-list li{color:#e6e9ec}
 .tier-popular .tier-list svg{stroke:var(--neon-green)}
 .tier-popular .btn{background:#fff;color:var(--ink)}

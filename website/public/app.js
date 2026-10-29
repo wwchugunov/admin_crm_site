@@ -55,10 +55,10 @@ const translations = {
     gains: ['Клієнт сам обирає послугу, майстра й час — у Telegram або на вашій сторінці', 'Один розклад для всієї команди: вільні вікна видно одразу', 'Бот сам нагадує клієнту за 24 і за 2 години до візиту', 'Посилання на оплату — і візит сам позначається оплаченим', 'Виручка за будь-який період і по кожному спеціалісту'],
     calcKicker: 'Калькулятор', calcTitle: ['Скільки коштують', 'неявки?'],
     calcIntro: 'Клієнт забув про запис — майстер простоює, а час уже не продати. Порахуйте, скільки це коштує вашому бізнесу.',
-    calcCheck: 'Середній чек', calcVisits: 'Записів на день', calcNoShow: 'Неявок і запізнілих скасувань', calcDays: 'Робочих днів на місяць', calcSaved: 'Скільки неявок повернуть нагадування',
-    calcLoss: 'Ви втрачаєте щомісяця', calcBack: 'Можна повернути з нагадуваннями LOMVIKO',
+    calcCheck: 'Середній чек', calcVisits: 'Записів на день', calcNoShow: 'Неявок і запізнілих скасувань', calcDays: 'Робочих днів на місяць',
+    calcLoss: 'Ви втрачаєте щомісяця', calcBack: 'Якщо нагадування збережуть третину цих візитів',
     calcMissed: (n) => `≈ ${n} пропущених візитів на місяць`, calcYear: (v) => `${v} за рік`,
-    calcNote: 'Це оцінка за вашими числами. Частку повернутих візитів ви задаєте самі. Бот нагадує клієнту за 24 і за 2 години до візиту.',
+    calcNote: 'Це оцінка за вашими числами, а не обіцянка. Бот сам нагадує клієнту про візит у Telegram за добу і за 2 години.',
     currency: 'грн', locale: 'uk-UA',
     featuresKicker: 'Можливості', featuresTitle: ['Усе для бізнесу за записом.', 'В одному вікні.'], featuresIntro: 'Кожну функцію можна увімкнути, коли вона знадобиться. Решта не заважає.',
     features: [
@@ -123,7 +123,7 @@ const translations = {
     statsLabel: 'LOMVIKO у цифрах',
     stats: [['30', 'днів безкоштовно — з усіма функціями й без картки'], ['24/7', 'приймаються записи — бот і сторінка запису не сплять'], ['×2', 'нагадування клієнту — за 24 і за 2 години до візиту'], ['3', 'способи записатися: Telegram, посилання і кнопка на сайті']],
     demoKicker: 'Старт', stepOne: 'Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.', stepTwo: 'Вкажіть назву бізнесу, email і пароль, підтвердьте email кодом із листа.', stepThree: 'Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.', stepOneTitle: 'Відкрийте LOMVIKO', stepTwoTitle: 'Створіть компанію', stepThreeTitle: 'Поділіться посиланням', launchTitle: ['Перший онлайн-запис', 'за три кроки.'], launchIntro: 'Без дзвінків менеджера й без встановлення. Більшість власників приймають перший запис у день реєстрації.',
-    priceTitle: ['Три тарифи.', 'Платите лише за потрібне.'], priceNoteSales: 'Без картки й без дзвінків менеджера. Тариф можна змінити будь-коли — дані залишаються.', freeBanner: 'Зараз усі функції безкоштовні до {date} — без картки. Ціни нижче почнуть діяти після цього.', planMonth: 'грн / міс', planYear: 'або {sum} грн на рік', planChoose: 'Обрати', planTry: 'Спробувати безкоштовно', planRequest: 'Залишити заявку', planPopular: 'Найчастіше обирають', planIncludes: 'Усе з «{plan}», а також:', planUsers: 'Користувачі без обмежень', closedBanner: 'Реєстрацію тимчасово закрито. Залиште заявку — напишемо, щойно відкриємо.', priceNote: 'Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.',
+    priceTitle: ['Три тарифи.', 'Платите лише за потрібне.'], priceNoteSales: 'Без картки й без дзвінків менеджера. Тариф можна змінити будь-коли — дані залишаються.', freeBanner: 'Зараз усі функції безкоштовні до {date} — без картки. Ціни нижче почнуть діяти після цього.', planMonth: 'грн / міс', planChoose: 'Обрати', planTry: 'Спробувати безкоштовно', planRequest: 'Залишити заявку', planPopular: 'Найчастіше обирають', planIncludes: 'Усе з «{plan}», а також:', planUsers: 'Користувачі без обмежень', closedBanner: 'Реєстрацію тимчасово закрито. Залиште заявку — напишемо, щойно відкриємо.', priceNote: 'Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.',
     planKicker: 'Один тариф · усі функції', planPer: 'грн / місяць за компанію', planList: ['безкоштовно до 1 березня 2027, без картки', 'Telegram-бот, сторінка запису й нагадування', 'Готові інтеграції з monobank і ПриватБанком (LiqPay)', 'Уся команда — з комп’ютера чи телефона'], planNote: 'Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.',
     faq: [
       ['Скільки це коштує?', 'Три тарифи: «Старт» — 199 грн/міс (розклад, бот, сторінка запису, нагадування), «Бізнес» — 499 грн/міс (+ онлайн-оплати, звіти, розсилки), «Про» — 899 грн/міс (+ сертифікати, склад, зарплати, ПРРО, філії). До 1 березня 2027 усі функції безкоштовні, без картки.'],
@@ -173,10 +173,10 @@ const translations = {
     gains: ['Clients pick the service, specialist and time themselves — in Telegram or on your page', 'One schedule for the whole team: free slots at a glance', 'The bot reminds clients 24 hours and 2 hours before', 'Send a payment link — the visit marks itself as paid', 'Revenue for any period and per specialist'],
     calcKicker: 'Calculator', calcTitle: ['What do no-shows', 'really cost?'],
     calcIntro: 'A client forgets — your specialist sits idle and that hour can’t be sold again. See what it costs your business.',
-    calcCheck: 'Average ticket', calcVisits: 'Appointments per day', calcNoShow: 'No-shows and late cancellations', calcDays: 'Working days per month', calcSaved: 'No-shows recovered by reminders',
-    calcLoss: 'You lose every month', calcBack: 'Recoverable with LOMVIKO reminders',
+    calcCheck: 'Average ticket', calcVisits: 'Appointments per day', calcNoShow: 'No-shows and late cancellations', calcDays: 'Working days per month',
+    calcLoss: 'You lose every month', calcBack: 'If reminders save a third of these visits',
     calcMissed: (n) => `≈ ${n} missed visits per month`, calcYear: (v) => `${v} per year`,
-    calcNote: 'An estimate based on your numbers. You choose the recovered share yourself. The bot reminds clients 24 hours and 2 hours before their visit.',
+    calcNote: 'An estimate from your numbers, not a promise. The bot reminds each client in Telegram a day and 2 hours before the visit.',
     currency: 'UAH', locale: 'en-GB',
     featuresKicker: 'Features', featuresTitle: ['Everything an appointment business needs.', 'In one window.'], featuresIntro: 'Turn each feature on when you need it. The rest stays out of your way.',
     features: [
@@ -241,7 +241,7 @@ const translations = {
     statsLabel: 'LOMVIKO in numbers',
     stats: [['30', 'days free — every feature, no card needed'], ['24/7', 'bookings come in — the bot and booking page never sleep'], ['×2', 'client reminders — 24 hours and 2 hours before the visit'], ['3', 'ways to book: Telegram, a link and a button on your site']],
     demoKicker: 'Get started', stepOne: 'Click “Try it free” — LOMVIKO opens in your browser, nothing to install.', stepTwo: 'Enter your business name, email and password, then confirm your email with the code we send.', stepThree: 'Add services and your team, share your booking link — clients book themselves.', stepOneTitle: 'Open LOMVIKO', stepTwoTitle: 'Create your company', stepThreeTitle: 'Share your link', launchTitle: ['Your first online booking', 'in three steps.'], launchIntro: 'No sales calls, nothing to install. Most owners take their first booking on the day they sign up.',
-    priceTitle: ['Three plans.', 'Pay only for what you need.'], priceNoteSales: 'No card and no sales calls. Change your plan any time — your data stays.', freeBanner: 'Every feature is free until {date} — no card. The prices below apply after that.', planMonth: 'UAH / month', planYear: 'or UAH {sum} a year', planChoose: 'Choose', planTry: 'Try it free', planRequest: 'Leave a request', planPopular: 'Most popular', planIncludes: 'Everything in {plan}, plus:', planUsers: 'Unlimited users', closedBanner: 'Registration is closed for now. Leave a request and we will write as soon as it opens.', priceNote: 'No card and no sales calls. Sign up right in your browser — and take your first online bookings today.',
+    priceTitle: ['Three plans.', 'Pay only for what you need.'], priceNoteSales: 'No card and no sales calls. Change your plan any time — your data stays.', freeBanner: 'Every feature is free until {date} — no card. The prices below apply after that.', planMonth: 'UAH / month', planChoose: 'Choose', planTry: 'Try it free', planRequest: 'Leave a request', planPopular: 'Most popular', planIncludes: 'Everything in {plan}, plus:', planUsers: 'Unlimited users', closedBanner: 'Registration is closed for now. Leave a request and we will write as soon as it opens.', priceNote: 'No card and no sales calls. Sign up right in your browser — and take your first online bookings today.',
     planKicker: 'One plan · every feature', planPer: 'UAH / month per company', planList: ['Free until 1 March 2027, no card needed', 'Telegram bot, booking page and reminders', 'Ready-made monobank and PrivatBank (LiqPay) integrations', 'The whole team, on a computer or a phone'], planNote: 'After the trial your data stays: you can view and export it for another 30 days.',
     faq: [
       ['How much does it cost?', 'Three plans: Start — UAH 199/month (schedule, bot, booking page, reminders), Business — UAH 499/month (+ online payments, reports, mailings), Pro — UAH 899/month (+ certificates, stock, pay, fiscal receipts, branches). Every feature is free until 1 March 2027, no card needed.'],
@@ -462,14 +462,13 @@ function tween(el, key, to, format) {
 }
 function calc() {
   const v = (id) => Number($('#calc-' + id).value);
-  const check = v('check'), visits = v('visits'), noshow = v('noshow'), days = v('days'), saved = v('saved');
+  const check = v('check'), visits = v('visits'), noshow = v('noshow'), days = v('days');
   for (const input of $$('#calc-form input[type=range]')) input.style.setProperty('--p', ((input.value - input.min) / (input.max - input.min)) * 100 + '%');
   $('#calc-check-out').textContent = money(check);
   $('#calc-visits-out').textContent = visits;
   $('#calc-noshow-out').textContent = noshow + '%';
   $('#calc-days-out').textContent = days;
-  $('#calc-saved-out').textContent = saved + '%';
-  const missed = (visits * days * noshow) / 100, loss = missed * check, back = (loss * saved) / 100;
+  const missed = (visits * days * noshow) / 100, loss = missed * check, back = loss / 3;
   $('#calc-missed').textContent = t('calcMissed')(Math.round(missed));
   tween($('#calc-loss'), 'loss', loss, money);
   tween($('#calc-back'), 'back', back, money);
@@ -523,9 +522,9 @@ const PLAN_FALLBACK = {
   sales: false, registration: true, free_until: Date.parse('2027-03-01T00:00:00+02:00'),
   base: { uk: ['Розклад і клієнтська база', 'Telegram-бот для запису 24/7', 'Сторінка онлайн-запису', 'Нагадування клієнтам'], en: ['Schedule and client base', 'Telegram booking bot 24/7', 'Online booking page', 'Client reminders'] },
   plans: [
-    { id: 'start', price: 199, yearly: 1990, uk: 'Старт', en: 'Start', for: { uk: 'Для майстра, який працює сам або вдвох', en: 'For a specialist working alone or in pairs' }, features: [] },
-    { id: 'business', price: 499, yearly: 4990, uk: 'Бізнес', en: 'Business', popular: true, for: { uk: 'Для салону чи студії з командою', en: 'For a salon or studio with a team' }, features: [{ uk: 'Онлайн-оплати monobank і LiqPay, передоплата', en: 'Online payments (monobank, LiqPay), prepayment' }, { uk: 'Дашборд, фінансовий звіт, витрати, звіти в Telegram', en: 'Dashboard, finance report, expenses, Telegram reports' }, { uk: '«Давно не були», відгуки в Google', en: 'Win-back invitations, Google reviews' }] },
-    { id: 'pro', price: 899, yearly: 8990, uk: 'Про', en: 'Pro', for: { uk: 'Для бізнесу з обліком, касою та філіями', en: 'For businesses with accounting, receipts and branches' }, features: [{ uk: 'Подарункові сертифікати й абонементи', en: 'Gift certificates and passes' }, { uk: 'Матеріали та склад', en: 'Materials and stock' }, { uk: 'Зарплати спеціалістів', en: 'Specialists’ pay' }, { uk: 'Фіскальні чеки (ПРРО)', en: 'Fiscal receipts' }, { uk: 'Кілька філій в одному акаунті', en: 'Several branches in one account' }] },
+    { id: 'start', price: 199, uk: 'Старт', en: 'Start', for: { uk: 'Для майстра, який працює сам або вдвох', en: 'For a specialist working alone or in pairs' }, features: [] },
+    { id: 'business', price: 499, uk: 'Бізнес', en: 'Business', popular: true, for: { uk: 'Для салону чи студії з командою', en: 'For a salon or studio with a team' }, features: [{ uk: 'Онлайн-оплати monobank і LiqPay, передоплата', en: 'Online payments (monobank, LiqPay), prepayment' }, { uk: 'Дашборд, фінансовий звіт, витрати, звіти в Telegram', en: 'Dashboard, finance report, expenses, Telegram reports' }, { uk: '«Давно не були», відгуки в Google', en: 'Win-back invitations, Google reviews' }] },
+    { id: 'pro', price: 899, uk: 'Про', en: 'Pro', for: { uk: 'Для бізнесу з обліком, касою та філіями', en: 'For businesses with accounting, receipts and branches' }, features: [{ uk: 'Подарункові сертифікати й абонементи', en: 'Gift certificates and passes' }, { uk: 'Матеріали та склад', en: 'Materials and stock' }, { uk: 'Зарплати спеціалістів', en: 'Specialists’ pay' }, { uk: 'Фіскальні чеки (ПРРО)', en: 'Fiscal receipts' }, { uk: 'Кілька філій в одному акаунті', en: 'Several branches in one account' }] },
   ],
 };
 function pricing() {
@@ -543,7 +542,7 @@ function pricing() {
     const own = previous ? plan.features.filter((f) => !previous.features.some((g) => L(g) === L(f))) : [];
     const items = previous ? own.map(L) : (p.base ? L(p.base) : L(PLAN_FALLBACK.base));
     const intro = previous ? `<p class="plan-includes">${esc(t('planIncludes').replace('{plan}', L(previous)))}</p>` : '';
-    const card = `<article class="tier${plan.popular ? ' tier-popular' : ''}">${plan.popular ? `<span class="tier-badge">${esc(t('planPopular'))}</span>` : ''}<h3>${esc(L(plan))}</h3><p class="tier-for">${esc(L(plan.for))}</p><p class="tier-price"><strong>${plan.price}</strong><span>${esc(t('planMonth'))}</span></p><p class="tier-year">${esc(t('planYear').replace('{sum}', plan.yearly.toLocaleString(en ? 'en-GB' : 'uk-UA')))}</p><a class="btn ${plan.popular ? 'btn-primary' : 'btn-ghost'} btn-block" href="${href}">${esc(label)}</a>${intro}<ul class="tier-list">${items.map((i) => `<li>${svg('check')}<span>${esc(i)}</span></li>`).join('')}<li>${svg('check')}<span>${esc(t('planUsers'))}</span></li></ul></article>`;
+    const card = `<article class="tier${plan.popular ? ' tier-popular' : ''}">${plan.popular ? `<span class="tier-badge">${esc(t('planPopular'))}</span>` : ''}<h3>${esc(L(plan))}</h3><p class="tier-for">${esc(L(plan.for))}</p><p class="tier-price"><strong>${plan.price}</strong><span>${esc(t('planMonth'))}</span></p><a class="btn ${plan.popular ? 'btn-primary' : 'btn-ghost'} btn-block" href="${href}">${esc(label)}</a>${intro}<ul class="tier-list">${items.map((i) => `<li>${svg('check')}<span>${esc(i)}</span></li>`).join('')}<li>${svg('check')}<span>${esc(t('planUsers'))}</span></li></ul></article>`;
     previous = plan;
     return card;
   }).join('');
