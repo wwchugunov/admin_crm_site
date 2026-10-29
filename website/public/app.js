@@ -576,7 +576,7 @@ $('#demo-form').addEventListener('submit', async (e) => {
   try {
     const response = await fetch('/public/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, consent: values.consent === 'on', language }), signal: AbortSignal.timeout(15000) });
     if (!response.ok) { status.classList.add('is-error'); status.textContent = t(response.status === 429 ? 'rate' : response.status === 400 ? 'invalid' : 'error'); return; }
-    e.target.reset(); status.textContent = t('success'); setTimeout(() => { if (status.textContent === t('success')) dialog.close(); }, 2500);
+    e.target.reset(); status.textContent = t('success'); try { window.lomvikoConversion?.(); } catch {} setTimeout(() => { if (status.textContent === t('success')) dialog.close(); }, 2500);
   } catch { status.classList.add('is-error'); status.textContent = t('error'); }
   finally { submit.removeAttribute('aria-busy'); submit.disabled = false; }
 });

@@ -7,6 +7,7 @@ const DAY = 'public, max-age=86400', YEAR = 'public, max-age=31536000, immutable
 const STATIC = new Map([
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/motion.js', ['motion.js', 'text/javascript; charset=utf-8', 'no-cache']],
+  ['/ads.js', ['ads.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8', 'no-cache']],
   ['/favicon.svg', ['favicon.svg', 'image/svg+xml', DAY]],
   ['/assets/crm.png', ['assets/crm.png', 'image/png', DAY]],
@@ -42,7 +43,9 @@ function page(directory, language) {
   const head = fs.readFileSync(path.join(directory, `head.${language}.html`), 'utf8').trim();
   return html.replace('<html lang="uk">', `<html lang="${language}">`).replace(/<!--meta:start-->[\s\S]*?<!--meta:end-->/, head);
 }
-const csp = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
+// Google Ads tag hosts are the only third parties: the tag script, its conversion pings and their pixels.
+const ADS = 'https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://www.google.com.ua';
+const csp = `default-src 'self'; script-src 'self' ${ADS}; style-src 'self'; img-src 'self' ${ADS}; connect-src 'self' ${ADS}; frame-src https://td.doubleclick.net https://bid.g.doubleclick.net; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`;
 function upstream(raw) {
   const u = new URL(raw);
   if (u.username || u.password || u.search || u.hash || u.pathname !== '/' || !['http:', 'https:'].includes(u.protocol)) throw Error('CH_API_URL must be an origin without credentials or path');
@@ -51,7 +54,7 @@ function upstream(raw) {
 function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, directory = path.join(__dirname, 'public') } = {}) {
   const origin = upstream(apiUrl), rates = new Map();
   const server = http.createServer(async (req, res) => {
-    res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',csp);res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Cache-Control','no-store');
+    res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Content-Security-Policy',csp);res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Cache-Control','no-store');
     const json = (status, value) => { if (!res.headersSent) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value)); } };
     try {
       const url = new URL(req.url,'http://localhost'), route = url.pathname, read = req.method === 'GET' || req.method === 'HEAD';
