@@ -123,7 +123,7 @@ const translations = {
     statsLabel: 'LOMVIKO у цифрах',
     stats: [['30', 'днів безкоштовно — з усіма функціями й без картки'], ['24/7', 'приймаються записи — бот і сторінка запису не сплять'], ['×2', 'нагадування клієнту — за 24 і за 2 години до візиту'], ['3', 'способи записатися: Telegram, посилання і кнопка на сайті']],
     demoKicker: 'Старт', stepOne: 'Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.', stepTwo: 'Вкажіть назву бізнесу, email і пароль, підтвердьте email кодом із листа.', stepThree: 'Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.', stepOneTitle: 'Відкрийте LOMVIKO', stepTwoTitle: 'Створіть компанію', stepThreeTitle: 'Поділіться посиланням', launchTitle: ['Перший онлайн-запис', 'за три кроки.'], launchIntro: 'Без дзвінків менеджера й без встановлення. Більшість власників приймають перший запис у день реєстрації.',
-    priceTitle: ['Три тарифи.', 'Платите лише за потрібне.'], priceNoteSales: 'Без картки й без дзвінків менеджера. Тариф можна змінити будь-коли — дані залишаються.', freeBanner: 'Зараз усі функції безкоштовні до {date} — без картки. Ціни нижче почнуть діяти після цього.', planMonth: 'грн / міс', planYear: 'або {sum} грн на рік', planChoose: 'Обрати', planTry: 'Спробувати безкоштовно', planRequest: 'Залишити заявку', planPopular: 'Найчастіше обирають', planIncludes: 'Усе з «{plan}», а також:', planUsers: 'До {n} користувачів', closedBanner: 'Реєстрацію тимчасово закрито. Залиште заявку — напишемо, щойно відкриємо.', priceNote: 'Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.',
+    priceTitle: ['Три тарифи.', 'Платите лише за потрібне.'], priceNoteSales: 'Без картки й без дзвінків менеджера. Тариф можна змінити будь-коли — дані залишаються.', freeBanner: 'Зараз усі функції безкоштовні до {date} — без картки. Ціни нижче почнуть діяти після цього.', planMonth: 'грн / міс', planYear: 'або {sum} грн на рік', planChoose: 'Обрати', planTry: 'Спробувати безкоштовно', planRequest: 'Залишити заявку', planPopular: 'Найчастіше обирають', planIncludes: 'Усе з «{plan}», а також:', planUsers: 'Користувачі без обмежень', closedBanner: 'Реєстрацію тимчасово закрито. Залиште заявку — напишемо, щойно відкриємо.', priceNote: 'Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.',
     planKicker: 'Один тариф · усі функції', planPer: 'грн / місяць за компанію', planList: ['безкоштовно до 1 березня 2027, без картки', 'Telegram-бот, сторінка запису й нагадування', 'Готові інтеграції з monobank і ПриватБанком (LiqPay)', 'Уся команда — з комп’ютера чи телефона'], planNote: 'Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.',
     faq: [
       ['Скільки це коштує?', 'Три тарифи: «Старт» — 199 грн/міс (розклад, бот, сторінка запису, нагадування), «Бізнес» — 499 грн/міс (+ онлайн-оплати, звіти, розсилки), «Про» — 899 грн/міс (+ сертифікати, склад, зарплати, ПРРО, філії). До 1 березня 2027 усі функції безкоштовні, без картки.'],
@@ -136,7 +136,7 @@ const translations = {
       ['Чи можна забрати всі свої дані?', 'Так. Експорт усієї бази в JSON, CSV або зашифрований файл — будь-коли.'],
       ['Як з вами зв’язатися?', 'Напишіть на info@lomviko.com або прямо з LOMVIKO: розділ «Підтримка». Відповідь прийде на пошту.'],
     ],
-    formTitle: 'Заявка на демо', formName: 'Ваше ім’я', formBusiness: 'Назва бізнесу', formMessage: 'Що для вас найважливіше?', formSubmit: 'Надіслати заявку',
+    formTitle: 'Залишити заявку', formName: 'Ваше ім’я', formBusiness: 'Назва бізнесу', formMessage: 'Що для вас найважливіше?', formSubmit: 'Надіслати заявку',
     offTitle: 'Почніть уже сьогодні', offBody: 'Спробуйте LOMVIKO безкоштовно — прямо в браузері, без встановлення.', offBodyMail: 'Напишіть нам — покажемо LOMVIKO і підготуємо доступ для вашого бізнесу.', writeUs: 'Написати нам', askTitle: 'Залишилися питання?', askBody: 'Напишіть нам — відповімо українською і підкажемо, як налаштувати LOMVIKO під ваш бізнес.',
     downloadSafety: 'Оновлюєте LOMVIKO? Спочатку створіть резервну копію в застосунку. Встановлення нової версії зберігає ваші дані.',
     download: 'Завантажити', macSub: 'Apple Silicon та Intel', winSub: 'Windows 10 і 11', integrity: 'Контрольна сума SHA-256', noRelease: 'Скоро. Слідкуйте за оновленнями на цій сторінці.',
@@ -241,7 +241,7 @@ const translations = {
     statsLabel: 'LOMVIKO in numbers',
     stats: [['30', 'days free — every feature, no card needed'], ['24/7', 'bookings come in — the bot and booking page never sleep'], ['×2', 'client reminders — 24 hours and 2 hours before the visit'], ['3', 'ways to book: Telegram, a link and a button on your site']],
     demoKicker: 'Get started', stepOne: 'Click “Try it free” — LOMVIKO opens in your browser, nothing to install.', stepTwo: 'Enter your business name, email and password, then confirm your email with the code we send.', stepThree: 'Add services and your team, share your booking link — clients book themselves.', stepOneTitle: 'Open LOMVIKO', stepTwoTitle: 'Create your company', stepThreeTitle: 'Share your link', launchTitle: ['Your first online booking', 'in three steps.'], launchIntro: 'No sales calls, nothing to install. Most owners take their first booking on the day they sign up.',
-    priceTitle: ['Three plans.', 'Pay only for what you need.'], priceNoteSales: 'No card and no sales calls. Change your plan any time — your data stays.', freeBanner: 'Every feature is free until {date} — no card. The prices below apply after that.', planMonth: 'UAH / month', planYear: 'or UAH {sum} a year', planChoose: 'Choose', planTry: 'Try it free', planRequest: 'Leave a request', planPopular: 'Most popular', planIncludes: 'Everything in {plan}, plus:', planUsers: 'Up to {n} users', closedBanner: 'Registration is closed for now. Leave a request and we will write as soon as it opens.', priceNote: 'No card and no sales calls. Sign up right in your browser — and take your first online bookings today.',
+    priceTitle: ['Three plans.', 'Pay only for what you need.'], priceNoteSales: 'No card and no sales calls. Change your plan any time — your data stays.', freeBanner: 'Every feature is free until {date} — no card. The prices below apply after that.', planMonth: 'UAH / month', planYear: 'or UAH {sum} a year', planChoose: 'Choose', planTry: 'Try it free', planRequest: 'Leave a request', planPopular: 'Most popular', planIncludes: 'Everything in {plan}, plus:', planUsers: 'Unlimited users', closedBanner: 'Registration is closed for now. Leave a request and we will write as soon as it opens.', priceNote: 'No card and no sales calls. Sign up right in your browser — and take your first online bookings today.',
     planKicker: 'One plan · every feature', planPer: 'UAH / month per company', planList: ['Free until 1 March 2027, no card needed', 'Telegram bot, booking page and reminders', 'Ready-made monobank and PrivatBank (LiqPay) integrations', 'The whole team, on a computer or a phone'], planNote: 'After the trial your data stays: you can view and export it for another 30 days.',
     faq: [
       ['How much does it cost?', 'Three plans: Start — UAH 199/month (schedule, bot, booking page, reminders), Business — UAH 499/month (+ online payments, reports, mailings), Pro — UAH 899/month (+ certificates, stock, pay, fiscal receipts, branches). Every feature is free until 1 March 2027, no card needed.'],
@@ -254,7 +254,7 @@ const translations = {
       ['Can I take all my data with me?', 'Yes. Export the whole database as JSON, CSV or an encrypted file — anytime.'],
       ['How do I reach you?', 'Write to info@lomviko.com or straight from LOMVIKO in the Support section. We reply by email.'],
     ],
-    formTitle: 'Request a demo', formName: 'Your name', formBusiness: 'Business name', formMessage: 'What matters most to you?', formSubmit: 'Send request',
+    formTitle: 'Leave a request', formName: 'Your name', formBusiness: 'Business name', formMessage: 'What matters most to you?', formSubmit: 'Send request',
     offTitle: 'Start today', offBody: 'Try LOMVIKO free — right in your browser, nothing to install.', offBodyMail: 'Write to us — we’ll show you LOMVIKO and prepare access for your business.', writeUs: 'Write to us', askTitle: 'Still have questions?', askBody: 'Write to us — we’ll reply and help you set LOMVIKO up for your business.',
     downloadSafety: 'Updating LOMVIKO? Create a backup in the app first. Installing a new version keeps your data.',
     download: 'Download', macSub: 'Apple Silicon and Intel', winSub: 'Windows 10 and 11', integrity: 'SHA-256 checksum', noRelease: 'Coming soon. Check back on this page.',
@@ -482,14 +482,13 @@ $('#calc-form').addEventListener('submit', (e) => e.preventDefault());
 function ctas() {
   $$('[data-cta]').forEach((a) => { a.href = APP_URL + '/?start=register'; });
   $$('[data-login]').forEach((a) => { a.href = APP_URL + '/'; });
-  // Self-service trial is the main path; the demo request form is an extra when the admin enables it.
-  const demo = Boolean(site?.demoAvailable);
+  // Self-service trial is the main path; the request form is always there for those who prefer to be contacted.
   // Registration closed in the admin: every "Try" button leads to the request form instead.
   const closed = site?.product?.registration === false;
   if (closed) $$('[data-cta]').forEach((a) => { a.href = '#start'; });
   $$('[data-cta-label]').forEach((label) => { label.textContent = closed ? t('planRequest') : t('ctaTrial'); });
   $$('[data-cta-short]').forEach((label) => { label.textContent = closed ? t('planRequest') : t('ctaShort'); });
-  $('#demo-form').hidden = !demo;
+  $('#demo-form').hidden = false;
   const mail = site?.contactEmail || CONTACT_EMAIL, link = $('#demo-fallback-mail');
   link.hidden = !mail;
   if (mail) link.href = 'mailto:' + mail;
@@ -524,9 +523,9 @@ const PLAN_FALLBACK = {
   sales: false, registration: true, free_until: Date.parse('2027-03-01T00:00:00+02:00'),
   base: { uk: ['Розклад і клієнтська база', 'Telegram-бот для запису 24/7', 'Сторінка онлайн-запису', 'Нагадування клієнтам'], en: ['Schedule and client base', 'Telegram booking bot 24/7', 'Online booking page', 'Client reminders'] },
   plans: [
-    { id: 'start', price: 199, yearly: 1990, seats: 2, uk: 'Старт', en: 'Start', for: { uk: 'Для майстра, який працює сам або вдвох', en: 'For a specialist working alone or in pairs' }, features: [] },
-    { id: 'business', price: 499, yearly: 4990, seats: 6, uk: 'Бізнес', en: 'Business', popular: true, for: { uk: 'Для салону чи студії з командою', en: 'For a salon or studio with a team' }, features: [{ uk: 'Онлайн-оплати monobank і LiqPay, передоплата', en: 'Online payments (monobank, LiqPay), prepayment' }, { uk: 'Дашборд, фінансовий звіт, витрати, звіти в Telegram', en: 'Dashboard, finance report, expenses, Telegram reports' }, { uk: '«Давно не були», відгуки в Google', en: 'Win-back invitations, Google reviews' }] },
-    { id: 'pro', price: 899, yearly: 8990, seats: 25, uk: 'Про', en: 'Pro', for: { uk: 'Для бізнесу з обліком, касою та філіями', en: 'For businesses with accounting, receipts and branches' }, features: [{ uk: 'Подарункові сертифікати й абонементи', en: 'Gift certificates and passes' }, { uk: 'Матеріали та склад', en: 'Materials and stock' }, { uk: 'Зарплати спеціалістів', en: 'Specialists’ pay' }, { uk: 'Фіскальні чеки (ПРРО)', en: 'Fiscal receipts' }, { uk: 'Кілька філій в одному акаунті', en: 'Several branches in one account' }] },
+    { id: 'start', price: 199, yearly: 1990, uk: 'Старт', en: 'Start', for: { uk: 'Для майстра, який працює сам або вдвох', en: 'For a specialist working alone or in pairs' }, features: [] },
+    { id: 'business', price: 499, yearly: 4990, uk: 'Бізнес', en: 'Business', popular: true, for: { uk: 'Для салону чи студії з командою', en: 'For a salon or studio with a team' }, features: [{ uk: 'Онлайн-оплати monobank і LiqPay, передоплата', en: 'Online payments (monobank, LiqPay), prepayment' }, { uk: 'Дашборд, фінансовий звіт, витрати, звіти в Telegram', en: 'Dashboard, finance report, expenses, Telegram reports' }, { uk: '«Давно не були», відгуки в Google', en: 'Win-back invitations, Google reviews' }] },
+    { id: 'pro', price: 899, yearly: 8990, uk: 'Про', en: 'Pro', for: { uk: 'Для бізнесу з обліком, касою та філіями', en: 'For businesses with accounting, receipts and branches' }, features: [{ uk: 'Подарункові сертифікати й абонементи', en: 'Gift certificates and passes' }, { uk: 'Матеріали та склад', en: 'Materials and stock' }, { uk: 'Зарплати спеціалістів', en: 'Specialists’ pay' }, { uk: 'Фіскальні чеки (ПРРО)', en: 'Fiscal receipts' }, { uk: 'Кілька філій в одному акаунті', en: 'Several branches in one account' }] },
   ],
 };
 function pricing() {
@@ -544,12 +543,10 @@ function pricing() {
     const own = previous ? plan.features.filter((f) => !previous.features.some((g) => L(g) === L(f))) : [];
     const items = previous ? own.map(L) : (p.base ? L(p.base) : L(PLAN_FALLBACK.base));
     const intro = previous ? `<p class="plan-includes">${esc(t('planIncludes').replace('{plan}', L(previous)))}</p>` : '';
-    const card = `<article class="tier${plan.popular ? ' tier-popular' : ''}">${plan.popular ? `<span class="tier-badge">${esc(t('planPopular'))}</span>` : ''}<h3>${esc(L(plan))}</h3><p class="tier-for">${esc(L(plan.for))}</p><p class="tier-price"><strong>${plan.price}</strong><span>${esc(t('planMonth'))}</span></p><p class="tier-year">${esc(t('planYear').replace('{sum}', plan.yearly.toLocaleString(en ? 'en-GB' : 'uk-UA')))}</p><a class="btn ${plan.popular ? 'btn-primary' : 'btn-ghost'} btn-block" href="${href}">${esc(label)}</a>${intro}<ul class="tier-list">${items.map((i) => `<li>${svg('check')}<span>${esc(i)}</span></li>`).join('')}<li>${svg('check')}<span>${esc(t('planUsers').replace('{n}', plan.seats))}</span></li></ul></article>`;
+    const card = `<article class="tier${plan.popular ? ' tier-popular' : ''}">${plan.popular ? `<span class="tier-badge">${esc(t('planPopular'))}</span>` : ''}<h3>${esc(L(plan))}</h3><p class="tier-for">${esc(L(plan.for))}</p><p class="tier-price"><strong>${plan.price}</strong><span>${esc(t('planMonth'))}</span></p><p class="tier-year">${esc(t('planYear').replace('{sum}', plan.yearly.toLocaleString(en ? 'en-GB' : 'uk-UA')))}</p><a class="btn ${plan.popular ? 'btn-primary' : 'btn-ghost'} btn-block" href="${href}">${esc(label)}</a>${intro}<ul class="tier-list">${items.map((i) => `<li>${svg('check')}<span>${esc(i)}</span></li>`).join('')}<li>${svg('check')}<span>${esc(t('planUsers'))}</span></li></ul></article>`;
     previous = plan;
     return card;
   }).join('');
-  // With registration closed the request form is the way in.
-  if (!p.registration) $('#demo-form').hidden = !site?.demoAvailable;
 }
 function render() {
   meta(); staticText(); lists(); storyTabs(); renderStory(); renderSegments(); calc(); ctas(); pricing(); news(); legal();
@@ -568,7 +565,6 @@ $$('[data-lang]').forEach((b) => b.addEventListener('click', () => {
 
 $('#demo-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!site?.demoAvailable) return;
   const values = Object.fromEntries(new FormData(e.target)), status = $('#form-status'), submit = $('#demo-submit');
   submit.disabled = true; submit.setAttribute('aria-busy', 'true');
   status.classList.remove('is-error'); status.textContent = t('sending');
@@ -577,7 +573,7 @@ $('#demo-form').addEventListener('submit', async (e) => {
     if (!response.ok) { status.classList.add('is-error'); status.textContent = t(response.status === 429 ? 'rate' : 'error'); return; }
     e.target.reset(); status.textContent = t('success');
   } catch { status.classList.add('is-error'); status.textContent = t('error'); }
-  finally { submit.removeAttribute('aria-busy'); submit.disabled = !site?.demoAvailable; }
+  finally { submit.removeAttribute('aria-busy'); submit.disabled = false; }
 });
 
 // Phones: a slim trial bar appears after the hero and hides near the other trial buttons.

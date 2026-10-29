@@ -41,7 +41,7 @@ test('Web app: requests from other sites are refused',async t=>{
  const f=await fixture(t),b=f.browser();await b.call('account:login','','owner@lira.test','owner-password-1');
  const r=await b.send('/web/call',{channel:'snapshot',args:[]},{Origin:'https://evil.example'});assert.equal(r.status,403);
 });
-test('Web app: owner and staff share one browser; a new browser takes the oldest browser seat',async t=>{
+test('Web app: owner and staff share one browser; users and browsers are unlimited',async t=>{
  const f=await fixture(t,{seats:2}),owner=f.browser();
  await owner.call('account:login','','owner@lira.test','owner-password-1');
  await owner.call('account:user:add',{name:'Майстер',email:'staff@lira.test',password:'staff-password-1',role:'staff'});
@@ -50,22 +50,11 @@ test('Web app: owner and staff share one browser; a new browser takes the oldest
  await owner.call('account:login','','staff@lira.test','staff-password-1');
  const staff=await owner.call('snapshot');assert.equal(staff.role,'staff');assert.ok(staff.appointments.every(a=>!a.paid&&!a.cost));
  await assert.rejects(owner.call('service:add',{name:'X',duration:30,price:1}),e=>e.status===403);
- // Both seats are used (owner + staff); the owner opens a private window: the owner's old browser is signed out.
- const fresh=f.browser();await fresh.call('account:login','','owner@lira.test','owner-password-1');
- assert.equal(f.owner.db.prepare("SELECT count(*) n FROM devices WHERE revoked=0").get().n,2);
- assert.equal(f.owner.db.prepare("SELECT count(*) n FROM events WHERE event='device.replaced'").get().n,1);
+ // The old device limit no longer applies: more browsers sign in and nobody is signed out.
+ const more=[f.browser(),f.browser(),f.browser()];for(const b of more)await b.call('account:login','','owner@lira.test','owner-password-1');
+ assert.equal(f.owner.db.prepare("SELECT count(*) n FROM devices WHERE revoked=0").get().n,5);
+ assert.equal(f.owner.db.prepare("SELECT count(*) n FROM events WHERE event='device.replaced'").get().n,0);
  await owner.call('snapshot');
-});
-test('Web app: the owner\'s many browsers never lock a colleague out',async t=>{
- const f=await fixture(t,{seats:2}),first=f.browser();
- await first.call('account:login','','owner@lira.test','owner-password-1');
- await first.call('account:user:add',{name:'Майстер',email:'staff@lira.test',password:'staff-password-1',role:'staff'});
- await f.browser().call('account:login','','owner@lira.test','owner-password-1');
- // Both seats belong to the owner; the colleague's phone takes the owner's oldest one.
- const phone=f.browser();await phone.call('account:login','','staff@lira.test','staff-password-1');
- assert.equal((await phone.call('snapshot')).role,'staff');
- assert.deepEqual(f.owner.db.prepare("SELECT u.email,count(*) n FROM devices d JOIN users u ON u.id=d.user_id WHERE d.revoked=0 GROUP BY u.email ORDER BY u.email").all().map(r=>[r.email,r.n]),[['owner@lira.test',1],['staff@lira.test',1]]);
- await assert.rejects(first.call('snapshot'),e=>e.status===401);
 });
 test('Web app: a new business registers in the browser and lands in its workspace',async t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'biz-web-reg-')),keys=setup(dir),owner=new ProductStore(path.join(dir,'owner.sqlite')),sent=[];

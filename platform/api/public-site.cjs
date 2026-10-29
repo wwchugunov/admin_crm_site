@@ -74,10 +74,10 @@ class PublicSite {
   public() {
     const row = this.state(), content = validate(JSON.parse(row.published));
     if (!content.enabled) fail('Website temporarily unavailable', 503);
-    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), documents: this.documents?.public() || {}, demoAvailable: !!content.contactEmail, product: this.product?.() || null };
+    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), documents: this.documents?.public() || {}, demoAvailable: true, product: this.product?.() || null };
   }
   lead(data) {
-    if (!this.public().demoAvailable) fail('Demo requests are not configured yet', 503);
+    // Requests are always accepted: they land in the site admin even when no contact email or SMTP is set.
     if (!data || typeof data !== 'object' || Array.isArray(data)) fail('Invalid demo request');
     if (data.website) return { ok: true }; // Honeypot; no record and no account created.
     if (data.consent !== true || !LANGUAGES.includes(data.language)) fail('Consent and supported language are required');
