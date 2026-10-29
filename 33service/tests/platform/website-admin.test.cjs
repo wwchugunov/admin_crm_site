@@ -15,3 +15,14 @@ test('Web admin requires login and origin, limits site operations and redacts pr
  }finally{await new Promise(r=>admin.close(r));await new Promise(r=>api.close(r));}
 });
 test('Public deployments require HTTPS and no arbitrary upstream paths',()=>{assert.throws(()=>createAdminServer({origin:'http://example.test'}));assert.throws(()=>createAdminServer({apiUrl:'https://api.example.test/private'}));});
+
+test('Failed admin sign-ins from one address do not lock out another address',async()=>{
+ const api=http.createServer(async(req,res)=>{for await(const _ of req);res.setHeader('Content-Type','application/json');if(req.url==='/admin/session'){res.statusCode=401;return res.end('{"error":"bad"}');}res.end('{}');});await new Promise(r=>api.listen(0,'127.0.0.1',r));
+ const origin='http://127.0.0.1:'+await port(),admin=createAdminServer({origin,apiUrl:'http://127.0.0.1:'+api.address().port});await new Promise(r=>admin.listen(Number(new URL(origin).port),'127.0.0.1',r));
+ try{
+  const send=(ip)=>fetch(origin+'/web/login',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','X-Forwarded-For':ip},body:JSON.stringify({token:'t'.repeat(40),otp:'123456'})});
+  for(let i=0;i<5;i++)assert.notEqual((await send('203.0.113.9')).status,429);
+  assert.equal((await send('203.0.113.9')).status,429,'the guessing address waits');
+  assert.notEqual((await send('198.51.100.7')).status,429,'the administrator from another address can still sign in');
+ }finally{await new Promise(r=>admin.close(r));await new Promise(r=>api.close(r));}
+});

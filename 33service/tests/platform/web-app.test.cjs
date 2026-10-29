@@ -72,3 +72,8 @@ test('Web app: a new business registers in the browser and lands in its workspac
  const s=await call('snapshot');assert.equal(s.business,'Салон «Нова»');assert.equal(s.role,'owner');
  assert.equal(owner.db.prepare("SELECT stage FROM users WHERE email='new@salon.test'").get().stage,'trial');
 });
+test('Web app: malformed arguments are refused with a clear 400, never a server error',async t=>{
+ const f=await fixture(t),owner=f.browser();await owner.call('account:login','','owner@lira.test','owner-password-1');
+ for(const args of [[],[null],[{}],['x'],[{id:{a:1},role:'staff',stage:'active'}]])await assert.rejects(owner.call('account:user:update',...args),e=>e.status===400||e.status===403,JSON.stringify(args));
+ assert.ok((await owner.call('snapshot')).revision,'the session still works');
+});

@@ -140,6 +140,7 @@
     "m681": {"uk":"Забагато спроб поспіль. Зачекайте хвилину і спробуйте ще раз.","en":"Too many attempts in a row. Wait a minute and try again."},
     "m682": {"uk":"Підписка закінчилась. Ваші дані збережені — продовжте підписку, і все запрацює як раніше.","en":"The subscription has ended. Your data is safe — renew and everything works as before."},
     "m689": {"uk":"Не вдалося виконати дію. Спробуйте ще раз — якщо повториться, натисніть «Написати нам».","en":"The action could not be completed. Try again — if it repeats, press “Write to us”."},
+    "m689input": {"uk":"Перевірте дані у формі: якесь поле порожнє або заповнене неправильно.","en":"Check the form: a field is empty or filled in incorrectly."},
     "language": {"uk":"Мова","en":"Language"},
     "botMenu": {"uk":"Вітаємо! Оберіть дію нижче 👇","en":"Welcome! Choose an option below 👇"},
     "botBook": {"uk":"📅 Записатися","en":"📅 Book an appointment"},
