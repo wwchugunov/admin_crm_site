@@ -33,6 +33,7 @@ class Registration {
     if(req.method!=='POST'||!['/v1/register/start','/v1/register/confirm'].includes(url.pathname))return false;
     const data=req.parsedBody||{};
     if(url.pathname.endsWith('/start')) {
+      if(this.store.product&&!this.store.product().registration)this.fail(403,'Реєстрацію тимчасово закрито. Залиште заявку на сайті — ми напишемо, щойно відкриємо / Registration is closed for now');
       if(!this.mail.configured())this.fail(503,'Підтвердження пошти ще не налаштовано / Email verification is not configured');
       const email=this.string(data.email,254).toLowerCase();
       if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))this.fail(400,'Перевірте email / Invalid email');
@@ -89,4 +90,4 @@ class Registration {
   cleanup(){this.db.prepare('DELETE FROM registration_pending WHERE expires<?').run(Date.now());this.db.prepare('DELETE FROM registration_limits WHERE at<?').run(Date.now()-86400000);}
   codeHash(id,code){return crypto.createHmac('sha256',this.key).update(id+':'+code).digest('hex');}
 }
-module.exports={Registration};
+module.exports={Registration,FREE_UNTIL};

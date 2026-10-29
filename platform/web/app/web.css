@@ -288,3 +288,8 @@ html[data-theme] .workspace.wide-logo .workspace-icon { width: 100%; height: 52p
 html[data-theme] .workspace.wide-logo .workspace-icon img { object-position: left center; padding: 6px 8px; }
 html[data-theme] .logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 12px 0; }
 html[data-theme] .logo-preview { width: auto; max-width: 220px; min-width: 70px; height: 70px; padding: 6px; background: #fff; box-sizing: border-box; margin: 0; }
+.plan-lock { border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface)); border-radius: 14px; padding: 18px 20px; display: grid; gap: 8px; justify-items: start; margin: 4px 0 12px; }
+.plan-lock strong { font-family: Geologica, Onest, sans-serif; font-size: 16px; }
+.plan-lock p { margin: 0; color: var(--muted); max-width: 640px; line-height: 1.5; }
+.plan-lock a.secondary { display: inline-flex; align-items: center; min-height: 38px; padding: 0 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); color: var(--ink); font-weight: 600; text-decoration: none; margin-top: 4px; }
+.plan-lock a.secondary:hover { border-color: var(--accent); color: var(--accent-strong); }

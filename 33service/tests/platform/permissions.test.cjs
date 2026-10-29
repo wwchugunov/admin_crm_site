@@ -14,7 +14,7 @@ async function fixture(t){
  await call('/admin/users',{name:'Olena',email:'owner@example.test',password:'owner-password-123',business:'Studio',days:14,max_devices:5});
  const owner=await login('owner@example.test','owner-password-123'),business=owner.businesses[0].id,q='?business_id='+business;
  const as=(s)=>(route,body)=>call(route+q,body,s.session,s.key);
- return{call,get,login,owner,business,q,as,O:as(owner)};
+ return{call,get,login,owner,business,q,as,O:as(owner),ownerStore:store};
 }
 
 test('Every part of the app can be switched on or off for a team member, and the server enforces it',async t=>{
@@ -43,4 +43,43 @@ test('Every part of the app can be switched on or off for a team member, and the
  // Team management stays with the owner whatever the switches say.
  assert.equal((await I('/v1/crm/users/add',{name:'X',email:'x@example.test',password:'staff-password-123',role:'staff'})).status,403);
  assert.equal((await M('/v1/crm/users/update',{id,role:'admin',stage:'active'})).status,403);
+});
+
+test('Plans: everything is open while sales are off or during a trial; with sales on a plan limits features',async t=>{
+ const f=await fixture(t),store=f.ownerStore;
+ const sell=()=>f.O('/v1/crm/certificate',{amount:500,method:'cash'});
+ assert.equal((await sell()).status,200,'sales off: all features');
+ store.setProduct('sales',true);
+ const owner=store.db.prepare("SELECT id FROM users WHERE email='owner@example.test'").get().id;
+ store.db.prepare("UPDATE users SET stage='trial',plan='start' WHERE id=?").run(owner);
+ assert.equal((await sell()).status,200,'trial: all features');
+ store.db.prepare("UPDATE users SET stage='active',plan='start' WHERE id=?").run(owner);
+ const refused=await sell();assert.equal(refused.status,403);assert.match(refused.value.error,/Про/);
+ assert.equal((await f.O('/v1/crm/expense',{amount:100,category:'rent',date:'2026-10-01'})).status,403,'reports need Business');
+ assert.equal((await f.get('/v1/crm/snapshot'+f.q,f.owner)).value.plan.id,'start');
+ store.db.prepare("UPDATE users SET plan='business' WHERE id=?").run(owner);
+ assert.notEqual((await f.O('/v1/crm/expense',{amount:100,category:'rent',date:'2026-10-01'})).status,403);
+ assert.equal((await sell()).status,403);
+ store.db.prepare("UPDATE users SET plan='pro' WHERE id=?").run(owner);
+ assert.equal((await sell()).status,200);
+ // The admin switch publishes or hides the offer together with sales.
+ assert.equal((await f.call('/admin/product',{sales:false})).status,200);
+ assert.equal(store.db.prepare("SELECT disabled FROM document_switches WHERE kind='site-offer'").get().disabled,1);
+ assert.equal((await f.call('/admin/product',{sales:true})).status,200);
+ assert.equal(store.db.prepare("SELECT disabled FROM document_switches WHERE kind='site-offer'").get().disabled,0);
+});
+
+test('When a subscription ends the whole team loses write access; renewing brings it back',async t=>{
+ const f=await fixture(t),store=f.ownerStore;
+ await f.O('/v1/crm/users/add',{name:'Max',email:'max@example.test',password:'staff-password-123',role:'staff'});
+ const max=await f.login('max@example.test','staff-password-123'),M=f.as(max);
+ const owner=store.db.prepare("SELECT id FROM users WHERE email='owner@example.test'").get().id;
+ store.db.prepare("UPDATE users SET expires=? WHERE id=?").run(Date.now()-86400000,owner);
+ assert.equal((await M('/v1/crm/client',{name:'Анна'})).status,403,'employee blocked');
+ assert.equal((await f.O('/v1/crm/client',{name:'Анна'})).status,403,'owner read-only');
+ assert.equal((await f.get('/v1/crm/snapshot'+f.q,f.owner)).status,200,'owner can still look and export');
+ store.db.prepare("UPDATE users SET expires=? WHERE id=?").run(Date.now()-31*86400000,owner);
+ assert.equal((await f.get('/v1/crm/snapshot'+f.q,f.owner)).status,403,'after 30 days nothing is open');
+ store.db.prepare("UPDATE users SET expires=?,stage='active' WHERE id=?").run(Date.now()+30*86400000,owner);
+ assert.equal((await M('/v1/crm/client',{name:'Анна'})).status,200,'renewed');
 });

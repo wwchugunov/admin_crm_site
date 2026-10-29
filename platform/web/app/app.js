@@ -31,6 +31,14 @@ const statuses = {
 // What the signed-in member may open; the owner and the desktop/local mode have everything.
 const can = (key) =>
   !data || data.role === "owner" || data.mode !== "server" || (data.perms ? data.perms[key] !== false : data.role !== "staff");
+// Whether the company's plan includes a feature (always true while LOMVIKO is free).
+const feature = (f) => !data?.plan || data.plan.features?.[f] !== false;
+// Shown instead of a feature the plan does not include: which plan has it and where to see plans.
+function planLock(f) {
+  const p = OrbitPlans.cheapest(f),
+    en = OrbitI18n.language === "en";
+  return `<section class="plan-lock"><strong>${OrbitI18n.t("planLockTitle").replace("{plan}", escape(en ? p.en : p.uk)).replace("{price}", p.price)}</strong><p>${escape(OrbitPlans.FEATURES[f][en ? "en" : "uk"])}. ${OrbitI18n.t("planLockText")}</p><a class="secondary" href="https://lomviko.com/#start" target="_blank" rel="noopener">${OrbitI18n.t("planLockButton")}</a></section>`;
+}
 let data,
   page = "schedule",
   selectedDate = dateKey(new Date()),

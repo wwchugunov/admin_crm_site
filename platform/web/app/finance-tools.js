@@ -166,9 +166,9 @@ function financeTabs() {
 }
 function financeToolView() {
   const toolbar = `<div class="finance-toolbar"><input id="finance-month" type="month" value="${financeMonth}" aria-label="${OrbitI18n.t("m125")}"><span class="hint">${escape(data.currency)} · ${escape(data.timezone)}</span></div>`;
-  if (financeTab === "expenses") return toolbar + expensesView();
-  if (financeTab === "payroll") return toolbar + payrollView();
-  return vouchersView();
+  if (financeTab === "expenses") return feature("reports") ? toolbar + expensesView() : planLock("reports");
+  if (financeTab === "payroll") return feature("payroll") ? toolbar + payrollView() : planLock("payroll");
+  return feature("vouchers") ? vouchersView() : planLock("vouchers");
 }
 // What came in during the month: payments except those taken from certificates and passes, plus their sales.
 function monthMoney() {
@@ -302,7 +302,7 @@ function passModal() {
 
 // Materials in Catalog --------------------------------------------------------
 function materialsCard() {
-  if (!can("catalog")) return "";
+  if (!can("catalog") || !feature("stock")) return "";
   const list = data.materials || [];
   return `<section class="card materials-card"><div class="panel-head"><h2>${ft("matTitle")}</h2><button class="secondary" data-action="material-add">${ft("matAdd")}</button></div>${
     list.length

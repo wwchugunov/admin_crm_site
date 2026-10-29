@@ -44,7 +44,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
  const add=(name,full)=>{const type=TYPES[name.split('.').pop()];if(!type)return;const body=fs.readFileSync(full);files.set(name,{body,type,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'});};
  (function load(dir,prefix){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name),name=prefix+entry.name;if(entry.isDirectory())load(full,name+'/');else add(name,full);}})(publicDirectory,'');
  // Role rules are shared with the API so the browser and the server decide permissions the same way.
- add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));add('permissions.js',path.join(__dirname,'..','shared','permissions.js'));
+ add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));add('permissions.js',path.join(__dirname,'..','shared','permissions.js'));add('plans.js',path.join(__dirname,'..','shared','plans.js'));
  add('industries.js',path.join(__dirname,'..','shared','industries.js'));
  const drafts=new Map();
  const cookies=req=>Object.fromEntries((req.headers.cookie||'').split(';').map(s=>s.trim().split('=')).filter(p=>p.length===2));
@@ -138,7 +138,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
     if(req.method!=='POST'||req.headers.origin!==external.origin)problem(403,'Invalid origin');
     if(!String(req.headers['content-type']||'').startsWith('application/json'))problem(415,'JSON required');
     // Whether the public offer is published decides what registration asks people to accept.
-    if(url.pathname==='/web/info'){let offer=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)offer=(await r.json())?.offer?.version!=='off';}catch{}return reply(200,{version:VERSION,api:apiPublic,offer});}
+    if(url.pathname==='/web/info'){let offer=true,registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)offer=(await r.json())?.offer?.version!=='off';}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,registration});}
     if(url.pathname==='/web/call'){const {channel,args=[]}=await json(req,4*1024*1024);return reply(200,{value:(await call(req,res,channel,args))??null});}
     if(url.pathname==='/web/export'){
      const {format,password}=await json(req,4096),s=session(req);if(!['json','csv','orbit'].includes(format))problem(400,'Unknown format');

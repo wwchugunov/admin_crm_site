@@ -977,6 +977,16 @@ function setupBookingClients() {
 }
 
 function registrationModal() {
+  // Registration closed by LOMVIKO: explain and point to the request form on the site.
+  if (window.OrbitWeb?.registration === false) {
+    modal(
+      OrbitI18n.t("registrationClosedTitle"),
+      `<p>${OrbitI18n.t("registrationClosedText")}</p><p><a class="primary" href="https://lomviko.com/#start" target="_blank" rel="noopener">${OrbitI18n.t("registrationClosedButton")}</a></p>`,
+      async () => {},
+      OrbitI18n.t("close"),
+    );
+    return;
+  }
   closeModal();
   modal(
     OrbitI18n.t("registerFreeTrial"),

@@ -633,3 +633,39 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 }
 /* "Увійти" for people who already have an account; phones keep only the trial button. */
 @media (max-width:560px){.header-login{display:none}}
+
+/* Pricing: three plans side by side; the popular one is the dark tile. */
+.pricing-head{max-width:760px}
+.pricing-head h2{font-size:clamp(34px,4.2vw,54px)}
+.pricing-head h2 em{display:block;color:var(--brand)}
+.pricing-head .section-intro{margin-top:18px}
+.free-banner{display:inline-block;margin:22px 0 0;padding:12px 18px;border-radius:16px;background:var(--mint);color:var(--brand-ink);font-weight:600;line-height:1.45}
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:40px;align-items:stretch}
+.tier{position:relative;display:flex;flex-direction:column;gap:6px;padding:30px 28px 28px;border-radius:28px;background:var(--soft);overflow:hidden}
+.tier h3{font-size:24px;letter-spacing:-.03em;margin:0}
+.tier-for{margin:0 0 14px;color:#5b616a;line-height:1.45;min-height:2.9em}
+.tier-price{display:flex;align-items:baseline;gap:10px;margin:0}
+.tier-price strong{font-size:clamp(54px,5vw,68px);font-weight:800;letter-spacing:-.05em;line-height:.95}
+.tier-price span{font-size:15px;color:#5b616a}
+.tier-year{margin:2px 0 18px;font-size:14px;color:#5b616a}
+.tier .btn{margin-bottom:20px}
+.tier-includes,.plan-includes{margin:0 0 8px;font-size:14px;font-weight:700}
+.tier-list{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.tier-list li{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.45}
+.tier-list svg{flex:none;width:18px;height:18px;margin-top:2px;fill:none;stroke:var(--brand);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tier-popular{background:var(--tile);color:#fff}
+.tier-popular::before{content:"";position:absolute;width:300px;height:300px;right:-120px;top:-150px;border-radius:50%;background:var(--grad);filter:blur(10px);opacity:.7}
+.tier-popular>*{position:relative}
+.tier-popular .tier-for,.tier-popular .tier-price span,.tier-popular .tier-year{color:#a8afb8}
+.tier-popular .tier-list li{color:#e6e9ec}
+.tier-popular .tier-list svg{stroke:var(--neon-green)}
+.tier-popular .btn{background:#fff;color:var(--ink)}
+.tier-badge{align-self:flex-start;margin-bottom:10px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.14);color:var(--neon-green);font-size:13px;font-weight:700}
+.btn-primary{background:var(--ink);color:#fff}
+.pricing .plan-note{margin:22px 0 0;color:#5b616a;font-size:14px}
+.pricing-request{display:grid;justify-items:start;gap:16px;margin-top:28px;max-width:560px}
+.pricing-request .demo-form{width:100%;background:var(--soft);border-radius:28px}
+@media (max-width:960px){.plans{grid-template-columns:1fr;max-width:520px}.tier-for{min-height:0}}
+.tier .btn-ghost{background:#fff;box-shadow:inset 0 0 0 1.5px #dde2e5}
+.tier .btn-ghost:hover{background:#fff;box-shadow:inset 0 0 0 1.5px var(--brand)}
+.tier-badge{position:absolute;top:24px;right:24px;margin:0}

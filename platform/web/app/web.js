@@ -13,7 +13,13 @@
     });
   const ready = post("/web/info")
     .then((r) => r.json())
-    .then((value) => (info = value))
+    .then((value) => {
+      info = value;
+      if (value.registration === false)
+        for (const b of document.querySelectorAll('[data-action="register"] span'))
+          b.textContent = OrbitI18n.t("registrationClosedButton");
+      return value;
+    })
     .catch(() => {});
   function signedOutError() {
     const error = Error("");
@@ -135,6 +141,10 @@
   // Signed out (or the session ended): the sign-in screen replaces the workspace.
   window.OrbitWeb = {
     // False while the public offer is switched off: registration then asks for the privacy policy only.
+    // False when the LOMVIKO owner closed registration: the app offers a request instead.
+    get registration() {
+      return info.registration !== false;
+    },
     get offer() {
       return info.offer !== false;
     },

@@ -45,3 +45,12 @@ test('Registration during the launch offer runs free until 1 March 2027 and send
  await f.server.mail.tick();const welcome=f.sent.find(m=>m.to==='welcome@example.test'&&/безкоштовний період почався/.test(m.subject));
  assert(welcome,'welcome email sent');assert.match(welcome.text,/Telegram/);assert.match(welcome.text,/app\.lomviko\.com|Відкрити LOMVIKO/);
 });
+
+test('The product owner can close registration: new sign-ups are refused until it opens again',async t=>{
+ const f=await fixture(t),request=start('closed@example.test');
+ f.store.setProduct('registration',false);
+ const closed=await f.call('/v1/register/start',request.data);
+ assert.equal(closed.status,403);assert.match(closed.value.error,/закрито/);
+ f.store.setProduct('registration',true);
+ assert.equal((await f.call('/v1/register/start',start('open@example.test').data)).status,201);
+});

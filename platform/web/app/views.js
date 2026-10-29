@@ -49,6 +49,7 @@ function dashboardChart(rows, metric, title) {
     .join("")}</svg>`;
 }
 function dashboardView() {
+  if (!feature("reports")) return planLock("reports");
   const a = OrbitAnalytics.dashboard(data, dashboardMode, dashboardValue()),
     popular = a.services[0];
   const filter = `<div class="dashboard-toolbar"><div class="period-buttons" role="group" aria-label="${OrbitI18n.t("m072")}">${[
@@ -95,6 +96,7 @@ function dashboardView() {
 function financeView() {
   if (!can("finance"))
     return empty(OrbitI18n.t("m106"), OrbitI18n.t("m107"));
+  if (financeTab === "overview" && !feature("reports")) return financeTabs() + planLock("reports");
   if (financeTab !== "overview") return financeTabs() + financeToolView();
   const appointments = data.appointments.filter(
       (a) =>
@@ -186,7 +188,7 @@ function teamView() {
   const rows = team.length
     ? `<table class="table"><thead><tr><th>${OrbitI18n.t("m139")}</th><th>${OrbitI18n.t("m140")}</th><th>${OrbitI18n.t("teamAccess")}</th><th>${OrbitI18n.t("m141")}</th><th></th></tr></thead><tbody>${team.map((u) => `<tr><td><strong>${escape(u.name)}</strong><div class="sub">${escape(u.email)}</div></td><td>${escape(roles[u.role])}</td><td class="team-access">${access(u)}</td><td><span class="badge status-${u.stage}">${u.stage === "blocked" ? OrbitI18n.t("m135") : OrbitI18n.t("m136")}</span></td><td>${u.id !== data.account.id ? `<button class="secondary" data-action="team-edit" data-id="${u.id}">${OrbitI18n.t("m137")}</button>` : OrbitI18n.t("m138")}</td></tr>`).join("")}</tbody></table>`
     : `<p class="loading">${OrbitI18n.t("teamLoading")}</p>`;
-  return `<div class="list-toolbar"><span class="role-hint">${OrbitI18n.t("m148")} ${escape(roles[data.role])}</span><div class="team-actions"><button class="secondary" data-action="business-add">${OrbitI18n.t("m133")}</button><button class="primary" data-action="team-add">${OrbitI18n.t("m134")}</button></div></div><section class="panel">${rows}</section><p class="hint mt">${OrbitI18n.t("teamHint")}</p>`;
+  return `<div class="list-toolbar"><span class="role-hint">${OrbitI18n.t("m148")} ${escape(roles[data.role])}</span><div class="team-actions">${feature("multi") ? `<button class="secondary" data-action="business-add">${OrbitI18n.t("m133")}</button>` : ""}<button class="primary" data-action="team-add">${OrbitI18n.t("m134")}</button></div></div><section class="panel">${rows}</section><p class="hint mt">${OrbitI18n.t("teamHint")}</p>`;
 }
 // Switches for each part of the app; the role only picks the starting set.
 function permissionFields(role, perms) {
@@ -467,6 +469,7 @@ function lapsedClients() {
     .sort((a, b) => b.away - a.away);
 }
 function lapsedView(rows) {
+  if (!feature("marketing")) return planLock("marketing");
   const manage = can("clients"),
     match = (c) =>
       `${c.name} ${c.phone}`.toLowerCase().includes(search.toLowerCase()),
@@ -674,7 +677,7 @@ function integrationsView() {
         more: `<p>${OrbitI18n.t("m236")}</p>`,
       })
     : "";
-  return `<div class="integrations">${settingsGroup(OrbitI18n.t("intGroupClients"), booking + telegram + reviewsRow() + website, OrbitI18n.t("m237"))}${settingsGroup(OrbitI18n.t("intGroupPay"), payRow("monobank") + payRow("liqpay"))}${fiscalGroup()}</div>`;
+  return `<div class="integrations">${settingsGroup(OrbitI18n.t("intGroupClients"), booking + telegram + (feature("marketing") ? reviewsRow() : "") + website, OrbitI18n.t("m237"))}${settingsGroup(OrbitI18n.t("intGroupPay"), feature("payments") ? payRow("monobank") + payRow("liqpay") : planLock("payments"))}${feature("fiscal") ? fiscalGroup() : settingsGroup(OrbitI18n.t("planFiscal"), planLock("fiscal"))}</div>`;
 }
 let settingsSection = "general";
 // One setting per row: what it is on the left, the control on the right.
@@ -754,7 +757,7 @@ function settingsAccount() {
             ? settingRow(
                 OrbitI18n.t("subscriptionTitle"),
                 `<button type="button" class="primary" data-action="subscription-extend">${OrbitI18n.t("subscriptionExtend")}</button>`,
-                `${escape(subscriptionText(subscriptionState()))}. ${OrbitI18n.t("subscriptionPriceHint")}`,
+                `${data.plan && !data.plan.free ? `${OrbitI18n.t("planCurrent")}: ${escape(OrbitI18n.language === "en" ? OrbitPlans.byId(data.plan.id).en : OrbitPlans.byId(data.plan.id).uk)}. ` : ""}${escape(subscriptionText(subscriptionState()))}. ${OrbitI18n.t("subscriptionPriceHint")}`,
               )
             : "")
         : settingRow(
