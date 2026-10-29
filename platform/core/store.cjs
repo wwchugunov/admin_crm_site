@@ -250,7 +250,7 @@ class Store {
     this.reviewSchema();
     // Indexes for the snapshot and client history (added after all tables exist).
     this.db.exec(
-      "CREATE INDEX IF NOT EXISTS payment_visit ON payments(appointment_id);CREATE INDEX IF NOT EXISTS visit_clients ON appointment_clients(client_id);CREATE INDEX IF NOT EXISTS visit_resources ON appointment_resources(resource_id);CREATE INDEX IF NOT EXISTS visit_start ON appointments(start);CREATE INDEX IF NOT EXISTS payment_at ON payments(at);",
+      "CREATE INDEX IF NOT EXISTS payment_visit ON payments(appointment_id);CREATE INDEX IF NOT EXISTS visit_clients ON appointment_clients(client_id);CREATE INDEX IF NOT EXISTS visit_resources ON appointment_resources(resource_id);CREATE INDEX IF NOT EXISTS visit_start ON appointments(start);CREATE INDEX IF NOT EXISTS visit_open ON appointments(status,end);CREATE INDEX IF NOT EXISTS payment_at ON payments(at);",
     );
     this.revisionSchema();
   }
@@ -970,13 +970,21 @@ class Store {
     // Nothing changed since the app's last copy: only say so.
     if (options.revision === revision && Number(options.from) === from)
       return { unchanged: true, revision, loaded_from: from };
+    // The same copy serves every member until data changes (or five minutes pass, for "upcoming").
+    const cacheKey = `${revision}|${from}|${Math.floor(Date.now() / 300000)}`;
+    if (this.snapshotCache?.key === cacheKey) return this.snapshotCache.value;
+    const value = this.buildSnapshot(from, revision);
+    this.snapshotCache = { key: cacheKey, value };
+    return value;
+  }
+  buildSnapshot(from, revision) {
     const profile = {};
     for (const key of PROFILE) profile[key] = this.get(key);
     // Per-client totals over all time, so the client list does not need every old visit.
     const totals = new Map(
       this.db
         .prepare(
-          "SELECT p.client_id id,sum(a.status='confirmed' AND a.start>?) upcoming,sum(a.status='completed') done,sum(a.status='no_show') no_show,max(CASE WHEN a.status='completed' THEN a.start END) last,sum(COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) paid,sum(CASE WHEN a.status='completed' THEN max(0,a.total-COALESCE((SELECT sum(amount) FROM payments WHERE appointment_id=a.id),0)) ELSE 0 END) due FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id GROUP BY p.client_id",
+          "SELECT p.client_id id,sum(a.status='confirmed' AND a.start>?) upcoming,sum(a.status='completed') done,sum(a.status='no_show') no_show,max(CASE WHEN a.status='completed' THEN a.start END) last,sum(COALESCE(pay.s,0)) paid,sum(CASE WHEN a.status='completed' THEN max(0,a.total-COALESCE(pay.s,0)) ELSE 0 END) due FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id LEFT JOIN (SELECT appointment_id,sum(amount) s FROM payments GROUP BY appointment_id) pay ON pay.appointment_id=a.id GROUP BY p.client_id",
         )
         .all(Date.now())
         .map((r) => [r.id, r]),
@@ -1206,9 +1214,9 @@ class Store {
       ) &&
       !this.db
         .prepare(
-          "SELECT a.id FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE r.resource_id=? AND a.status='confirmed' AND a.start<? AND a.end>?",
+          "SELECT a.id FROM appointments a INDEXED BY visit_open JOIN appointment_resources r ON r.appointment_id=a.id AND r.resource_id=? WHERE a.status='confirmed' AND a.end>? AND a.start<?",
         )
-        .get(resource, end, start)
+        .get(resource, start, end)
     );
   }
   availableResources(serviceId, primary, start) {
@@ -1377,9 +1385,22 @@ class Store {
   }
   // Usual gap between a client's completed visits in days (median); none with fewer than two visit days.
   rhythms() {
-    const day = new Intl.DateTimeFormat("en-CA", {
-        timeZone: this.get("timezone") || "Europe/Kyiv",
-      }),
+    // Computed once per data revision; the day of each visit comes from a per-day zone offset
+    // instead of formatting every timestamp (thousands of visits stay fast).
+    const revision = this.revision();
+    if (this.rhythmCache?.revision === revision) return this.rhythmCache.value;
+    const timezone = this.get("timezone") || "Europe/Kyiv",
+      DAY = 86400000,
+      parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
+      offsets = new Map(),
+      offset = (k) => {
+        if (!offsets.has(k)) {
+          const at = k * DAY + 12 * 3600000,
+            p = Object.fromEntries(parts.formatToParts(at).map((x) => [x.type, x.value]));
+          offsets.set(k, Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - at);
+        }
+        return offsets.get(k);
+      },
       byClient = new Map(),
       out = new Map();
     for (const r of this.db
@@ -1387,21 +1408,17 @@ class Store {
         "SELECT p.client_id id,a.start FROM appointment_clients p JOIN appointments a ON a.id=p.appointment_id WHERE a.status='completed' ORDER BY a.start",
       )
       .all()) {
-      const days = byClient.get(r.id) || new Set();
-      days.add(day.format(r.start));
-      byClient.set(r.id, days);
+      const dayNo = Math.floor((r.start + offset(Math.floor(r.start / DAY))) / DAY),
+        days = byClient.get(r.id);
+      if (!days) byClient.set(r.id, [dayNo]);
+      else if (days[days.length - 1] !== dayNo) days.push(dayNo);
     }
-    for (const [id, set] of byClient) {
-      const days = [...set];
+    for (const [id, days] of byClient) {
       if (days.length < 2) continue;
-      const gaps = days
-        .slice(1)
-        .map((d, i) =>
-          Math.round((Date.parse(d) - Date.parse(days[i])) / 86400000),
-        )
-        .sort((a, b) => a - b);
+      const gaps = days.slice(1).map((d, i) => d - days[i]).sort((a, b) => a - b);
       out.set(id, gaps[Math.floor((gaps.length - 1) / 2)]);
     }
+    this.rhythmCache = { revision, value: out };
     return out;
   }
   // Minimum days without a visit before a client shows in "Haven't visited for a while".

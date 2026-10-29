@@ -1,8 +1,8 @@
 const OrbitI18n = require('../shared/i18n.js');
 const crypto = require('node:crypto');
-async function request(url, options = {}) {
+async function request(url, options = {}, timeout = 20000) {
   let response;
-  try { response = await fetch(url, { ...options, signal: AbortSignal.timeout(20000) }); }
+  try { response = await fetch(url, { ...options, signal: AbortSignal.timeout(timeout) }); }
   catch { throw Error(OrbitI18n.t('m579')); }
   if (!response.ok) throw Error(`${OrbitI18n.t('m580')} ${response.status}${OrbitI18n.t('m581')}`);
   let result; try { result = await response.json(); } catch { throw Error(OrbitI18n.t('m582')); }
@@ -10,9 +10,9 @@ async function request(url, options = {}) {
 }
 class Telegram {
   constructor(store, vault, options = {}) { this.runtime = options.runtime || 'desktop'; this.store = store; this.vault = vault; this.sessions = new Map(); this.languages = new Map(); this.busy = false; this.state = OrbitI18n.t('m217'); }
-  async call(method, data = {}, override) {
+  async call(method, data = {}, override, timeout) {
     const token = override || this.vault.get('telegram'); if (!token) throw Error(OrbitI18n.t('m583'));
-    const result = await request(`https://api.telegram.org/bot${token}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const result = await request(`https://api.telegram.org/bot${token}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }, timeout);
     if (!result.ok) throw Error(OrbitI18n.t('m584')); return result.result;
   }
   async connect(token) {
@@ -125,7 +125,9 @@ class Telegram {
       try {
         const chat = row.chat_id, id = row.appointment_id;
         // "I'll come" for everyone; moving or cancelling only for the person who made the booking.
-        await this.send(chat, `${this.text(chat,'botReminder')}\n${row.service_name} · ${this.date(chat,row.start)} (${this.store.get('timezone')})\n${this.store.get('business')}`, row.client_id === row.main_client ? [[this.button(chat,'botCome',`ok:${id}`)],[this.button(chat,'botMove',`mv:${id}`),this.button(chat,'botCancelShort',`cancel:${id}`)]] : [[this.button(chat,'botCome',`ok:${id}`)],[this.button(chat,'botVisits','/appointments'),this.button(chat,'botHome','menu')]]);
+        // "Tomorrow at 12:00 — Haircut", then the company and its address; the zone is the company's own.
+        const at = this.date(chat, row.start, { hour: '2-digit', minute: '2-digit' }), sameDay = this.date(chat, row.start, { day: 'numeric', month: 'numeric' }) === this.date(chat, now, { day: 'numeric', month: 'numeric' });
+        await this.send(chat, `${this.text(chat, sameDay ? 'botReminderToday' : 'botReminderTomorrow').replace('{time}', at).replace('{service}', row.service_name)}${sameDay ? '' : `\n${this.date(chat, row.start, { weekday: 'long', day: 'numeric', month: 'long' })}`}\n${[this.store.get('business'), this.store.get('address')].filter(Boolean).join(', ')}`, row.client_id === row.main_client ? [[this.button(chat,'botCome',`ok:${id}`)],[this.button(chat,'botMove',`mv:${id}`),this.button(chat,'botCancelShort',`cancel:${id}`)]] : [[this.button(chat,'botCome',`ok:${id}`)],[this.button(chat,'botVisits','/appointments'),this.button(chat,'botHome','menu')]]);
         this.store.db.prepare("UPDATE reminder_deliveries SET status='sent' WHERE appointment_id=? AND kind=? AND client_id=?").run(row.appointment_id, row.kind,row.client_id);
       } catch {
         this.store.db.prepare("UPDATE reminder_deliveries SET status='pending',attempts=attempts+1,next_at=? WHERE appointment_id=? AND kind=? AND client_id=?").run(now + Math.min(3600000, 60000 * 2 ** Math.min(row.attempts, 6)), row.appointment_id, row.kind,row.client_id);
@@ -143,13 +145,38 @@ class Telegram {
       try { await this.send(chat, `${this.text(chat,'botWaitOffer')}\n${service} · ${this.date(chat, times[0], { weekday: 'long', day: 'numeric', month: 'long' })}\n${this.store.get('business')}`, buttons); } catch {}
     }
   }
+  // On the server each bot keeps one long poll open, so a message is answered the moment it arrives
+  // (the periodic tick then only sends reminders). Stops when the company is no longer allowed.
+  listen(allowed) {
+    if (this.listening || this.closed || !this.vault.has('telegram')) return;
+    this.listening = true;
+    const pause = (ms) => new Promise((ok) => setTimeout(ok, ms).unref?.());
+    (async () => {
+      while (!this.closed && this.vault.has('telegram') && allowed()) {
+        const started = Date.now(); let count = 0;
+        try {
+          const updates = await this.call('getUpdates', { offset: this.store.get('telegram_offset') || 0, timeout: 25, limit: 50, allowed_updates: ['message', 'callback_query'] }, undefined, 40000);
+          count = updates.length;
+          for (const update of updates) {
+            this.store.set('telegram_offset', update.update_id + 1);
+            try { await this.handle(update); } catch {}
+          }
+          this.state = OrbitI18n.t('m618');
+        } catch (e) { this.state = e.message; await pause(5000); }
+        if (!count && Date.now() - started < 1000) await pause(1000);
+      }
+      this.listening = false;
+    })();
+  }
   async tick() {
     if (this.busy || !this.vault.has('telegram')) return; this.busy = true;
     try {
-      const updates = await this.call('getUpdates', { offset: this.store.get('telegram_offset') || 0, timeout: 0, limit: 20, allowed_updates: ['message', 'callback_query'] });
-      for (const update of updates) {
-        // Acknowledge before side effects: avoid duplicate bookings on an uncertain HTTP reply.
-        this.store.set('telegram_offset', update.update_id + 1); await this.handle(update);
+      if (!this.listening) {
+        const updates = await this.call('getUpdates', { offset: this.store.get('telegram_offset') || 0, timeout: 0, limit: 20, allowed_updates: ['message', 'callback_query'] });
+        for (const update of updates) {
+          // Acknowledge before side effects: avoid duplicate bookings on an uncertain HTTP reply.
+          this.store.set('telegram_offset', update.update_id + 1); await this.handle(update);
+        }
       }
       await this.reminders(); await this.reviews().catch(() => {}); this.state = this.runtime === 'server' ? OrbitI18n.t('m618') : OrbitI18n.t('m619');
     } catch (e) { this.state = e.message; } finally { this.busy = false; }

@@ -86,7 +86,7 @@ class ProductStore {
     return { users, businesses:this.db.prepare('SELECT b.*,u.name owner_name FROM businesses b JOIN users u ON u.id=b.account_id ORDER BY b.name').all(), devices: this.db.prepare('SELECT d.id,d.user_id,d.platform,d.version,d.activated_at,d.last_seen,d.revoked,u.name user_name,u.business FROM devices d JOIN users u ON u.id=d.user_id ORDER BY last_seen DESC').all(), events: this.db.prepare('SELECT e.*,u.name user_name,u.email FROM events e LEFT JOIN users u ON u.id=e.user_id ORDER BY at DESC LIMIT 500').all() };
   }
 }
-function createProductServer({ store, adminToken, privateKey, publicKey, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,documentDirectory=path.join(store.directory,'documents'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
+function createProductServer({ store, adminToken, privateKey, publicKey, businessDirectory=path.join(store.directory,'businesses'), telegramFactory,allowLocalAdmin=false,botLongPoll=!allowLocalAdmin&&!telegramFactory,documentDirectory=path.join(store.directory,'documents'),mailTransportFactory,allowLocalMail=false,trustProxy=false }) {
   const rates = new Map();
   const administrator=new AdminAuth({directory:store.directory,token:adminToken,db:store.db,local:allowLocalAdmin});
   const members=new AdminMembers({db:store.db,mail:null,adminUrl:process.env.CH_PRODUCT_ADMIN_URL||(process.env.CH_APP_ADMIN_DOMAIN?'https://'+process.env.CH_APP_ADMIN_DOMAIN:''),totp,base32});administrator.members=members;
@@ -227,7 +227,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
         const business = store.db.prepare('SELECT * FROM businesses WHERE id=?').get(businessId);
         const user = business && store.db.prepare('SELECT * FROM users WHERE id=?').get(business.account_id);
         return user && user.stage !== 'blocked' && user.expires > Date.now() && !store.db.prepare('SELECT business_id FROM bot_workers WHERE business_id=?').get(businessId);
-      });
+      }, { listen: botLongPoll });
     }).catch(() => { console.error('LOMVIKO bot worker cycle failed'); }).finally(() => { botWork = null; });
     return botWork;
   }

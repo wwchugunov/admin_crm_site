@@ -9,7 +9,7 @@
     "botDepositAsk": {"uk": "Щоб підтвердити запис, внесіть передоплату {amount} протягом 30 хвилин. Інакше запис скасується, а час звільниться.", "en": "To confirm the booking, pay a prepayment of {amount} within 30 minutes. Otherwise the booking is cancelled and the time is freed."},
     "botDepositPay": {"uk": "Оплатити передоплату", "en": "Pay the prepayment"},
     "botDepositExpired": {"uk": "Запис скасовано: передоплату не отримано вчасно. Ви можете записатися знову.", "en": "The booking was cancelled: the prepayment did not arrive in time. You can book again."},
-    "botPhoneAsk": {"uk": "Щоб майстер міг зв’язатися з вами щодо запису, поділіться номером телефону: натисніть кнопку нижче або надішліть номер повідомленням.", "en": "So the specialist can reach you about the booking, share your phone number: tap the button below or send the number as a message."},
+    "botPhoneAsk": {"uk": "Щоб з вами могли зв’язатися щодо запису, поділіться номером телефону: натисніть кнопку нижче або надішліть номер повідомленням.", "en": "So the specialist can reach you about the booking, share your phone number: tap the button below or send the number as a message."},
     "botPhoneButton": {"uk": "Поділитися номером", "en": "Share my number"},
     "botPhoneThanks": {"uk": "Дякуємо, номер збережено.", "en": "Thank you, your number is saved."},
     "botPhoneOwn": {"uk": "Надішліть, будь ласка, власний номер телефону.", "en": "Please send your own phone number."},
@@ -40,7 +40,7 @@
     "botWaitOffer": {"uk":"🔔 Звільнився час! Записуємо того, хто першим натисне.","en":"🔔 A time has opened up! The first to tap gets it."},
     "botWaitStop": {"uk":"Більше не чекаю","en":"Stop waiting"},
     "botWaitTaken": {"uk":"На жаль, цей час уже забрали. Якщо звільниться ще, я напишу.","en":"Sorry, this time has already been taken. If another one opens up, I will message you."},
-    "botWaitStopped": {"uk":"Добре, прибрав вас із листа очікування.","en":"OK, you are off the waiting list."},
+    "botWaitStopped": {"uk":"Добре, ви більше не в листі очікування.","en":"OK, you are off the waiting list."},
     "botInvite": {"uk":"Давно вас не бачили! Запишіться на зручний час — це займе хвилину.","en":"We haven't seen you for a while! Book a convenient time — it takes a minute."},
     "botExternalOnline": {"uk":"✓ Власний сервер","en":"✓ Own server"},
     "botExternalWaiting": {"uk":"Очікує запуску на власному сервері","en":"Waiting for your server"},
@@ -152,7 +152,7 @@
     "botAgree": {"uk":"✅ Погоджуюсь і продовжую","en":"✅ I agree, continue"},
     "botConsent": {"uk":"Щоб записатися й отримувати нагадування, потрібна ваша згода. Компанія збереже ваше ім’я, Telegram ID та історію записів. Ви можете відключити сповіщення командою /stop або звернутися до компанії для видалення даних.","en":"To book and receive reminders, we need your consent. The business stores your name, Telegram ID and booking history. Send /stop to disconnect notifications or contact the business to delete your data."},
     "botChooseService": {"uk":"Яка послуга вас цікавить?","en":"Which service would you like?"},
-    "botChooseResource": {"uk":"До кого бажаєте записатися? Можна обрати будь-якого вільного спеціаліста / пост.","en":"Who would you like to book with? You can choose any available specialist / bay."},
+    "botChooseResource": {"uk":"До кого бажаєте записатися? Можна обрати будь-кого вільного.","en":"Who would you like to book with? You can choose any available specialist / bay."},
     "botChooseDay": {"uk":"Оберіть зручний день. Усі дати й час — за часовим поясом компанії:","en":"Choose a day. All dates and times use the business time zone:"},
     "botChooseTime": {"uk":"Оберіть зручний час:","en":"Choose a time:"},
     "botNoTimes": {"uk":"На цей день вільного часу немає. Оберіть іншу дату або іншого спеціаліста.","en":"No times are available on this day. Choose another date or specialist."},
@@ -171,11 +171,11 @@
     "botVisitList": {"uk":"Ваші майбутні записи. Натисніть, щоб переглянути деталі.","en":"Your upcoming appointments. Select one to see details."},
     "botService": {"uk":"Послуга","en":"Service"},
     "botWhen": {"uk":"Дата й час","en":"Date and time"},
-    "botResource": {"uk":"Спеціаліст / пост","en":"Specialist / bay"},
+    "botResource": {"uk":"Спеціаліст","en":"Specialist / bay"},
     "botPeople": {"uk":"Учасників","en":"Participants"},
     "botPrice": {"uk":"Вартість","en":"Total price"},
     "botMinutes": {"uk":"хв","en":"min"},
-    "botMissingInfo": {"uk":"Уточніть у адміністратора компанії.","en":"Please ask the business administrator."},
+    "botMissingInfo": {"uk":"Уточніть в адміністратора компанії.","en":"Please ask the business administrator."},
     "botExpired": {"uk":"Цей крок уже неактуальний. Почніть запис знову або відкрийте свої записи.","en":"This step has expired. Start a new booking or view your appointments."},
     "botChanged": {"uk":"Умови послуги змінилися. Оберіть послугу знову, щоб перевірити нову вартість і час.","en":"The service details have changed. Choose it again to review the current price and duration."},
     "botTaken": {"uk":"Цей час щойно зайняли. Оберіть інший час — ми перевіримо доступність знову.","en":"This time was just booked. Choose another time and we will check availability again."},
@@ -187,7 +187,9 @@
     "botVisitPassed": {"uk":"⏰ Час цього візиту вже минув. Якщо не встигли — оберіть новий зручний час.","en":"⏰ This visit time has already passed. If you missed it, pick a new time."},
     "botVisitDone": {"uk":"✅ Цей візит уже відбувся. Дякуємо, що були у нас! Будемо раді бачити вас знову.","en":"✅ This visit has already taken place. Thank you for coming — see you again!"},
     "botVisitCancelled": {"uk":"Цей запис скасовано. Можна обрати новий час.","en":"This booking was cancelled. You can pick a new time."},
-    "botReminder": {"uk":"🔔 Нагадуємо про ваш запис","en":"🔔 Your appointment reminder"}
+    "botReminder": {"uk":"🔔 Нагадуємо про ваш запис","en":"🔔 Your appointment reminder"},
+    "botReminderTomorrow": {"uk":"🔔 Нагадуємо: завтра о {time} — {service}","en":"🔔 Reminder: tomorrow at {time} — {service}"},
+    "botReminderToday": {"uk":"🔔 Нагадуємо: сьогодні о {time} — {service}","en":"🔔 Reminder: today at {time} — {service}"}
   };
   let language='uk';try{if(globalThis.localStorage?.getItem('orbit.language')==='en')language='en';}catch{}
   function t(key,lang=language){const value=messages[key];if(!value)throw Error('Unknown message: '+key);return value[lang==='en'?'en':'uk'];}

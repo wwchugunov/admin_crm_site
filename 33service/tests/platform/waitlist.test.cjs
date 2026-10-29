@@ -129,7 +129,7 @@ test('A full day offers the nearest free times and the waiting list; a freed tim
  assert.equal(f.store.db.prepare('SELECT status FROM waitlist WHERE client_id=?').get(anna).status,'waiting');
  // "Stop waiting" takes her off the list.
  await f.press(101,'wl-stop:'+f.store.db.prepare('SELECT id FROM waitlist WHERE client_id=?').get(anna).id);
- assert.match(f.sent.at(-1).text,/прибрав/);
+ assert.match(f.sent.at(-1).text,/більше не в листі/);
  assert.deepEqual(f.store.waitlist().map(w=>w.client_name),['Оксана']);
 });
 

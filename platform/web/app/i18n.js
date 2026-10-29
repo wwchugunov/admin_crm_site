@@ -1589,12 +1589,12 @@
       en: "Required resource count",
     },
     m290: {
-      uk: "Доступна для запису через бота",
-      en: "Available for bot booking",
+      uk: "Показувати в Telegram-боті",
+      en: "Show in the Telegram bot",
     },
     m291: {
-      uk: "Доступна в API сайту",
-      en: "Available in the website API",
+      uk: "Показувати на сторінці онлайн-запису і на сайті",
+      en: "Show on the online booking page and the website",
     },
     m292: {
       uk: "Сервер компанії",

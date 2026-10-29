@@ -18,7 +18,7 @@ class Businesses {
   get(business){if(!/^[a-f0-9-]{36}$/.test(business.id))throw Error('Invalid business id');if(!this.instances.has(business.id)){const directory=path.join(this.directory,business.id),store=new Store(path.join(directory,'crm.sqlite'));if(!store.get('onboarded')){store.set('business',business.name);store.set('onboarded',true);/* The server runs in UTC; a new company starts in Kyiv time and can change it in the profile. */if(store.get('timezone')==='UTC')store.set('timezone',process.env.CH_DEFAULT_TIMEZONE||'Europe/Kyiv');}const vault=new ServerVault(path.join(directory,'vault'),this.master),telegram=this.telegramFactory(store,vault);store.db.exec("UPDATE reminders SET status='pending' WHERE status='sending';UPDATE reminder_deliveries SET status='pending' WHERE status='sending'");this.instances.set(business.id,{store,vault,telegram});}return this.instances.get(business.id);}
   // Closes the company database and erases its folder (CRM data, vault secrets, update backups).
   remove(id){if(!/^[a-f0-9-]{36}$/.test(id))throw Error('Invalid business id');const runtime=this.instances.get(id);this.instances.delete(id);try{runtime?.store.db.close();}catch{}fs.rmSync(path.join(this.directory,id),{recursive:true,force:true});}
-  async tick(allowed){await Promise.all([...this.instances].filter(([id])=>allowed(id)).map(([,runtime])=>runtime.telegram.tick()));}
-  close(){for(const runtime of this.instances.values())runtime.store.db.close();}
+  async tick(allowed,{listen=false}={}){const active=[...this.instances].filter(([id])=>allowed(id));if(listen)for(const[id,runtime]of active)runtime.telegram.listen?.(()=>allowed(id));await Promise.all(active.map(([,runtime])=>runtime.telegram.tick()));}
+  close(){for(const runtime of this.instances.values()){if(runtime.telegram)runtime.telegram.closed=true;runtime.store.db.close();}}
 }
 module.exports={Businesses};

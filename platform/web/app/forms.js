@@ -810,7 +810,7 @@ function serviceFields(s = {}) {
       ? `<fieldset class="chip-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")}</legend>${data.resources.map((r) => `<label class="chip"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${(s.resource_ids || []).includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</fieldset><p class="hint">${OrbitI18n.t("staffWhoHint")}</p>`
       : "") +
     serviceExtraFields(s) +
-    `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.web_visible ? "checked" : ""}>${OrbitI18n.t("m291")}</label>`
+    `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.id ? (s.web_visible ? "checked" : "") : "checked"}>${OrbitI18n.t("m291")}</label>`
   );
 }
 function loginModal() {
