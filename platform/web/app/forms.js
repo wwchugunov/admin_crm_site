@@ -7,7 +7,7 @@ function profileFields() {
   );
 }
 function profileInputs(p) {
-  return `<div class="logo-row">${selectedLogo || p.logo ? `<img class="logo-preview" alt="${OrbitI18n.t("m039")}" src="${escape(selectedLogo || p.logo)}">` : ""}<button class="secondary" type="button" data-action="logo">${OrbitI18n.t("m053")}</button><span class="hint">${OrbitI18n.t("m054")}</span></div><div class="form-grid">${field(OrbitI18n.t("m040"), "phone", "tel", `value="${escape(p.phone || "")}" maxlength="40"`)}${field(OrbitI18n.t("m041"), "currency", "text", `required maxlength="3" value="${escape(p.currency || "UAH")}"`)}</div>${field(OrbitI18n.t("m042"), "address", "text", `value="${escape(p.address || "")}" maxlength="500"`)}<label for="field-timezone">${OrbitI18n.t("m043")}</label><select id="field-timezone" name="timezone" required>${OrbitZones.options(p.timezone || "Europe/Kyiv")}</select><p class="hint">${OrbitI18n.t("zoneHint")}</p><div class="form-grid">${field(OrbitI18n.t("m044"), "work_start", "time", `required value="${p.work_start || "09:00"}"`)}${field(OrbitI18n.t("m045"), "work_end", "time", `required value="${p.work_end || "18:00"}"`)}</div><label>${OrbitI18n.t("m055")}</label><div class="work-days">${[OrbitI18n.t("m046"), OrbitI18n.t("m047"), OrbitI18n.t("m048"), OrbitI18n.t("m049"), OrbitI18n.t("m050"), OrbitI18n.t("m051"), OrbitI18n.t("m052")].map((name, i) => `<label class="chip"><input type="checkbox" name="work_days" value="${i + 1}" ${(p.work_days || [1, 2, 3, 4, 5, 6, 7]).includes(i + 1) ? "checked" : ""}><span>${name}</span></label>`).join("")}</div><label class="checkbox-line"><input type="checkbox" name="website_enabled" value="1" ${p.website_enabled ? "checked" : ""}>${OrbitI18n.t("m056")}</label><p class="hint">${OrbitI18n.t("m057")}</p>`;
+  return `<div class="logo-row">${selectedLogo || p.logo ? `<img class="logo-preview" alt="${OrbitI18n.t("m039")}" src="${escape(selectedLogo || p.logo)}">` : ""}<button class="secondary" type="button" data-action="logo">${OrbitI18n.t("m053")}</button><span class="hint">${OrbitI18n.t("m054")}</span></div><div class="form-grid"><div>${field(OrbitI18n.t("m040"), "phone", "tel", `value="${escape(p.phone || "")}" maxlength="40"`)}</div><div>${field(OrbitI18n.t("m041"), "currency", "text", `required maxlength="3" value="${escape(p.currency || "UAH")}"`)}</div></div>${field(OrbitI18n.t("m042"), "address", "text", `value="${escape(p.address || "")}" maxlength="500"`)}<label for="field-timezone">${OrbitI18n.t("m043")}</label><select id="field-timezone" name="timezone" required>${OrbitZones.options(p.timezone || "Europe/Kyiv")}</select><p class="hint">${OrbitI18n.t("zoneHint")}</p><div class="form-grid"><div>${field(OrbitI18n.t("m044"), "work_start", "time", `required value="${p.work_start || "09:00"}"`)}</div><div>${field(OrbitI18n.t("m045"), "work_end", "time", `required value="${p.work_end || "18:00"}"`)}</div></div><label>${OrbitI18n.t("m055")}</label><div class="work-days">${[OrbitI18n.t("m046"), OrbitI18n.t("m047"), OrbitI18n.t("m048"), OrbitI18n.t("m049"), OrbitI18n.t("m050"), OrbitI18n.t("m051"), OrbitI18n.t("m052")].map((name, i) => `<label class="chip"><input type="checkbox" name="work_days" value="${i + 1}" ${(p.work_days || [1, 2, 3, 4, 5, 6, 7]).includes(i + 1) ? "checked" : ""}><span>${name}</span></label>`).join("")}</div><label class="checkbox-line"><input type="checkbox" name="website_enabled" value="1" ${p.website_enabled ? "checked" : ""}>${OrbitI18n.t("m056")}</label><p class="hint">${OrbitI18n.t("m057")}</p>`;
 }
 function profileValues(form) {
   const values = Object.fromEntries(form);
@@ -332,7 +332,7 @@ function appointmentModal(id) {
   if (!a) return;
   const status = statuses[a.status] ? a.status : "confirmed";
   const due = Math.max(0, a.price - a.paid),
-    staff = data.role === "staff";
+    staff = !can("money");
   const day = new Date(`${businessDate(a.start)}T12:00:00`).toLocaleDateString(
     OrbitI18n.locale(),
     { day: "numeric", month: "long", weekday: "short" },
@@ -466,7 +466,7 @@ function payProviders() {
   );
 }
 function monoReady() {
-  return payProviders().length > 0 && data.role !== "staff";
+  return payProviders().length > 0 && can("money");
 }
 function openPayLink(id) {
   return (data.payment_links || []).find((l) => l.appointment_id === id);
@@ -773,30 +773,38 @@ function serviceFields(s = {}) {
       `required maxlength="120" value="${escape(s.name || "")}"`,
     ) +
     '<div class="form-grid">' +
+    "<div>" +
     field(
       OrbitI18n.t("m286"),
       "duration",
       "number",
       `required min="5" max="480" value="${s.duration || 60}"`,
     ) +
+    "</div>" +
+    "<div>" +
     field(
       OrbitI18n.t("m287"),
       "price",
       "number",
       `required min="0" step="0.01" value="${(s.price || 0) / 100}"`,
     ) +
+    "</div>" +
+    "<div>" +
     field(
       OrbitI18n.t("m288"),
       "capacity",
       "number",
       `required min="1" max="100" value="${s.capacity || 1}"`,
     ) +
+    "</div>" +
+    "<div>" +
     field(
       OrbitI18n.t("m289"),
       "required_resources",
       "number",
       `required min="1" max="8" value="${s.required_resources || 1}"`,
     ) +
+    "</div>" +
     "</div>" +
     (data.resources.length
       ? `<fieldset class="chip-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")}</legend>${data.resources.map((r) => `<label class="chip"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${(s.resource_ids || []).includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</fieldset><p class="hint">${OrbitI18n.t("staffWhoHint")}</p>`
@@ -1106,7 +1114,7 @@ function clientDetails(c) {
   ].filter(Boolean);
   // Without a birthday the card offers to add one, so birthday greetings can find the client.
   const addBirthday =
-    !c.birthday && data.role !== "staff"
+    !c.birthday && can("clients")
       ? `<p class="hint client-birthday-add">${OrbitI18n.t("clientBirthday")}: — <button type="button" class="link-button" data-action="client-edit" data-id="${escape(c.id)}">${OrbitI18n.t("clientBirthdayAdd")}</button></p>`
       : "";
   return `${c.alert ? `<p class="client-alert">⚠ ${escape(c.alert)}</p>` : ""}${
@@ -1122,7 +1130,7 @@ function clientModal(id) {
   const c = data.clients.find((x) => x.id === id);
   if (!c) return;
   const st = clientStats(id),
-    staff = data.role === "staff",
+    staff = !can("money"),
     cur = escape(data.currency);
   const figures = [
     [OrbitI18n.t("clientVisits"), st.done],

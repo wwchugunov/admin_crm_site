@@ -109,7 +109,7 @@ function reviewsRow() {
     on,
     status: OrbitI18n.t(on ? "reviewsOn" : "reviewsOff"),
     short: OrbitI18n.t("reviewsShort"),
-    controls: data.role === "staff" ? "" : `<button class="${on ? "secondary" : "primary"}" data-action="reviews-setup">${OrbitI18n.t("reviewsSetup")}</button>`,
+    controls: !can("clients") ? "" : `<button class="${on ? "secondary" : "primary"}" data-action="reviews-setup">${OrbitI18n.t("reviewsSetup")}</button>`,
     more: `<p>${OrbitI18n.t("reviewsNeedBot")}</p>`,
   });
 }

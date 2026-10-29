@@ -28,6 +28,9 @@ const statuses = {
   cancelled: OrbitI18n.t("m002"),
   no_show: OrbitI18n.t("m003"),
 };
+// What the signed-in member may open; the owner and the desktop/local mode have everything.
+const can = (key) =>
+  !data || data.role === "owner" || data.mode !== "server" || (data.perms ? data.perms[key] !== false : data.role !== "staff");
 let data,
   page = "schedule",
   selectedDate = dateKey(new Date()),
@@ -39,6 +42,7 @@ let data,
   selectedLogo,
   financeMonth = new Date().toISOString().slice(0, 7),
   team = [],
+  teamLoading = false,
   appVersion = "";
 let scheduleMode = (() => {
   try {
@@ -277,7 +281,6 @@ const onlineActions = new Set([
   "complete",
   "cancel-booking",
   "no-show",
-  "team-refresh",
   "team-add",
   "team-edit",
   "business-add",
@@ -379,9 +382,17 @@ function render() {
   $(".workspace-icon").innerHTML = data.logo
     ? `<img alt="${OrbitI18n.t("m037")}" src="${escape(data.logo)}">`
     : escape(data.business.slice(0, 1));
+  // A wide logo gets the full sidebar width above the name instead of a tiny square.
+  const logo = $(".workspace-icon img");
+  $(".workspace").classList.remove("wide-logo");
+  if (logo) {
+    const fit = () => $(".workspace").classList.toggle("wide-logo", logo.naturalWidth > logo.naturalHeight * 1.4);
+    if (logo.complete) fit(); else logo.addEventListener("load", fit, { once: true });
+  }
   document.querySelector('[data-page="team"]').hidden = !remote;
-  document.querySelector('[data-page="finance"]').hidden =
-    data.role === "staff";
+  for (const [name, key] of [["dashboard", "dashboard"], ["clients", "clients"], ["catalog", "catalog"], ["finance", "finance"], ["integrations", "integrations"]])
+    document.querySelector(`[data-page="${name}"]`).hidden = !can(key);
+  if (["dashboard", "clients", "catalog", "finance", "integrations"].includes(page) && !can(page)) page = "schedule";
   if (page === "settings" && $("#settings-form")) profileFields();
   connectionView();
   $("#connection-corner").textContent =
@@ -390,7 +401,6 @@ function render() {
         ? OrbitI18n.t("offlineMode")
         : OrbitI18n.t("sharedBase")
       : OrbitI18n.t("localBase");
-  OrbitLayout.prepare(page, data);
   if (page === "schedule") OrbitScheduleGrid.layout();
   OrbitStartup.play();
 }

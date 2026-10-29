@@ -302,7 +302,7 @@ function passModal() {
 
 // Materials in Catalog --------------------------------------------------------
 function materialsCard() {
-  if (data.role === "staff") return "";
+  if (!can("catalog")) return "";
   const list = data.materials || [];
   return `<section class="card materials-card"><div class="panel-head"><h2>${ft("matTitle")}</h2><button class="secondary" data-action="material-add">${ft("matAdd")}</button></div>${
     list.length
@@ -343,7 +343,7 @@ function materialMoveModal(id, kind) {
 }
 // The part of the service form that lists materials used per visit and the specialist's share.
 function serviceExtraFields(s = {}) {
-  if (data.role === "staff") return "";
+  if (!can("catalog")) return "";
   const used = new Map((data.service_materials || []).filter((m) => m.service_id === s.id).map((m) => [m.material_id, m.quantity]));
   return (
     field(ft("serviceDeposit"), "deposit", "number", `min="0" step="0.01" value="${(s.deposit || 0) / 100}"`) +
@@ -372,11 +372,11 @@ function botGuide() {
   return `<div class="bot-guide"><strong>${ft("botGuideTitle")}</strong><ol>${[1, 2, 3, 4, 5].map((n) => `<li>${ft("botGuide" + n)}</li>`).join("")}</ol><p class="hint">${ft("botGuideSafe")}</p><p class="hint">${ft("botRoles")}</p></div>`;
 }
 function staffPayFields(r) {
-  if (data.role === "staff") return "";
+  if (!can("finance")) return "";
   return `<h3 class="form-section">${ft("payTitle")}</h3><div class="form-grid"><div>${field(ft("payPercent"), "pay_percent", "number", `min="0" max="100" step="0.01" value="${r.pay_percent || 0}"`)}</div><div>${field(ft("payDaily"), "pay_daily", "number", `min="0" step="0.01" value="${(r.pay_daily || 0) / 100}"`)}</div></div>`;
 }
 function discountField(c = {}) {
-  if (data.role === "staff") return "";
+  if (!can("clients")) return "";
   return field(ft("clientDiscount"), "discount", "number", `min="0" max="100" step="1" value="${c.discount || 0}"`) + `<p class="hint">${ft("clientDiscountHint")}</p>`;
 }
 // Certificates and passes in the payment form: a code to type, or the client's pass for this service.

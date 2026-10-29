@@ -70,7 +70,7 @@ Object.assign(OrbitI18n.messages, {
   fiscalFailedNote: { uk: "Є чеки з помилкою — перевірте дані каси в Checkbox і натисніть «Повторити».", en: "Some receipts failed — check the register in Checkbox and press “Retry”." },
 });
 function fiscalGroup() {
-  if (data.mode !== "server" || data.role === "staff") return "";
+  if (data.mode !== "server" || !can("integrations")) return "";
   const f = data.integrations.fiscal || { connected: false },
     owner = data.role === "owner",
     receipts = data.fiscal_receipts || [],

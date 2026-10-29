@@ -240,3 +240,51 @@ html[data-theme] .subscription-banner.ended {
 }
 .badge.deposit-wait { background: #fff4e0; color: #9a6a12; }
 .badge.rating-badge { background: #fff6dc; color: #a37812; letter-spacing: 1px; }
+
+/* ── 2.8 lively theme ──────────────────────────────────────────────────
+   The same voice as lomviko.com: Geologica headings, the brand green, a real
+   brand mark instead of a letter-spaced wordmark, sentence-case labels. */
+@font-face { font-family: Geologica; font-weight: 100 900; font-display: swap; src: url(fonts/geologica-cyrillic-wght-normal.woff2) format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: Geologica; font-weight: 100 900; font-display: swap; src: url(fonts/geologica-latin-wght-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF; }
+html[data-theme="light"], html[data-theme]:not([data-theme="dark"]) {
+  --canvas: #f3f6f4;
+  --sidebar: #ffffff;
+  --accent: #0a8f74;
+  --accent-strong: #06664c;
+  --accent-soft: #e2f5ee;
+  --focus: #0a8f7459;
+  --c-confirmed: #0a8f74;
+}
+html[data-theme="dark"] { --accent: #34c09b; --accent-strong: #5fd6b4; --accent-soft: #163a31; --c-confirmed: #34c09b; }
+html[data-theme] :is(#page-title, .panel-head h2, .modal h2, dialog h2, .empty strong, .stat strong) { font-family: Geologica, Onest, sans-serif; letter-spacing: -0.01em; }
+html[data-theme] #page-title { font-size: 21px; font-weight: 650; }
+/* Brand: a gradient mark with the initial, then the name in normal tracking. */
+html[data-theme] aside .brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px; }
+html[data-theme] aside .brand::before { content: "L"; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #05523f, #0a8f74 55%, #11a6a0); color: #fff; font: 700 16px/1 Geologica, sans-serif; box-shadow: 0 4px 12px #0a8f7440; }
+html[data-theme] aside .wordmark { font-family: Geologica, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0; color: var(--ink); }
+/* Company: the owner's logo is shown whole (any proportions), the name may take two lines. */
+html[data-theme] .workspace { align-items: center; gap: 10px; margin: 16px 0 12px; padding: 8px; border-radius: 12px; }
+html[data-theme] .workspace-icon { flex: none; width: 40px; height: 40px; border-radius: 11px; background: var(--accent-soft); color: var(--accent); font: 700 16px/1 Geologica, sans-serif; overflow: hidden; display: grid; place-items: center; }
+html[data-theme] .workspace-icon:has(img) { background: #fff; border: 1px solid var(--line); }
+html[data-theme] .workspace-icon img { width: 100%; height: 100%; object-fit: contain; padding: 3px; box-sizing: border-box; border-radius: 0; }
+html[data-theme] .workspace > div { min-width: 0; }
+html[data-theme] .workspace strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; line-height: 1.25; font-size: 14px; }
+/* Labels in sentence case, not shouted. */
+html[data-theme] .nav-label { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600; color: var(--muted); margin: 6px 10px 6px; }
+html[data-theme] .table th { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+html[data-theme] .nav, html[data-theme] aside nav .nav { border-radius: 10px; }
+html[data-theme] .nav.active, html[data-theme] aside nav .nav.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+html[data-theme] .nav.active svg { color: var(--accent); }
+html[data-theme] button.primary, html[data-theme] .primary { border-radius: 11px; }
+html[data-theme] .empty-icon { display: none; }
+html[data-theme] .panel, html[data-theme] .stat, html[data-theme] .card { border-radius: 14px; }
+.perm-list { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 12px; margin: 14px 0 6px; display: grid; gap: 6px; }
+.perm-list legend { padding: 0 6px; font-weight: 600; }
+.perm-list .hint { margin: 0 0 4px; }
+.perm-line { margin: 0; }
+.team-access { color: var(--muted); font-size: 13px; max-width: 320px; }
+html[data-theme] .workspace.wide-logo { flex-direction: column; align-items: flex-start; gap: 8px; }
+html[data-theme] .workspace.wide-logo .workspace-icon { width: 100%; height: 52px; border-radius: 10px; justify-items: start; }
+html[data-theme] .workspace.wide-logo .workspace-icon img { object-position: left center; padding: 6px 8px; }
+html[data-theme] .logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 12px 0; }
+html[data-theme] .logo-preview { width: auto; max-width: 220px; min-width: 70px; height: 70px; padding: 6px; background: #fff; box-sizing: border-box; margin: 0; }

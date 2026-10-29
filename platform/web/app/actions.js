@@ -228,7 +228,6 @@ const actions = {
     );
     $("#modal-submit").className = "danger";
   },
-  "layout-start": () => $("#layout-toggle").click(),
   "settings-section": (b) => {
     settingsSection = b.dataset.section;
     render();
@@ -274,10 +273,6 @@ const actions = {
     closeModal();
     bookingModal({ clientId: b.dataset.id });
   },
-  "team-refresh": async () => {
-    team = await window.orbit.call("account:users");
-    render();
-  },
   "team-add": () =>
     modal(
       OrbitI18n.t("m303"),
@@ -289,9 +284,11 @@ const actions = {
           "password",
           'required minlength="12" maxlength="128" autocomplete="new-password"',
         ) +
-        `<label>${OrbitI18n.t("m306")}</label><select name="role"><option value="staff">${OrbitI18n.t("m132")}</option><option value="admin">${OrbitI18n.t("m131")}</option></select>`,
+        `<label>${OrbitI18n.t("m306")}</label><select name="role" data-perm-role><option value="staff">${OrbitI18n.t("m132")}</option><option value="admin">${OrbitI18n.t("m131")}</option></select>` +
+        permissionFields("staff"),
       async (v) => {
-        await window.orbit.call("account:user:add", v);
+        const { name, email, password, role } = v;
+        await window.orbit.call("account:user:add", { name, email, password, role, perms: permissionValues(v) });
         team = await window.orbit.call("account:users");
       },
     ),
@@ -299,7 +296,8 @@ const actions = {
     const u = team.find((u) => u.id === b.dataset.id);
     modal(
       OrbitI18n.t("m307"),
-      `<p class="hint">${escape(u.name)} · ${escape(u.email)}</p><label>${OrbitI18n.t("m306")}</label><select name="role"><option value="staff" ${u.role === "staff" ? "selected" : ""}>${OrbitI18n.t("m132")}</option><option value="admin" ${u.role === "admin" ? "selected" : ""}>${OrbitI18n.t("m131")}</option></select><label>${OrbitI18n.t("m308")}</label><select name="stage"><option value="active">${OrbitI18n.t("m309")}</option><option value="blocked" ${u.stage === "blocked" ? "selected" : ""}>${OrbitI18n.t("m135")}</option></select>` +
+      `<p class="hint">${escape(u.name)} · ${escape(u.email)}</p><label>${OrbitI18n.t("m306")}</label><select name="role" data-perm-role><option value="staff" ${u.role === "staff" ? "selected" : ""}>${OrbitI18n.t("m132")}</option><option value="admin" ${u.role === "admin" ? "selected" : ""}>${OrbitI18n.t("m131")}</option></select><label>${OrbitI18n.t("m308")}</label><select name="stage"><option value="active">${OrbitI18n.t("m309")}</option><option value="blocked" ${u.stage === "blocked" ? "selected" : ""}>${OrbitI18n.t("m135")}</option></select>` +
+        permissionFields(u.role, u.perms) +
         field(
           OrbitI18n.t("m310"),
           "password",
@@ -307,7 +305,8 @@ const actions = {
           'minlength="12" maxlength="128" autocomplete="new-password"',
         ),
       async (v) => {
-        await window.orbit.call("account:user:update", { ...v, id: u.id });
+        const { role, stage, password } = v;
+        await window.orbit.call("account:user:update", { role, stage, password, id: u.id, perms: permissionValues(v) });
         team = await window.orbit.call("account:users");
       },
     );
@@ -608,7 +607,6 @@ setInterval(() => {
   run(() =>
     refresh({
       preserveView:
-        OrbitLayout.editing ||
         $("#modal").open ||
         page === "settings" ||
         ["INPUT", "TEXTAREA", "SELECT"].includes(
@@ -622,3 +620,14 @@ setInterval(() => {
   loadSupport();
   loadLegal();
 }, 120000);
+
+// Picking another role in the user dialog resets the switches to that role's starting set.
+document.addEventListener("change", (event) => {
+  const select = event.target.closest?.("select[data-perm-role]");
+  if (!select) return;
+  const preset = OrbitPermissions.PRESETS[select.value] || OrbitPermissions.PRESETS.staff;
+  for (const key of OrbitPermissions.KEYS) {
+    const box = select.form?.querySelector(`input[name="perm_${key}"]`);
+    if (box) box.checked = Boolean(preset[key]);
+  }
+});

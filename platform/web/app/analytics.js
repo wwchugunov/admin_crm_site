@@ -131,7 +131,7 @@ const Staff =
   function dashboard(data, mode, value) {
     const timezone = data.timezone || "Europe/Kyiv",
       range = period(mode, value, timezone),
-      financial = data.role !== "staff";
+      financial = can("money");
     const buckets = range.buckets.map((b) => ({
       ...b,
       bookings: 0,

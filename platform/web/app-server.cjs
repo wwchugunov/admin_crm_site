@@ -44,7 +44,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
  const add=(name,full)=>{const type=TYPES[name.split('.').pop()];if(!type)return;const body=fs.readFileSync(full);files.set(name,{body,type,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'});};
  (function load(dir,prefix){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name),name=prefix+entry.name;if(entry.isDirectory())load(full,name+'/');else add(name,full);}})(publicDirectory,'');
  // Role rules are shared with the API so the browser and the server decide permissions the same way.
- add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));
+ add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));add('permissions.js',path.join(__dirname,'..','shared','permissions.js'));
  add('industries.js',path.join(__dirname,'..','shared','industries.js'));
  const drafts=new Map();
  const cookies=req=>Object.fromEntries((req.headers.cookie||'').split(';').map(s=>s.trim().split('=')).filter(p=>p.length===2));

@@ -788,20 +788,20 @@
       en: "Income by",
     },
     m091: {
-      uk: "ПОСЛУГА",
-      en: "SERVICE",
+      uk: "Послуга",
+      en: "Service",
     },
     m092: {
-      uk: "ЗАПИСИ",
-      en: "BOOKINGS",
+      uk: "Записи",
+      en: "Bookings",
     },
     m093: {
-      uk: "УЧАСНИКИ",
-      en: "PARTICIPANTS",
+      uk: "Учасники",
+      en: "Participants",
     },
     m094: {
-      uk: "ЧАСТКА ЗАПИСІВ",
-      en: "BOOKING SHARE",
+      uk: "Частка записів",
+      en: "Booking share",
     },
     m095: {
       uk: "Немає записів за період",
@@ -812,8 +812,8 @@
       en: "The service ranking will appear once bookings are created.",
     },
     m097: {
-      uk: "ДОХІД",
-      en: "INCOME",
+      uk: "Дохід",
+      en: "Income",
     },
     m098: {
       uk: "Дохід — фактичні платежі за вирахуванням повернень за датою платежу; це не прибуток.",
@@ -836,12 +836,12 @@
       en: "Period breakdown",
     },
     m103: {
-      uk: "ПЕРІОД",
-      en: "PERIOD",
+      uk: "Період",
+      en: "Period",
     },
     m104: {
-      uk: "ЗАВАНТАЖЕНІСТЬ",
-      en: "OCCUPANCY",
+      uk: "Завантаженість",
+      en: "Occupancy",
     },
     m105: {
       uk: "Завантаженість — зайнятий час співробітників і постів у робочі години за поточним графіком компанії. Кілька ресурсів враховуються окремо. Записи та популярність рахуються за датою візиту; скасування й неявки виключені.",
@@ -904,16 +904,16 @@
       en: "Refund",
     },
     m120: {
-      uk: "ДАТА",
-      en: "DATE",
+      uk: "Дата",
+      en: "Date",
     },
     m121: {
-      uk: "СУМА",
-      en: "AMOUNT",
+      uk: "Сума",
+      en: "Amount",
     },
     m122: {
-      uk: "СПОСІБ",
-      en: "METHOD",
+      uk: "Спосіб",
+      en: "Method",
     },
     m123: {
       uk: "Платежів поки немає",
@@ -980,20 +980,20 @@
       en: "Your account",
     },
     m139: {
-      uk: "КОРИСТУВАЧ",
-      en: "USER",
+      uk: "Користувач",
+      en: "User",
     },
     m140: {
-      uk: "РОЛЬ",
-      en: "ROLE",
+      uk: "Роль",
+      en: "Role",
     },
     m141: {
-      uk: "СТАТУС",
-      en: "STATUS",
+      uk: "Статус",
+      en: "Status",
     },
     m142: {
-      uk: "ДІЇ",
-      en: "ACTIONS",
+      uk: "Дії",
+      en: "Actions",
     },
     m143: {
       uk: "Завантажте користувачів",
@@ -1109,12 +1109,12 @@
       en: "In your client database",
     },
     m164: {
-      uk: "ПОСТ / МАЙСТЕР",
-      en: "BAY / SPECIALIST",
+      uk: "Пост / майстер",
+      en: "Bay / specialist",
     },
     m165: {
-      uk: "СПЕЦІАЛІСТ",
-      en: "SPECIALIST",
+      uk: "Спеціаліст",
+      en: "Specialist",
     },
     m166: {
       uk: "Оплата / повернення",
@@ -1133,12 +1133,12 @@
       en: "until",
     },
     m170: {
-      uk: "ЧАС",
-      en: "TIME",
+      uk: "Час",
+      en: "Time",
     },
     m171: {
-      uk: "КЛІЄНТ / ПОСЛУГА",
-      en: "CLIENT / SERVICE",
+      uk: "Клієнт / послуга",
+      en: "Client / service",
     },
     m172: {
       uk: "День відкритий для нових записів",
@@ -1217,12 +1217,12 @@
       en: "Connection link",
     },
     m191: {
-      uk: "КЛІЄНТ",
-      en: "CLIENT",
+      uk: "Клієнт",
+      en: "Client",
     },
     m192: {
-      uk: "ТЕЛЕФОН",
-      en: "PHONE",
+      uk: "Телефон",
+      en: "Phone",
     },
     m193: {
       uk: "Нічого не знайдено",
@@ -1973,32 +1973,32 @@
       en: "Terms",
     },
     m395: {
-      uk: "КОРИСТУВАЧ / КОМПАНІЯ",
-      en: "USER / COMPANY",
+      uk: "Користувач / компанія",
+      en: "User / company",
     },
     m396: {
-      uk: "ДОСТУП ДО",
-      en: "ACCESS UNTIL",
+      uk: "Доступ до",
+      en: "Access until",
     },
     m397: {
-      uk: "ПРИСТРОЇ",
-      en: "DEVICES",
+      uk: "Пристрої",
+      en: "Devices",
     },
     m398: {
       uk: "Користувачів поки немає",
       en: "No users yet",
     },
     m399: {
-      uk: "КОЛИ",
-      en: "WHEN",
+      uk: "Коли",
+      en: "When",
     },
     m400: {
-      uk: "ПОДІЯ",
-      en: "EVENT",
+      uk: "Подія",
+      en: "Event",
     },
     m401: {
-      uk: "ПЛАТФОРМА",
-      en: "PLATFORM",
+      uk: "Платформа",
+      en: "Platform",
     },
     m402: {
       uk: "Подій поки немає",
@@ -2057,17 +2057,17 @@
       en: "Email supplied by the owner, not verified",
     },
     m416: {
-      uk: "ПРИСТРІЙ",
-      en: "DEVICE",
+      uk: "Пристрій",
+      en: "Device",
     },
-    m417: { uk: "ПЕРШИЙ ВХІД", en: "FIRST SIGN-IN" },
+    m417: { uk: "Перший вхід", en: "First sign-in" },
     m418: {
-      uk: "ОСТАННІЙ ЗВ’ЯЗОК",
-      en: "LAST CONNECTION",
+      uk: "Останній зв’язок",
+      en: "Last connection",
     },
     m419: {
-      uk: "ДОСТУП",
-      en: "ACCESS",
+      uk: "Доступ",
+      en: "Access",
     },
     m420: {
       uk: "Пристроїв поки немає",
@@ -2147,16 +2147,16 @@
       en: "Profile and logo",
     },
     m443: {
-      uk: "КОМПАНІЯ",
-      en: "COMPANY",
+      uk: "Компанія",
+      en: "Company",
     },
     m444: {
-      uk: "ГОЛОВНИЙ КОРИСТУВАЧ",
-      en: "MAIN USER",
+      uk: "Головний користувач",
+      en: "Main user",
     },
     m445: {
-      uk: "ПОЧАТКОВЕ НАЛАШТУВАННЯ",
-      en: "INITIAL SETUP",
+      uk: "Початкове налаштування",
+      en: "Initial setup",
     },
     m446: {
       uk: "Компаній поки немає",
@@ -3041,8 +3041,8 @@
       en: "The action could not be completed. Try again — if it repeats, press “Write to us”.",
     },
     m690: {
-      uk: "ЗАПИС І БІЗНЕС",
-      en: "BOOKING AND BUSINESS",
+      uk: "Запис і бізнес",
+      en: "Booking and business",
     },
     m691: {
       uk: "М",
@@ -3053,8 +3053,8 @@
       en: "Workspace",
     },
     m693: {
-      uk: "КЕРУВАННЯ",
-      en: "MANAGEMENT",
+      uk: "Керування",
+      en: "Management",
     },
     m694: {
       uk: "Працюйте навіть без інтернету.",
@@ -3069,8 +3069,8 @@
       en: "LOMVIKO · preview",
     },
     m697: {
-      uk: "ВАШ БІЗНЕС У ПОРЯДКУ",
-      en: "YOUR BUSINESS AT A GLANCE",
+      uk: "Ваш бізнес у порядку",
+      en: "Your business at a glance",
     },
     m698: {
       uk: "＋ Новий запис",
@@ -3085,8 +3085,8 @@
       en: "Close",
     },
     m701: {
-      uk: "ПАНЕЛЬ ВЛАСНИКА",
-      en: "OWNER PANEL",
+      uk: "Панель власника",
+      en: "Owner panel",
     },
     m702: {
       uk: "L",
@@ -3101,8 +3101,8 @@
       en: "LOMVIKO management",
     },
     m705: {
-      uk: "БІЗНЕС ПРОДУКТУ",
-      en: "PRODUCT BUSINESS",
+      uk: "Бізнес продукту",
+      en: "Product business",
     },
     m706: {
       uk: "Доступ лише власнику",
@@ -3122,8 +3122,8 @@
       en: "● Server",
     },
     m711: {
-      uk: "ВАШ ПРОДУКТ У ЦИФРАХ",
-      en: "YOUR PRODUCT AT A GLANCE",
+      uk: "Ваш продукт у цифрах",
+      en: "Your product at a glance",
     },
     m712: {
       uk: "＋ Додати користувача",
@@ -3905,6 +3905,12 @@
       uk: "Через що оплатити",
       en: "Pay through",
     },
+    teamAccess: { uk: "Доступ", en: "Access" },
+    teamAccessAll: { uk: "Усе", en: "Everything" },
+    teamAccessSchedule: { uk: "Лише розклад", en: "Schedule only" },
+    teamAccessHint: { uk: "Розклад бачать усі. Решту вмикайте окремо — роль лише задає початковий набір.", en: "Everyone sees the schedule. Switch the rest on one by one; the role only sets the starting set." },
+    teamLoading: { uk: "Завантажуємо команду…", en: "Loading your team…" },
+    teamHint: { uk: "Власник має доступ до всього. Права адміністратора й співробітника можна змінити кнопкою «Змінити».", en: "The owner has access to everything. Administrator and employee access can be changed with “Edit”." },
     botReminder: {
       uk: "🔔 Нагадуємо про ваш запис",
       en: "🔔 Your appointment reminder",

@@ -93,7 +93,7 @@ function dashboardView() {
   );
 }
 function financeView() {
-  if (data.role === "staff")
+  if (!can("finance"))
     return empty(OrbitI18n.t("m106"), OrbitI18n.t("m107"));
   if (financeTab !== "overview") return financeTabs() + financeToolView();
   const appointments = data.appointments.filter(
@@ -164,9 +164,39 @@ function staffReport(appointments) {
 function teamView() {
   if (data.mode !== "server")
     return empty(OrbitI18n.t("m128"), OrbitI18n.t("m129"));
-  return `<div class="list-toolbar"><span class="role-hint">${OrbitI18n.t("m148")} ${escape({ owner: OrbitI18n.t("m130"), admin: OrbitI18n.t("m131"), staff: OrbitI18n.t("m132") }[data.role])}</span>${data.role === "owner" ? `<div class="team-actions"><button class="secondary" data-action="business-add">${OrbitI18n.t("m133")}</button><button class="primary" data-action="team-add">${OrbitI18n.t("m134")}</button></div>` : ""}</div>${data.role === "owner" ? `<section class="panel">${team.length ? `<table class="table"><thead><tr><th>${OrbitI18n.t("m139")}</th><th>${OrbitI18n.t("m140")}</th><th>${OrbitI18n.t("m141")}</th><th>${OrbitI18n.t("m142")}</th></tr></thead><tbody>${team.map((u) => `<tr data-layout-key="user:${escape(u.id)}"><td><strong>${escape(u.name)}</strong><div class="sub">${escape(u.email)}</div></td><td>${escape({ owner: OrbitI18n.t("m130"), admin: OrbitI18n.t("m131"), staff: OrbitI18n.t("m132") }[u.role])}</td><td><span class="badge status-${u.stage}">${u.stage === "blocked" ? OrbitI18n.t("m135") : OrbitI18n.t("m136")}</span></td><td>${u.id !== data.account.id ? `<button class="secondary" data-action="team-edit" data-id="${u.id}">${OrbitI18n.t("m137")}</button>` : OrbitI18n.t("m138")}</td></tr>`).join("")}</tbody></table>` : empty(OrbitI18n.t("m143"), OrbitI18n.t("m144"))}</section><button class="secondary mt" data-action="team-refresh">${OrbitI18n.t("m145")}</button>` : empty(OrbitI18n.t("m146"), OrbitI18n.t("m147"))}`;
+  const roles = { owner: OrbitI18n.t("m130"), admin: OrbitI18n.t("m131"), staff: OrbitI18n.t("m132") };
+  if (data.role !== "owner")
+    return `<div class="list-toolbar"><span class="role-hint">${OrbitI18n.t("m148")} ${escape(roles[data.role])}</span></div>${empty(OrbitI18n.t("m146"), OrbitI18n.t("m147"))}`;
+  // The list loads by itself when the page opens.
+  if (!team.length && !teamLoading) {
+    teamLoading = true;
+    window.orbit
+      .call("account:users")
+      .then((list) => { team = list; })
+      .catch(() => {})
+      .finally(() => { teamLoading = false; if (page === "team") render(); });
+  }
+  const items = OrbitPermissions.ITEMS,
+    lang = OrbitI18n.language === "en" ? "en" : "uk",
+    access = (u) => {
+      if (u.role === "owner") return OrbitI18n.t("teamAccessAll");
+      const on = items.filter((i) => u.perms?.[i.key]);
+      return on.length === items.length ? OrbitI18n.t("teamAccessAll") : on.length ? on.map((i) => escape(i[lang].split(":")[0])).join(", ") : OrbitI18n.t("teamAccessSchedule");
+    };
+  const rows = team.length
+    ? `<table class="table"><thead><tr><th>${OrbitI18n.t("m139")}</th><th>${OrbitI18n.t("m140")}</th><th>${OrbitI18n.t("teamAccess")}</th><th>${OrbitI18n.t("m141")}</th><th></th></tr></thead><tbody>${team.map((u) => `<tr><td><strong>${escape(u.name)}</strong><div class="sub">${escape(u.email)}</div></td><td>${escape(roles[u.role])}</td><td class="team-access">${access(u)}</td><td><span class="badge status-${u.stage}">${u.stage === "blocked" ? OrbitI18n.t("m135") : OrbitI18n.t("m136")}</span></td><td>${u.id !== data.account.id ? `<button class="secondary" data-action="team-edit" data-id="${u.id}">${OrbitI18n.t("m137")}</button>` : OrbitI18n.t("m138")}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="loading">${OrbitI18n.t("teamLoading")}</p>`;
+  return `<div class="list-toolbar"><span class="role-hint">${OrbitI18n.t("m148")} ${escape(roles[data.role])}</span><div class="team-actions"><button class="secondary" data-action="business-add">${OrbitI18n.t("m133")}</button><button class="primary" data-action="team-add">${OrbitI18n.t("m134")}</button></div></div><section class="panel">${rows}</section><p class="hint mt">${OrbitI18n.t("teamHint")}</p>`;
 }
-
+// Switches for each part of the app; the role only picks the starting set.
+function permissionFields(role, perms) {
+  const lang = OrbitI18n.language === "en" ? "en" : "uk",
+    current = perms || OrbitPermissions.PRESETS[role] || OrbitPermissions.PRESETS.staff;
+  return `<fieldset class="perm-list"><legend>${OrbitI18n.t("teamAccess")}</legend><p class="hint">${OrbitI18n.t("teamAccessHint")}</p>${OrbitPermissions.ITEMS.map((i) => `<label class="checkbox-line perm-line"><input type="checkbox" name="perm_${i.key}" ${current[i.key] ? "checked" : ""}><span>${escape(i[lang])}</span></label>`).join("")}</fieldset>`;
+}
+function permissionValues(v) {
+  return Object.fromEntries(OrbitPermissions.KEYS.map((k) => [k, v["perm_" + k] === "on"]));
+}
 function scheduleWeek() {
   const monday = new Date(`${selectedDate}T12:00:00`);
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
@@ -210,7 +240,7 @@ function scheduleAppointment(a) {
     .map((t) => `<small class="visit-alert">⚠ ${escape(t)}</small>`)
     .join(
       "",
-    )}</div></div><div class="appointment-resource"><span>${escape(a.resource_name)}</span><strong>${money(a.price)} <small>${escape(data.currency)}</small></strong></div><div class="appointment-status"><span class="badge ${status}">${statuses[a.status] || escape(a.status)}</span>${comingBadge(a)}${a.rating ? `<span class="badge rating-badge" title="${OrbitI18n.t("reviewRating")}">${"★".repeat(a.rating)}</span>` : ""}${a.status === "confirmed" && a.deposit_until > Date.now() ? `<span class="badge deposit-wait">${OrbitI18n.t("depositWaiting").replace("{time}", time(a.deposit_until))}</span>` : ""}<div class="appointment-actions">${data.role !== "staff" ? `<button class="secondary" data-action="payment" data-id="${a.id}">${OrbitI18n.t("m166")}</button>` : ""}${a.status === "confirmed" ? `${a.start <= Date.now() ? `<button class="secondary finish-button" data-action="complete" data-id="${a.id}">${OrbitI18n.t("m167")}</button>` : `<button class="secondary" data-action="appointment-open" data-id="${a.id}">${OrbitI18n.t("apptMove")}</button>`}<details class="appointment-menu"><summary aria-label="${OrbitI18n.t("bookingActions")}">•••</summary><div><button data-action="cancel-booking" data-id="${a.id}">${OrbitI18n.t("m168")}</button>${a.start <= Date.now() ? `<button data-action="no-show" data-id="${a.id}">${OrbitI18n.t("m003")}</button>` : ""}</div></details>` : ""}</div></div></article>`;
+    )}</div></div><div class="appointment-resource"><span>${escape(a.resource_name)}</span><strong>${money(a.price)} <small>${escape(data.currency)}</small></strong></div><div class="appointment-status"><span class="badge ${status}">${statuses[a.status] || escape(a.status)}</span>${comingBadge(a)}${a.rating ? `<span class="badge rating-badge" title="${OrbitI18n.t("reviewRating")}">${"★".repeat(a.rating)}</span>` : ""}${a.status === "confirmed" && a.deposit_until > Date.now() ? `<span class="badge deposit-wait">${OrbitI18n.t("depositWaiting").replace("{time}", time(a.deposit_until))}</span>` : ""}<div class="appointment-actions">${can("money") ? `<button class="secondary" data-action="payment" data-id="${a.id}">${OrbitI18n.t("m166")}</button>` : ""}${a.status === "confirmed" ? `${a.start <= Date.now() ? `<button class="secondary finish-button" data-action="complete" data-id="${a.id}">${OrbitI18n.t("m167")}</button>` : `<button class="secondary" data-action="appointment-open" data-id="${a.id}">${OrbitI18n.t("apptMove")}</button>`}<details class="appointment-menu"><summary aria-label="${OrbitI18n.t("bookingActions")}">•••</summary><div><button data-action="cancel-booking" data-id="${a.id}">${OrbitI18n.t("m168")}</button>${a.start <= Date.now() ? `<button data-action="no-show" data-id="${a.id}">${OrbitI18n.t("m003")}</button>` : ""}</div></details>` : ""}</div></div></article>`;
 }
 // Minutes since midnight in the business time zone.
 function dayMinutes(value) {
@@ -386,7 +416,7 @@ function scheduleView() {
   const completed = rows.filter((a) => a.status === "completed");
   const summary = [
     `${OrbitI18n.t("bookingCount")}: ${active.length}`,
-    ...(data.role === "staff"
+    ...(!can("money")
       ? []
       : [
           `${money(active.reduce((s, a) => s + a.price, 0))} ${escape(data.currency)}`,
@@ -437,7 +467,7 @@ function lapsedClients() {
     .sort((a, b) => b.away - a.away);
 }
 function lapsedView(rows) {
-  const manage = data.role !== "staff",
+  const manage = can("clients"),
     match = (c) =>
       `${c.name} ${c.phone}`.toLowerCase().includes(search.toLowerCase()),
     shown = rows.filter((r) => match(r.client)),
@@ -491,7 +521,7 @@ function clientsView() {
   const clients = data.clients.filter((c) =>
       clientText(c).includes(search.toLowerCase()),
     ),
-    staff = data.role === "staff",
+    staff = !can("money"),
     lapsed = lapsedClients(),
     birthdays = birthdayClients(),
     filter = ["lapsed", "birthdays"].includes(clientFilter)
@@ -502,7 +532,7 @@ function clientsView() {
     return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${birthdaysView(birthdays)}</section>`;
   if (filter === "lapsed")
     return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"></div><section class="panel">${lapsedView(lapsed)}</section>`;
-  return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"><button class="secondary" data-action="client">${OrbitI18n.t("m197")}</button>${data.role === "staff" ? "" : `<button class="secondary" data-action="client-import">${OrbitI18n.t("importButton")}</button>`}</div><section class="panel">${
+  return `<div class="list-toolbar">${tabs}<input class="search" id="client-search" placeholder="${OrbitI18n.t(OrbitIndustries.fields(data.industry).includes("vehicle") ? "clientSearchAuto" : "clientSearch")}" value="${escape(search)}"><button class="secondary" data-action="client">${OrbitI18n.t("m197")}</button>${!can("clients") ? "" : `<button class="secondary" data-action="client-import">${OrbitI18n.t("importButton")}</button>`}</div><section class="panel">${
     clients.length
       ? `<table class="table clients-table"><thead><tr><th>${OrbitI18n.t("m191")}</th><th>${OrbitI18n.t("m192")}</th><th>${OrbitI18n.t("clientVisits")}</th><th>${OrbitI18n.t("clientLast")}</th>${staff ? "" : `<th>${OrbitI18n.t("clientPaid")}</th>`}<th>Telegram</th></tr></thead><tbody>${clients
           .map((c) => {
@@ -538,7 +568,7 @@ function catalogView() {
                         .join(", "),
                     )
                   : OrbitI18n.t("staffAnyone")
-              }</small></div><div><span class="mini-price">${money(s.price)} ${escape(data.currency)} ${OrbitI18n.t("m205")}</span><div class="mt"><button class="secondary" data-action="service-edit" data-id="${s.id}">${OrbitI18n.t("m206")}</button>${data.role !== "staff" ? `<button class="danger" data-action="service-delete" data-id="${s.id}">${OrbitI18n.t("catalogDelete")}</button>` : ""}</div></div></div>`,
+              }</small></div><div><span class="mini-price">${money(s.price)} ${escape(data.currency)} ${OrbitI18n.t("m205")}</span><div class="mt"><button class="secondary" data-action="service-edit" data-id="${s.id}">${OrbitI18n.t("m206")}</button>${can("catalog") ? `<button class="danger" data-action="service-delete" data-id="${s.id}">${OrbitI18n.t("catalogDelete")}</button>` : ""}</div></div></div>`,
           )
           .join("")
       : empty(OrbitI18n.t("m207"), OrbitI18n.t("m208"))
@@ -551,7 +581,7 @@ function catalogView() {
                 x.resource_id === r.id &&
                 x.end_date >= businessDate(Date.now()),
             );
-            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong><small>${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${data.role !== "staff" ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
+            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong><small>${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${can("catalog") ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
           })
           .join("")
       : empty(OrbitI18n.t("m211"), OrbitI18n.t("m212"))
@@ -630,7 +660,7 @@ function integrationsView() {
         : OrbitI18n.t("bookShort"),
     controls: !b
       ? ""
-      : `${b.enabled ? `<button class="secondary" data-action="booking-share">${OrbitI18n.t("bookShareButton")}</button><button class="secondary" data-action="booking-open">${OrbitI18n.t("bookOpen")}</button>` : ""}${data.role === "staff" ? "" : `<button class="${b.enabled ? "secondary" : "primary"}" data-action="booking-settings">${OrbitI18n.t(b.enabled ? "bookSettings" : "bookTurnOn")}</button>`}`,
+      : `${b.enabled ? `<button class="secondary" data-action="booking-share">${OrbitI18n.t("bookShareButton")}</button><button class="secondary" data-action="booking-open">${OrbitI18n.t("bookOpen")}</button>` : ""}${!can("integrations") ? "" : `<button class="${b.enabled ? "secondary" : "primary"}" data-action="booking-settings">${OrbitI18n.t(b.enabled ? "bookSettings" : "bookTurnOn")}</button>`}`,
     more: `<p>${OrbitI18n.t("bookAboutLong")}</p>`,
   });
   const website = w
@@ -682,10 +712,6 @@ function settingsGeneral() {
                 `<option value="${value}" ${OrbitI18n.language === value ? "selected" : ""}>${name}</option>`,
             )
             .join("")}</select>`,
-        ) +
-        settingRow(
-          OrbitI18n.t("appearanceBlocks"),
-          `<button type="button" class="secondary" data-action="layout-start">${OrbitI18n.t("appearanceLayout")}</button>`,
         ),
     ) +
     settingsGroup(
@@ -754,7 +780,7 @@ function settingsAccount() {
   );
 }
 function settingsData() {
-  const owner = data.role !== "staff";
+  const owner = can("settings");
   return (
     settingsGroup(
       OrbitI18n.t("m261"),
