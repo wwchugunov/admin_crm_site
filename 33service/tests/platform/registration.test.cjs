@@ -18,9 +18,9 @@ test('Registering an existing email or a used trial answers like a normal start 
  assert.equal(again.status,201);assert(/^[a-f0-9-]{36}$/.test(again.value.registration_id),'response looks like a real registration');
  await f.call('/v1/register/start',start('owner-again@example.test').data);await f.server.mail.tick();
  const notices=f.sent.slice(before).filter(m=>m.to==='owner-again@example.test');
- assert.equal(notices.length,1,'one notice per hour, no verification code');assert.match(notices[0].subject,/уже є обліковий запис/);assert(!/\b\d{6}\b/.test(notices[0].text));
+ assert.equal(notices.length,1,'one notice per hour, no verification code');assert.match(notices[0].subject,/уже є обліковий запис/i);assert(!/\b\d{6}\b/.test(notices[0].text));
  const sameDevice=start('new-person@example.test',first.pair);assert.equal((await f.call('/v1/register/start',sameDevice.data)).status,201);await f.server.mail.tick();
- const trial=f.sent.findLast(m=>m.to==='new-person@example.test');assert.match(trial.subject,/пробний період уже використано/);assert(!/\b\d{6}\b/.test(trial.text));
+ const trial=f.sent.findLast(m=>m.to==='new-person@example.test');assert.match(trial.subject,/пробний період уже використано/i);assert(!/\b\d{6}\b/.test(trial.text));
  assert.equal(f.store.db.prepare('SELECT count(*) n FROM registration_pending').get().n,0);
 });
 test('Registration tolerates ten minutes of client clock drift but rejects stale requests',async t=>{

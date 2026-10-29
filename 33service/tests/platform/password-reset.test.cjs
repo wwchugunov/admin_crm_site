@@ -10,7 +10,7 @@ test('Forgot password: a code by email sets a new password once; unknown emails 
   assert.equal(unknown.status,201);assert(unknown.value.reset_id);
   const start=await f.call('/v1/password/reset/start',{email:'OWNER@example.test',language:'uk'});
   assert.equal(start.status,201);await f.server.mail.tick();
-  assert.equal(f.sent.length,1);assert.match(f.sent[0].subject,/код для зміни пароля/);assert(!/macOS|Windows|завантаж/i.test(f.sent[0].text));
+  assert.equal(f.sent.length,1);assert.match(f.sent[0].subject,/код для зміни пароля/i);assert(!/macOS|Windows|завантаж/i.test(f.sent[0].text));
   assert.equal((await f.call('/v1/password/reset/confirm',{reset_id:unknown.value.reset_id,code:'000000',password:'new-password-123'})).status,401);
   assert.equal((await f.call('/v1/password/reset/confirm',{reset_id:start.value.reset_id,code:'000000',password:'new-password-123'})).status,401);
   const ok=await f.call('/v1/password/reset/confirm',{reset_id:start.value.reset_id,code:code(f.sent[0]),password:'new-password-123'});
@@ -24,11 +24,11 @@ test('Owners hear 7, 3 and 1 day before access ends and once when it ends; early
   const f=await fixture(t),day=86400000,now=Date.now();
   for(const left of [6.5*day,2.5*day,0.5*day,-0.5*day]){f.store.db.prepare('UPDATE users SET expires=? WHERE id=?').run(now+left,f.id);f.server.retention.remind(now);f.server.retention.remind(now);}
   await f.server.mail.tick();await f.server.mail.tick();
-  assert.deepEqual(f.sent.map(m=>m.subject),['LOMVIKO — пробного періоду залишилось 7 днів','LOMVIKO — пробного періоду залишилось 3 дні','LOMVIKO — безкоштовний період закінчується завтра','LOMVIKO — доступ завершився, дані збережено']);
+  assert.deepEqual(f.sent.map(m=>m.subject),['Пробного періоду залишилось 7 днів','Пробного періоду залишилось 3 дні','Безкоштовний період закінчується завтра','Доступ завершився, дані збережено']);
   assert(f.sent.every(m=>m.text.includes('https://app.lomviko.com')));
   const trialEnd=now+20*day;f.store.db.prepare("UPDATE users SET stage='trial',expires=? WHERE id=?").run(trialEnd,f.id);
   assert.equal((await f.call('/admin/purchase',{user_id:f.id,reference:'LV-1',days:30,max_devices:10,confirmed:true,language:'uk'},true)).status,201);
   assert.equal(f.store.db.prepare('SELECT expires FROM users WHERE id=?').get(f.id).expires,trialEnd+30*day);
   await f.server.mail.tick();const paid=f.sent.at(-1);
-  assert.match(paid.subject,/оплату отримано/);assert(paid.text.includes('№ LV-1'));assert(paid.text.includes('30 днів'));assert(!/macOS|downloads|Сервер CRM|T\d\d:\d\d/.test(paid.text));
+  assert.match(paid.subject,/оплату отримано/i);assert(paid.text.includes('№ LV-1'));assert(paid.text.includes('30 днів'));assert(!/macOS|downloads|Сервер CRM|T\d\d:\d\d/.test(paid.text));
 });
