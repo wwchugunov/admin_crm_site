@@ -6,8 +6,8 @@
   --ink: #292620;
   --muted: #637069;
   --line: #e5e3df;
-  --accent: #755827;
-  --accent-soft: #eeeae2;
+  --accent: #0a8f74;
+  --accent-soft: #e2f5ee;
   --field: #fbfbfa;
   --hover: #f4f3f0;
   --elevation: 0 2px 5px #18291f04, 0 12px 28px #18291f04;
@@ -25,8 +25,8 @@ html[data-theme="dark"] {
   --ink: #f2f0ed;
   --muted: #abb8af;
   --line: #35403a;
-  --accent: #7b5d29;
-  --accent-soft: #3e3628;
+  --accent: #0a8f74;
+  --accent-soft: #163a31;
   --field: #1a2023;
   --hover: #2a3330;
   --elevation: 0 2px 5px #0001, 0 12px 28px #0001;
@@ -70,7 +70,7 @@ html[data-theme="dark"] .brand-icon {
   height: 42px;
   border-radius: 14px;
   font-size: 18px;
-  background: #755827;
+  background: #0a8f74;
   box-shadow: 0 4px 10px #12332114;
   color: white;
 }
@@ -151,7 +151,7 @@ html[data-theme="dark"] .nav.active {
   width: 3px;
   height: 16px;
   border-radius: 3px;
-  background: #96753b;
+  background: #0a8f74;
   position: absolute;
   left: 0;
   top: 12px;
@@ -448,7 +448,7 @@ html[data-theme="dark"] .mono {
   color: var(--ink);
 }
 .callout {
-  border-left: 3px solid #96753b;
+  border-left: 3px solid #0a8f74;
   border-radius: 12px;
 }
 .grid-2 {
@@ -491,7 +491,7 @@ html[data-theme="dark"] .chart-axis {
   fill: var(--muted);
 }
 .chart-load {
-  fill: #96753b;
+  fill: #0a8f74;
 }
 .chart-income {
   fill: #beaa87;
