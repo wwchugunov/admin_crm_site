@@ -17,7 +17,7 @@ async function fixture(t,profile){
 test('Website admin manages only website documents and signs uploads',async t=>{
  const f=await fixture(t,'website');
  const snapshot=await (await f.call('owner:snapshot')).json();
- assert.deepEqual(snapshot.documentKinds,['site-privacy','site-offer','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['site-privacy']);
+ assert.deepEqual(snapshot.documentKinds,['site-privacy','site-terms','site-offer','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['site-privacy']);
  assert.equal((await f.upload('app-privacy')).status,403);assert.equal((await f.upload('site-privacy','https://evil.test')).status,403);
  const ok=await f.upload('presentation');assert.equal(ok.status,201);
  const sent=f.calls.find(c=>c.method==='PUT');assert.match(sent.route,/^\/admin\/documents\/file\?kind=presentation&language=uk&title=/);assert.equal(sent.body.toString(),'%PDF-1.7 test');assert.equal(sent.headers.authorization,'Bearer upstream-session');assert(sent.headers['x-orbit-proof']);

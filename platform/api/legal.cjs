@@ -3,7 +3,7 @@ const crypto=require('node:crypto');
 // electronic commerce", art. 11–12: acceptance by registration; the emailed one-time code is an
 // electronic signature by a one-time identifier). Each record keeps who, which document versions
 // (fingerprint of the published file), when, how, from which device and IP.
-const DOCS={offer:'site-offer',privacy:'app-privacy'};
+const DOCS={offer:'site-offer',terms:'site-terms',privacy:'app-privacy'};
 const hash=v=>crypto.createHash('sha256').update(v).digest('hex');
 class Legal{
  constructor({store,fail}){Object.assign(this,{store,db:store.db,fail});
@@ -14,7 +14,10 @@ class Legal{
   try{const r=this.db.prepare("SELECT sha256,uploaded_at FROM documents WHERE kind=? AND language='uk' AND active=1").get(kind);if(r)return{version:r.sha256.slice(0,16),date:r.uploaded_at};}catch{}
   return{version:'none',date:null};
  }
- current(){return{offer:this.version(DOCS.offer),privacy:this.version(DOCS.privacy),links:{offer:`/public/documents/${DOCS.offer}/uk`,privacy:`/public/documents/${DOCS.privacy}/uk`}};}
+ // The contract people accept: the public offer while it is published (sales on), otherwise the free terms of use.
+ // The "offer" slot keeps its name for stored acceptances; switching between the two asks everyone again.
+ contract(){const offer=this.version(DOCS.offer);if(!['off','none'].includes(offer.version))return{kind:DOCS.offer,...offer};const terms=this.version(DOCS.terms);return{kind:DOCS.terms,...(terms.version==='none'?{version:'off',date:null}:terms)};}
+ current(){const offer=this.contract();return{offer,privacy:this.version(DOCS.privacy),links:{offer:`/public/documents/${offer.kind}/uk`,privacy:`/public/documents/${DOCS.privacy}/uk`}};}
  record({userId=null,email,method,ip='',device='',app=''}){
   const c=this.current();
   this.db.prepare('INSERT INTO legal_acceptances VALUES(?,?,?,?,?,?,?,?,?,?)').run(crypto.randomUUID(),userId,String(email).toLowerCase(),c.offer.version,c.privacy.version,method,String(ip||'').slice(0,64),String(device||'').slice(0,128),String(app||'').slice(0,30),Date.now());

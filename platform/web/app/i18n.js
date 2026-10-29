@@ -3641,6 +3641,30 @@
       uk: "Щоб зареєструватися, позначте, що приймаєте Публічну оферту та Політику конфіденційності.",
       en: "To register, tick that you accept the Public offer and the Privacy policy.",
     },
+    legalTerms: {
+      uk: "Умови користування",
+      en: "Terms of use",
+    },
+    legalTermsTitle: {
+      uk: "Умови користування",
+      en: "Terms of use",
+    },
+    legalAcceptRequiredTerms: {
+      uk: "Щоб зареєструватися, позначте, що приймаєте Умови користування та Політику конфіденційності.",
+      en: "To register, tick that you accept the Terms of use and the Privacy policy.",
+    },
+    legalCodeSignsTerms: {
+      uk: "Код із листа підтверджує вашу пошту і є вашим електронним підписом під згодою з Умовами користування та Політикою конфіденційності.",
+      en: "The code from the email confirms your address and works as your electronic signature under the Terms of use and Privacy policy.",
+    },
+    legalBannerFirstTerms: {
+      uk: "Перш ніж продовжити, перегляньте й прийміть Умови користування та Політику конфіденційності LOMVIKO. Це займе хвилину.",
+      en: "Before you continue, please review and accept the LOMVIKO Terms of use and Privacy policy. It takes a minute.",
+    },
+    legalBannerUpdatedTerms: {
+      uk: "Ми оновили Умови користування або Політику конфіденційності. Перегляньте нову редакцію й підтвердьте згоду.",
+      en: "We have updated the Terms of use or the Privacy policy. Please review the new version and confirm your consent.",
+    },
     legalAcceptRequiredPrivacy: {
       uk: "Щоб зареєструватися, позначте, що приймаєте Політику конфіденційності.",
       en: "To register, tick that you accept the Privacy policy.",

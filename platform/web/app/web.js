@@ -115,7 +115,7 @@
       open(
         `${info.api}/public/documents/app-privacy/${language === "en" ? "en" : "uk"}`,
       ),
-    "legal:offer": () => open(`${info.api}/public/documents/site-offer/${OrbitI18n.language === "en" ? "en" : "uk"}`),
+    "legal:offer": () => open(`${info.api}/public/documents/${info.contract === "site-terms" ? "site-terms" : "site-offer"}/${OrbitI18n.language === "en" ? "en" : "uk"}`),
     "notify:link": async () => {
       // Opened before the request so the browser does not treat it as a pop-up.
       const tab = window.open("about:blank", "_blank");
@@ -147,6 +147,10 @@
     },
     get offer() {
       return info.offer !== false;
+    },
+    // "site-terms" while sales are off: the free terms of use stand in for the public offer.
+    get terms() {
+      return info.contract === "site-terms";
     },
     signedOut() {
       if (document.body.classList.contains("signed-out")) return;

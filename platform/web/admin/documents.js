@@ -20,6 +20,7 @@ const documentText = {
     publicLink: 'Публічне посилання', fallback: 'Якщо немає англійської версії, англомовні відвідувачі отримають українську.',
     kinds: {
       'site-privacy': ['Політика конфіденційності сайту', 'Посилання в підвалі сайту та біля форми заявки. Коротка адреса: /privacy', 'Політика конфіденційності'],
+      'site-terms': ['Умови користування', 'Діють, поки продажі вимкнені. Посилання в підвалі сайту і при реєстрації. Коротка адреса: /terms', 'Умови користування'],
       'site-offer': ['Публічна оферта', 'Посилання в підвалі сайту. Коротка адреса: /offer', 'Публічна оферта'],
       presentation: ['Презентація LOMVIKO', 'Кнопка «Завантажити презентацію» на сайті. Коротка адреса /presentation зручна, щоб надсилати клієнтам.', 'Презентація LOMVIKO'],
       'app-privacy': ['Політика конфіденційності сервісу', 'Відкривається у веб-застосунку: Налаштування та дані → Про LOMVIKO → Документи.', 'Політика конфіденційності LOMVIKO'],
@@ -43,6 +44,7 @@ const documentText = {
     publicLink: 'Public link', fallback: 'Without an English version, English-speaking visitors receive the Ukrainian one.',
     kinds: {
       'site-privacy': ['Website privacy policy', 'Linked in the website footer and next to the demo form. Short address: /privacy', 'Privacy policy'],
+      'site-terms': ['Terms of use', 'Apply while sales are off. Linked in the website footer and at registration. Short address: /terms', 'Terms of use'],
       'site-offer': ['Public offer', 'Linked in the website footer. Short address: /offer', 'Public offer'],
       presentation: ['LOMVIKO presentation', '“Download presentation” button on the website. The short address /presentation is handy for sending to clients.', 'LOMVIKO presentation'],
       'app-privacy': ['App privacy policy', 'Opened from the LOMVIKO app: Settings → Legal documents.', 'LOMVIKO privacy policy'],

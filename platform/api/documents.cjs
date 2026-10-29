@@ -1,6 +1,6 @@
 const crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path');
 // Replaceable public documents. Each kind keeps one current version per language plus an archive.
-const KINDS=['site-privacy','site-offer','presentation','app-privacy'];
+const KINDS=['site-privacy','site-terms','site-offer','presentation','app-privacy'];
 const LANGUAGES=['uk','en'];
 const MAX_SIZE=25*1024*1024;
 const TYPES={

@@ -138,7 +138,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
     if(req.method!=='POST'||req.headers.origin!==external.origin)problem(403,'Invalid origin');
     if(!String(req.headers['content-type']||'').startsWith('application/json'))problem(415,'JSON required');
     // Whether the public offer is published decides what registration asks people to accept.
-    if(url.pathname==='/web/info'){let offer=true,registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)offer=(await r.json())?.offer?.version!=='off';}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,registration});}
+    if(url.pathname==='/web/info'){let offer=true,contract='site-offer',registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok){const j=await r.json();offer=j?.offer?.version!=='off';contract=j?.offer?.kind||contract;}}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,contract,registration});}
     if(url.pathname==='/web/call'){const {channel,args=[]}=await json(req,4*1024*1024);return reply(200,{value:(await call(req,res,channel,args))??null});}
     if(url.pathname==='/web/export'){
      const {format,password}=await json(req,4096),s=session(req);if(!['json','csv','orbit'].includes(format))problem(400,'Unknown format');

@@ -55,3 +55,24 @@ test("While the offer is switched off only the privacy policy is accepted; switc
   db.prepare("UPDATE document_switches SET disabled=0").run();
   assert.equal(legal.status(user).required, true, "the published offer needs consent");
 });
+
+test("While sales are off the terms of use are the contract; publishing the offer asks again", (t) => {
+  const db = new DatabaseSync(":memory:");
+  t.after(() => db.close());
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER);CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
+  db.prepare("INSERT INTO documents VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
+  db.prepare("INSERT INTO documents VALUES('t','site-terms','uk',?,1,1)").run("t".repeat(16));
+  db.prepare("INSERT INTO documents VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
+  db.prepare("INSERT INTO document_switches VALUES('site-offer',1)").run();
+  const legal = new Legal({ store: { db }, fail }),
+    user = { id: "u1", email: "anna@salon.ua" };
+  const c = legal.current();
+  assert.equal(c.offer.kind, "site-terms");
+  assert.equal(c.offer.version, "t".repeat(16));
+  assert.equal(c.links.offer, "/public/documents/site-terms/uk");
+  legal.record({ userId: user.id, email: user.email, method: "app-signed" });
+  assert.equal(legal.status(user).required, false);
+  db.prepare("UPDATE document_switches SET disabled=0").run();
+  assert.equal(legal.current().offer.kind, "site-offer");
+  assert.equal(legal.status(user).required, true, "sales on: the offer needs consent");
+});

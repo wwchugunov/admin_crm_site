@@ -136,7 +136,7 @@ const translations = {
       ['Чи можна забрати всі свої дані?', 'Так. Експорт усієї бази в JSON, CSV або зашифрований файл — будь-коли.'],
       ['Як з вами зв’язатися?', 'Напишіть на info@lomviko.com або прямо з LOMVIKO: розділ «Підтримка». Відповідь прийде на пошту.'],
     ],
-    formTitle: 'Залишити заявку', formName: 'Ваше ім’я', formBusiness: 'Назва бізнесу', formMessage: 'Що для вас найважливіше?', formSubmit: 'Надіслати заявку',
+    formTitle: 'Залишити заявку', formIntro: 'Залиште контакти — напишемо протягом робочого дня.', formConsent: 'Погоджуюся, щоб мені відповіли на цю пошту.', formName: 'Ваше ім’я', formBusiness: 'Назва бізнесу', formMessage: 'Що для вас найважливіше?', formSubmit: 'Надіслати заявку',
     offTitle: 'Почніть уже сьогодні', offBody: 'Спробуйте LOMVIKO безкоштовно — прямо в браузері, без встановлення.', offBodyMail: 'Напишіть нам — покажемо LOMVIKO і підготуємо доступ для вашого бізнесу.', writeUs: 'Написати нам', askTitle: 'Залишилися питання?', askBody: 'Напишіть нам — відповімо українською і підкажемо, як налаштувати LOMVIKO під ваш бізнес.',
     downloadSafety: 'Оновлюєте LOMVIKO? Спочатку створіть резервну копію в застосунку. Встановлення нової версії зберігає ваші дані.',
     download: 'Завантажити', macSub: 'Apple Silicon та Intel', winSub: 'Windows 10 і 11', integrity: 'Контрольна сума SHA-256', noRelease: 'Скоро. Слідкуйте за оновленнями на цій сторінці.',
@@ -144,7 +144,7 @@ const translations = {
     faqKicker: 'Питання', faqTitle: ['Перед', 'початком.'],
     finalTitle: ['Перший онлайн-запис —', 'вже сьогодні.'], finalBody: 'Зареєструйтеся за дві хвилини прямо в браузері й користуйтеся всім безкоштовно до 1 березня 2027.', finalWord: 'РИТМ',
     footerTagline: 'CRM для бізнесу, що працює за записом.', footerMade: 'Комп’ютер · Телефон · Українська · English',
-    legalLabel: 'Документи', docPrivacy: 'Політика конфіденційності', docOffer: 'Публічна оферта', docPresentation: 'Презентація', privacyLink: 'Політика конфіденційності',
+    legalLabel: 'Документи', operator: 'Власник сервісу — Чугунов, Україна', docTerms: 'Умови користування', docPrivacy: 'Політика конфіденційності', docOffer: 'Публічна оферта', docPresentation: 'Презентація', privacyLink: 'Політика конфіденційності',
     deckTitle: ['Покажіть LOMVIKO', 'своїй команді.'], deckCover: ['Ваш день —', 'в ідеальному ритмі.'], deckBody: 'Коротка презентація: можливості, сценарії роботи, безпека даних і запуск. Зручно переслати партнеру чи власнику бізнесу.', deckButton: 'Відкрити презентацію',
     sending: 'Надсилаємо…', success: 'Дякуємо! Заявку отримано. Зв’яжемося за вказаним email.', error: 'Не вдалося надіслати заявку. Спробуйте пізніше.', rate: 'Забагато спроб. Спробуйте пізніше.',
     unavailable: 'Сервіс тимчасово недоступний. Спробуйте трохи пізніше.', waiting: 'Перевіряємо доступні версії…',
@@ -254,7 +254,7 @@ const translations = {
       ['Can I take all my data with me?', 'Yes. Export the whole database as JSON, CSV or an encrypted file — anytime.'],
       ['How do I reach you?', 'Write to info@lomviko.com or straight from LOMVIKO in the Support section. We reply by email.'],
     ],
-    formTitle: 'Leave a request', formName: 'Your name', formBusiness: 'Business name', formMessage: 'What matters most to you?', formSubmit: 'Send request',
+    formTitle: 'Leave a request', formIntro: 'Leave your contacts and we will write back within a business day.', formConsent: 'I agree to be contacted at this email.', formName: 'Your name', formBusiness: 'Business name', formMessage: 'What matters most to you?', formSubmit: 'Send request',
     offTitle: 'Start today', offBody: 'Try LOMVIKO free — right in your browser, nothing to install.', offBodyMail: 'Write to us — we’ll show you LOMVIKO and prepare access for your business.', writeUs: 'Write to us', askTitle: 'Still have questions?', askBody: 'Write to us — we’ll reply and help you set LOMVIKO up for your business.',
     downloadSafety: 'Updating LOMVIKO? Create a backup in the app first. Installing a new version keeps your data.',
     download: 'Download', macSub: 'Apple Silicon and Intel', winSub: 'Windows 10 and 11', integrity: 'SHA-256 checksum', noRelease: 'Coming soon. Check back on this page.',
@@ -262,7 +262,7 @@ const translations = {
     faqKicker: 'FAQ', faqTitle: ['Before', 'you start.'],
     finalTitle: ['Your first online booking —', 'today.'], finalBody: 'Sign up in two minutes right in your browser and use everything free until 1 March 2027.', finalWord: 'RHYTHM',
     footerTagline: 'The CRM for appointment-based businesses.', footerMade: 'Computer · Phone · Українська · English',
-    legalLabel: 'Documents', docPrivacy: 'Privacy policy', docOffer: 'Public offer', docPresentation: 'Presentation', privacyLink: 'Privacy policy',
+    legalLabel: 'Documents', operator: 'Service owner — Chuhunov, Ukraine', docTerms: 'Terms of use', docPrivacy: 'Privacy policy', docOffer: 'Public offer', docPresentation: 'Presentation', privacyLink: 'Privacy policy',
     deckTitle: ['Show LOMVIKO', 'to your team.'], deckCover: ['Your day —', 'in perfect rhythm.'], deckBody: 'A short presentation: features, everyday scenarios, data security and getting started. Easy to forward to a partner or the business owner.', deckButton: 'Open the presentation',
     sending: 'Sending…', success: 'Thank you! We received your request and will contact you by email.', error: 'We could not send your request. Please try again later.', rate: 'Too many attempts. Please try again later.',
     unavailable: 'The service is temporarily unavailable. Please try again a little later.', waiting: 'Checking available versions…',
@@ -326,7 +326,7 @@ function staticText() {
   editorial('hero-description', 'heroDescription', 'description');
   heading($('#site-price'), t('priceTitle'));
   const c = content();
-  for (const [id, key] of Object.entries({ 'site-about': 'about', 'site-privacy': 'privacy' })) $('#' + id).textContent = c[key] || fallbackContent[language][key];
+  for (const [id, key] of Object.entries({ 'site-about': 'about' })) $('#' + id).textContent = c[key] || fallbackContent[language][key];
 }
 
 function lists() {
@@ -484,10 +484,9 @@ function ctas() {
   // Self-service trial is the main path; the request form is always there for those who prefer to be contacted.
   // Registration closed in the admin: every "Try" button leads to the request form instead.
   const closed = site?.product?.registration === false;
-  if (closed) $$('[data-cta]').forEach((a) => { a.href = '#start'; });
+  if (closed) $$('[data-cta]').forEach((a) => { a.href = '#request'; });
   $$('[data-cta-label]').forEach((label) => { label.textContent = closed ? t('planRequest') : t('ctaTrial'); });
   $$('[data-cta-short]').forEach((label) => { label.textContent = closed ? t('planRequest') : t('ctaShort'); });
-  $('#demo-form').hidden = false;
   const mail = site?.contactEmail || CONTACT_EMAIL, link = $('#demo-fallback-mail');
   link.hidden = !mail;
   if (mail) link.href = 'mailto:' + mail;
@@ -503,11 +502,11 @@ function news() {
 }
 
 // Links to replaceable documents appear only after the website admin uploads them.
-const documentSlugs = { 'site-privacy': 'privacy', 'site-offer': 'offer', presentation: 'presentation' };
+const documentSlugs = { 'site-privacy': 'privacy', 'site-terms': 'terms', 'site-offer': 'offer', presentation: 'presentation' };
 const documentHref = (kind) => (language === 'en' ? '/en/' : '/') + documentSlugs[kind];
 function legal() {
   const docs = site?.documents || {}, has = (kind) => Boolean(docs[kind]?.[language]);
-  $('#footer-legal').innerHTML = [['site-privacy', 'docPrivacy'], ['site-offer', 'docOffer'], ['presentation', 'docPresentation']].filter(([kind]) => has(kind)).map(([kind, key]) => `<a href="${documentHref(kind)}" target="_blank" rel="noopener">${esc(t(key))}</a>`).join('');
+  $('#footer-legal').innerHTML = [['site-privacy', 'docPrivacy'], ['site-terms', 'docTerms'], ['site-offer', 'docOffer'], ['presentation', 'docPresentation']].filter(([kind]) => has(kind)).map(([kind, key]) => `<a href="${documentHref(kind)}" target="_blank" rel="noopener">${esc(t(key))}</a>`).join('');
   const inline = $('#privacy-inline');
   inline.hidden = !has('site-privacy');
   if (has('site-privacy')) { inline.href = documentHref('site-privacy'); inline.textContent = t('privacyLink'); }
@@ -535,7 +534,7 @@ function pricing() {
   banner.textContent = !p.registration ? t('closedBanner') : t('freeBanner').replace('{date}', date);
   $('#site-price-note').textContent = t('priceNoteSales');
   const label = !p.registration ? t('planRequest') : p.sales ? t('planChoose') : t('planTry');
-  const href = !p.registration ? '#demo-form' : APP_URL + '/?start=register';
+  const href = !p.registration ? '#request' : APP_URL + '/?start=register';
   let previous = null;
   $('#plans').innerHTML = p.plans.map((plan) => {
     // Each plan lists only what it adds; the first one lists the base every plan has.
@@ -562,6 +561,13 @@ $$('[data-lang]').forEach((b) => b.addEventListener('click', () => {
   render(); accessCopy();
 }));
 
+// The request form lives in a dialog: every "Leave a request" link opens it instead of jumping down the page.
+const dialog = $('#request-dialog');
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href="#request"]');
+  if (link) { e.preventDefault(); $('#form-status').textContent = ''; dialog.showModal(); $('#name').focus(); }
+  if (e.target.closest('[data-request-close]') || e.target === dialog) dialog.close();
+});
 $('#demo-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const values = Object.fromEntries(new FormData(e.target)), status = $('#form-status'), submit = $('#demo-submit');
@@ -570,7 +576,7 @@ $('#demo-form').addEventListener('submit', async (e) => {
   try {
     const response = await fetch('/public/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, consent: values.consent === 'on', language }), signal: AbortSignal.timeout(15000) });
     if (!response.ok) { status.classList.add('is-error'); status.textContent = t(response.status === 429 ? 'rate' : 'error'); return; }
-    e.target.reset(); status.textContent = t('success');
+    e.target.reset(); status.textContent = t('success'); setTimeout(() => { if (status.textContent === t('success')) dialog.close(); }, 2500);
   } catch { status.classList.add('is-error'); status.textContent = t('error'); }
   finally { submit.removeAttribute('aria-busy'); submit.disabled = false; }
 });

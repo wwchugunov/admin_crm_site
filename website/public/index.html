@@ -317,22 +317,8 @@
     <div class="plans" id="plans"></div>
     <p class="plan-note" data-t="planNote">Після пробного періоду дані не зникнуть: переглядати й експортувати їх можна ще 30 днів.</p>
     <div class="pricing-request">
+      <a class="btn btn-primary" href="#request" data-t="planRequest">Залишити заявку</a>
       <a class="btn btn-ghost" id="demo-fallback-mail" hidden data-t="writeUs">Написати нам</a>
-      <form id="demo-form" class="glass demo-form">
-        <h3 data-t="formTitle">Залишити заявку</h3>
-        <label for="name" data-t="formName">Ваше ім’я</label>
-        <input id="name" name="name" autocomplete="name" maxlength="120" required>
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
-        <label for="company" data-t="formBusiness">Назва бізнесу</label>
-        <input id="company" name="business" autocomplete="organization" maxlength="160">
-        <label for="message" data-t="formMessage">Що для вас найважливіше?</label>
-        <textarea id="message" name="message" rows="3" maxlength="2000"></textarea>
-        <div class="honeypot" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
-        <label class="consent"><input name="consent" type="checkbox" required><span><span id="site-privacy">Погоджуюся на використання контактних даних для відповіді на заявку.</span> <a id="privacy-inline" class="inline-link" hidden target="_blank" rel="noopener"></a></span></label>
-        <button class="btn btn-light btn-block" id="demo-submit" type="submit" data-t="formSubmit">Надіслати заявку</button>
-        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
-      </form>
     </div>
   </section>
 
@@ -378,8 +364,25 @@
     </nav>
     <a id="contact-email" class="footer-mail" hidden></a>
   </div>
-  <div class="wrap footer-base"><span>© <span id="year">2026</span> LOMVIKO</span><nav class="footer-legal" id="footer-legal" aria-label="Документи" data-t-label="legalLabel"></nav><span data-t="footerMade">Комп’ютер · Телефон · Українська · English</span></div>
+  <div class="wrap footer-base"><span>© <span id="year">2026</span> LOMVIKO · <span data-t="operator">Власник сервісу — Чугунов, Україна</span></span><nav class="footer-legal" id="footer-legal" aria-label="Документи" data-t-label="legalLabel"></nav><span data-t="footerMade">Комп’ютер · Телефон · Українська · English</span></div>
   <div class="footer-giant" aria-hidden="true">LOMVIKO</div>
 </footer>
+<dialog id="request-dialog" class="request-dialog" aria-labelledby="request-title">
+      <form id="demo-form" class="demo-form" method="dialog">
+        <button class="request-close" type="button" data-request-close aria-label="Закрити">×</button>
+        <h3 id="request-title" data-t="formTitle">Залишити заявку</h3>
+        <p class="request-intro" data-t="formIntro">Залиште контакти — напишемо протягом робочого дня.</p>
+        <label for="name" data-t="formName">Ваше ім’я</label>
+        <input id="name" name="name" autocomplete="name" maxlength="120" required>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="company" data-t="formBusiness">Назва бізнесу</label>
+        <input id="company" name="business" autocomplete="organization" maxlength="160">
+        <div class="honeypot" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+        <label class="consent"><input name="consent" type="checkbox" required><span><span id="site-privacy" data-t="formConsent">Погоджуюся, щоб мені відповіли на цю пошту.</span> <a id="privacy-inline" class="inline-link" hidden target="_blank" rel="noopener"></a></span></label>
+        <button class="btn btn-light btn-block" id="demo-submit" type="submit" data-t="formSubmit">Надіслати заявку</button>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
+      </form>
+</dialog>
 </body>
 </html>

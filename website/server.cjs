@@ -24,7 +24,7 @@ const STATIC = new Map([
 ]);
 const PAGES = new Map([['/', 'uk'], ['/en', 'en']]);
 // Short public addresses for replaceable documents managed in the website admin.
-const DOCUMENTS = new Map([['privacy', 'site-privacy'], ['offer', 'site-offer'], ['presentation', 'presentation']].flatMap(([slug, kind]) => [[`/${slug}`, [kind, 'uk']], [`/en/${slug}`, [kind, 'en']]]));
+const DOCUMENTS = new Map([['privacy', 'site-privacy'], ['terms', 'site-terms'], ['offer', 'site-offer'], ['presentation', 'presentation']].flatMap(([slug, kind]) => [[`/${slug}`, [kind, 'uk']], [`/en/${slug}`, [kind, 'en']]]));
 const DOCUMENT_TYPES = new Set(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 function missingDocument(language) {
   const en = language === 'en';

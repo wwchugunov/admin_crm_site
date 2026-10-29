@@ -1022,12 +1022,12 @@ function registrationModal() {
         'required minlength="12" maxlength="128" autocomplete="new-password"',
       ) +
       `<p class="hint">${OrbitI18n.t("registerPasswordHint")}</p>` +
-      `<label class="checkbox-line legal-accept"><input name="accept" type="checkbox" required><span>${OrbitI18n.t("legalAcceptLabel")} ${window.OrbitWeb?.offer === false ? "" : `<button type="button" class="link-button" data-action="offer">${OrbitI18n.t("legalOffer")}</button> ${OrbitI18n.t("legalAnd")} `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("legalPrivacyAccusative")}</button></span></label>`,
+      `<label class="checkbox-line legal-accept"><input name="accept" type="checkbox" required><span>${OrbitI18n.t("legalAcceptLabel")} ${window.OrbitWeb?.offer === false ? "" : `<button type="button" class="link-button" data-action="offer">${OrbitI18n.t(window.OrbitWeb?.terms ? "legalTerms" : "legalOffer")}</button> ${OrbitI18n.t("legalAnd")} `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("legalPrivacyAccusative")}</button></span></label>`,
     async (values) => {
       if (values.password !== values.password_again)
         throw Error(OrbitI18n.t("registerPasswordMismatch"));
       if (values.accept !== "on")
-        throw Error(OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalAcceptRequiredPrivacy" : "legalAcceptRequired"));
+        throw Error(OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalAcceptRequiredPrivacy" : window.OrbitWeb?.terms ? "legalAcceptRequiredTerms" : "legalAcceptRequired"));
       const { password_again, accept, ...fields } = values;
       fields.accept = true;
       await window.orbit.call("account:register:start", {
@@ -1038,7 +1038,7 @@ function registrationModal() {
         () =>
           modal(
             OrbitI18n.t("verifyEmail"),
-            `<p class="hint">${OrbitI18n.t("verifyEmailHint")}</p><p class="hint">${OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalCodeSignsPrivacy" : "legalCodeSigns")}</p>` +
+            `<p class="hint">${OrbitI18n.t("verifyEmailHint")}</p><p class="hint">${OrbitI18n.t(window.OrbitWeb?.offer === false ? "legalCodeSignsPrivacy" : window.OrbitWeb?.terms ? "legalCodeSignsTerms" : "legalCodeSigns")}</p>` +
               field(
                 OrbitI18n.t("verificationCode"),
                 "code",
