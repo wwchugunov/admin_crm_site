@@ -261,8 +261,12 @@ const finance = {
   applyVoucher(method, voucherId, value, appointment, due) {
     const now = Date.now();
     if (method === "certificate") {
-      const c = this.db.prepare("SELECT * FROM certificates WHERE id=? OR code=?").get(id(voucherId), String(voucherId).toUpperCase());
-      if (!c || c.status !== "active") fail("Сертифікат недійсний", "The certificate is not valid");
+      // The code may be typed with spaces or dashes ("ABCD-EFGH") and in any case.
+      const typed = String(voucherId || "").trim(),
+        code = typed.toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const c = this.db.prepare("SELECT * FROM certificates WHERE id=? OR code=?").get(typed, code);
+      // A refund may still go back to a void certificate, so a visit paid with it can be refunded.
+      if (!c || (c.status !== "active" && value > 0)) fail("Сертифікат недійсний", "The certificate is not valid");
       if (value > 0) {
         if (c.expires && c.expires <= now) fail("Термін дії сертифіката минув", "The certificate has expired");
         if (value > c.balance) fail(`На сертифікаті лише ${(c.balance / 100).toFixed(2)}`, `The certificate only has ${(c.balance / 100).toFixed(2)} left`);
@@ -271,7 +275,7 @@ const finance = {
       return c.id;
     }
     const p = this.db.prepare("SELECT * FROM passes WHERE id=?").get(id(voucherId));
-    if (!p || p.status !== "active") fail("Абонемент недійсний", "The pass is not valid");
+    if (!p || (p.status !== "active" && value > 0)) fail("Абонемент недійсний", "The pass is not valid");
     if (value > 0) {
       if (p.expires && p.expires <= now) fail("Термін дії абонемента минув", "The pass has expired");
       if (p.used >= p.visits) fail("Візити в абонементі закінчились", "The pass has no visits left");

@@ -161,3 +161,26 @@ test("Deleting a client without visits removes their passes and keeps sold certi
   assert.equal(s.store.db.prepare("SELECT count(*) n FROM passes").get().n, 0);
   assert.equal(s.store.db.prepare("SELECT client_id FROM certificates").get().client_id, null);
 });
+
+test("Certificates in real use: discounted sale, typed codes, expiry, refunds after voiding, and income counted once", (t) => {
+  const s = salon(t);
+  const Analytics = require("../../../platform/web/app/analytics.js");
+  // Sold for 900 with a face value of 1000: the business received 900.
+  const { id: cert, code } = s.store.sellCertificate({ amount: 1000, price: 900, method: "card" });
+  const a = s.visit(s.nails, s.anna, s.past(0, 10));
+  s.store.payment({ appointment_id: a, amount: 800, method: "certificate", voucher_id: ` ${code.slice(0, 4).toLowerCase()}-${code.slice(4)} ` });
+  s.store.payment({ appointment_id: s.visit(s.cut, s.bohdana, s.past(0, 12)), amount: 500, method: "cash" });
+  const snap = s.store.snapshot({ all: true });
+  const month = new Date().toISOString().slice(0, 7);
+  const dash = Analytics.dashboard({ ...snap, role: "owner", mode: "server" }, "month", month);
+  assert.equal(dash.received, 140000, "900 sale + 500 cash; the 800 redemption is not income again");
+  // Expired: no more payments, but a refund still goes back.
+  s.store.db.prepare("UPDATE certificates SET expires=? WHERE id=?").run(Date.now() - 1000, cert);
+  const late = s.visit(s.cut, s.anna, Date.now() + 86400000);
+  assert.throws(() => s.store.payment({ appointment_id: late, amount: 100, method: "certificate", voucher_id: code }), /минув/);
+  // Voided after use: refunding the visit paid with it still works.
+  s.store.voidCertificate({ id: cert });
+  s.store.payment({ appointment_id: a, amount: -800, method: "certificate", voucher_id: cert });
+  assert.equal(s.store.db.prepare("SELECT balance FROM certificates WHERE id=?").get(cert).balance, 100000);
+  assert.throws(() => s.store.payment({ appointment_id: late, amount: 100, method: "certificate", voucher_id: cert }), /недійсний/);
+});

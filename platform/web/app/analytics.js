@@ -131,7 +131,7 @@ const Staff =
   function dashboard(data, mode, value) {
     const timezone = data.timezone || "Europe/Kyiv",
       range = period(mode, value, timezone),
-      financial = can("money");
+      financial = data.role === "owner" || data.mode !== "server" || (data.perms ? data.perms.money !== false : data.role !== "staff");
     const buckets = range.buckets.map((b) => ({
       ...b,
       bookings: 0,
@@ -197,7 +197,12 @@ const Staff =
       }
     }
     if (financial)
-      for (const payment of data.payments || []) {
+      // Money comes in when a certificate or pass is sold, not when it later covers a visit,
+      // so redemptions are skipped and sales are counted (the same rule as the finance report).
+      for (const payment of [
+        ...(data.payments || []).filter((p) => !["certificate", "pass"].includes(p.method)),
+        ...[...(data.certificates || []), ...(data.passes || [])].map((v) => ({ at: v.sold_at, amount: v.price })),
+      ]) {
         const b = buckets.find(
           (b) => payment.at >= b.start && payment.at < b.end,
         );
