@@ -19,13 +19,14 @@ test('Documents live only in the app admin; the site admin sees none of them',as
  assert.deepEqual(siteSnapshot.documentKinds,[]);assert.deepEqual(siteSnapshot.documents,[]);assert.equal((await site.upload('site-privacy')).status,403);
  const f=await fixture(t,'product');
  const snapshot=await (await f.call('owner:snapshot')).json();
- assert.deepEqual(snapshot.documentKinds,['app-privacy','site-terms','site-offer','site-privacy','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['site-privacy','app-privacy']);
+ assert.deepEqual(snapshot.documentKinds,['app-privacy','site-terms','site-offer','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['app-privacy']);
  assert.equal((await f.upload('unknown-kind')).status,403);assert.equal((await f.upload('site-privacy','https://evil.test')).status,403);
  const ok=await f.upload('presentation');assert.equal(ok.status,201);
  const sent=f.calls.find(c=>c.method==='PUT');assert.match(sent.route,/^\/admin\/documents\/file\?kind=presentation&language=uk&title=/);assert.equal(sent.body.toString(),'%PDF-1.7 test');assert.equal(sent.headers.authorization,'Bearer upstream-session');assert(sent.headers['x-orbit-proof']);
- assert.equal((await f.call('owner:document:activate',[{id:docs[0].id,kind:'site-privacy'}])).status,200);assert(f.calls.some(c=>c.route==='/admin/documents/activate'&&JSON.parse(c.body).kind==='site-privacy'));
- const file=await fetch(f.origin+'/web/document?id='+docs[0].id+'&kind=site-privacy',{headers:{Cookie:f.cookie}});assert.equal(file.status,200);assert.match(file.headers.get('content-disposition'),/^attachment; filename="policy.pdf"/);assert.equal(await file.text(),'%PDF-1.7');
- assert.equal((await fetch(f.origin+'/web/document?id=x&kind=site-privacy',{headers:{Cookie:f.cookie}})).status,404);
+ assert.equal((await f.call('owner:document:activate',[{id:docs[1].id,kind:'app-privacy'}])).status,200);assert(f.calls.some(c=>c.route==='/admin/documents/activate'&&JSON.parse(c.body).kind==='app-privacy'));
+ assert.equal((await f.call('owner:document:activate',[{id:docs[0].id,kind:'site-privacy'}])).status,403,'the separate site policy is no longer managed');
+ const file=await fetch(f.origin+'/web/document?id='+docs[1].id+'&kind=app-privacy',{headers:{Cookie:f.cookie}});assert.equal(file.status,200);assert.match(file.headers.get('content-disposition'),/^attachment; filename="policy.pdf"/);assert.equal(await file.text(),'%PDF-1.7');
+ assert.equal((await fetch(f.origin+'/web/document?id=x&kind=app-privacy',{headers:{Cookie:f.cookie}})).status,404);
 });
 test('Product admin manages the app policy and the site documents',async t=>{
  const f=await fixture(t,'product');
