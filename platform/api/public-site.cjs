@@ -89,7 +89,7 @@ class PublicSite {
     this.store.transaction(()=>{const id=crypto.randomUUID();this.db.prepare('INSERT INTO site_leads VALUES(?,?,?,?,?,?,?,?)').run(id, name, email, business, message, data.language, 'new', Date.now());this.mail?.lead({id,name,email,business,message,language:data.language});this.store.event('site.lead.created');});return { ok: true };
   }
   updateLead(data) {
-    if (!['new', 'contacted', 'closed'].includes(data.stage)) fail('Invalid lead stage');
+    if (!['new', 'contacted', 'granted', 'closed'].includes(data.stage)) fail('Invalid lead stage');
     if (!this.db.prepare('UPDATE site_leads SET stage=? WHERE id=?').run(data.stage, data.id).changes) fail('Lead not found', 404);
     this.store.event('site.lead.updated'); return { ok: true };
   }

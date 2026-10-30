@@ -38,7 +38,7 @@
     const button = document.createElement('button');
     button.className = 'nav';
     button.dataset.page = 'sales';
-    button.innerHTML = '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18l-2 11H5z"/><path d="M8 7a4 4 0 0 1 8 0"/></svg></span><span></span>';
+    button.innerHTML = '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18l-2 11H5z"/><path d="M8 7a4 4 0 0 1 8 0"/></svg></span><span data-nav-label></span>';
     button.lastChild.textContent = pages.sales[0];
     nav.querySelector('[data-page="users"]')?.before(button) ?? nav.append(button);
   };

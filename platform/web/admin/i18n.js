@@ -248,6 +248,7 @@
     "siteAnnouncementEdit": {"uk":"Редагувати анонс","en":"Edit announcement"},
     "siteVisible": {"uk":"Показувати після публікації","en":"Show after publishing"},
     "siteLeads": {"uk":"Заявки на демо","en":"Demo requests"},
+    "siteLeadsMoved": {"uk":"Заявки з сайту тепер в адмін-панелі застосунку → «Заявки»: там можна одразу дати людині доступ.","en":"Requests from the site are now in the app admin → Requests, where you can give access right away."},
     "siteNew": {"uk":"Нова","en":"New"},
     "siteContacted": {"uk":"Зв’язалися","en":"Contacted"},
     "siteClosed": {"uk":"Закрита","en":"Closed"},

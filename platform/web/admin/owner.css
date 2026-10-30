@@ -102,3 +102,9 @@ html[data-theme="dark"] .account-avatar { background: #504737; color: #f2e9da; }
 .mono-inline { font-family: ui-monospace, monospace; font-size: 11px; }
 html[data-theme="dark"] .security-status.calm { background: #1e2a22; border-color: #2e4a38; color: #9fd3b2; }
 html[data-theme="dark"] .security-status.alert { background: #2e1d1b; border-color: #5a332e; color: #f0b1a9; }
+
+/* Requests from the site */
+.badge.lead-new{background:#e6f6f1;color:#06664c}.badge.lead-progress{background:#fff4dc;color:#8a5a00}.badge.lead-granted{background:#e9f0ff;color:#2a4fb3}.badge.lead-closed{background:#f1f2f4;color:#6b7280}
+.lead-row-new td:first-child strong::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:#0a8f74;vertical-align:middle}
+.lead-message{max-width:420px;white-space:pre-wrap}
+.nav .nav-count{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#0a8f74;color:#fff;font-size:11px;line-height:20px;text-align:center}
