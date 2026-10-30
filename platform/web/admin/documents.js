@@ -97,7 +97,7 @@ const documentGuide = {
   },
 };
 const dg = (key) => (documentGuide[OrbitI18n.language] || documentGuide.uk)[key];
-const siteBase = () => (data.mail?.siteUrl || 'https://lomviko.com').replace(/\/$/, '');
+const siteBase = () => (data.mail?.settings?.siteUrl || 'https://lomviko.com').replace(/\/$/, '');
 
 function documentState(kind) {
   const has = (k) => (data.documents || []).some((d) => d.kind === k && d.active), off = (k) => (data.documentsDisabled || []).includes(k), sales = data.product?.sales === true;

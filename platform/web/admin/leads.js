@@ -18,7 +18,7 @@
     const list = leads();
     const counts = Object.fromEntries(Object.keys(STAGES).map((k) => [k, list.filter((l) => l.stage === k).length]));
     const stats = `<div class="stats">${[[L('Нові', 'New'), counts.new], [L('В роботі', 'In progress'), counts.contacted], [L('Доступ видано', 'Access given'), counts.granted], [L('Усього', 'Total'), list.length]].map(([label, value]) => `<div class="stat"><div class="stat-top">${label}</div><div class="stat-number">${value}</div></div>`).join('')}</div>`;
-    const mailHint = data.mail?.enabled ? '' : `<div class="callout mt">${L('Щоб кнопка «Дати доступ» надсилала лист, налаштуйте пошту в розділі «Пошта».', 'To send the access letter, set up mail under Mail first.')}</div>`;
+    const mailHint = data.mail?.accessReady ? '' : `<div class="callout mt">${L('Щоб кнопка «Дати доступ» надсилала лист, налаштуйте пошту в розділі «Пошта».', 'To send the access letter, set up mail under Mail first.')}</div>`;
     if (!list.length) return stats + mailHint + `<section class="panel mt">${noRows(L('Заявок поки немає', 'No requests yet'))}</section>`;
     const rows = list.map((l) => {
       const granted = l.stage === 'granted' || hasUser(l.email);
