@@ -7,6 +7,39 @@ function text(value, max, required = false) {
   if (typeof value !== 'string' || value.length > max || (required && !value.trim())) fail('Invalid website text');
   return value.trim();
 }
+// Edits made on the page in the site editor: any site text by its key (a heading is two parts) and
+// replaced pictures by slot. Unknown keys are ignored by the renderer, and text is always set as text.
+const IMAGE_SLOTS = ['app'];
+const IMAGE_MAX = 3 * 1024 * 1024;
+function texts(input) {
+  const out = { uk: {}, en: {} };
+  if (input === undefined) return out;
+  if (!input || typeof input !== 'object') fail('Invalid site texts');
+  for (const lang of LANGUAGES) {
+    const entries = Object.entries(input[lang] || {});
+    if (entries.length > 400) fail('Too many edited texts');
+    for (const [key, value] of entries) {
+      if (!/^[A-Za-z][A-Za-z0-9]{0,39}$/.test(key)) fail('Invalid text key');
+      if (typeof value === 'string') out[lang][key] = text(value, 1000, true);
+      else if (Array.isArray(value) && value.length === 2) out[lang][key] = [text(value[0], 300, true), text(value[1], 300)];
+      else fail('Invalid site text');
+    }
+  }
+  return out;
+}
+function images(input) {
+  const out = {};
+  if (input === undefined) return out;
+  if (!input || typeof input !== 'object') fail('Invalid site images');
+  for (const [slot, version] of Object.entries(input)) { if (!IMAGE_SLOTS.includes(slot) || !Number.isSafeInteger(version) || version < 1) fail('Invalid site image'); out[slot] = version; }
+  return out;
+}
+function imageType(buffer) {
+  if (buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg';
+  if (buffer.subarray(0, 4).toString() === 'RIFF' && buffer.subarray(8, 12).toString() === 'WEBP') return 'image/webp';
+  return null;
+}
 function defaults() {
   const content = { enabled: true, contactEmail: '', locales: {
     uk: { eyebrow: "CRM для салонів, клінік, студій і СТО", title: "Онлайн-запис і CRM для вашого бізнесу.", description: "Клієнти записуються самі 24/7, бот нагадує про візит, а розклад, оплати, витрати й зарплати команди — в одній програмі. Для салонів, клінік, СТО, студій і всіх, хто працює за записом.", price: "199 грн на місяць або 1 990 грн на рік. До 1 березня 2027 — безкоштовно.", priceNote: "Без картки й без дзвінків менеджера. Зареєструйтеся прямо в браузері — і приймайте перші онлайн-записи вже сьогодні.", about: "Один робочий простір для кількох бізнесів, команд і послуг.", privacy: "Надаючи ім’я та email, ви погоджуєтеся на їх використання для відповіді на вашу заявку. Ми не створюємо обліковий запис автоматично. Щоб видалити заявку, зверніться за контактним email на цій сторінці.", features: FEATURE_DEFAULTS.uk, faq: FAQ_DEFAULTS.uk },
@@ -35,12 +68,13 @@ function validate(input) {
     if (!/^[a-f0-9-]{36}$/.test(item.id || '') || ids.has(item.id) || typeof item.visible !== 'boolean' || !Number.isSafeInteger(item.at) || item.at < 0 || item.at > Date.now()+365*86400000) fail('Invalid announcement'); ids.add(item.id);
     return { id: item.id, at: item.at, visible: item.visible, uk: { title: text(item.uk?.title, 160, true), body: text(item.uk?.body, 2000, true) }, en: { title: text(item.en?.title, 160, true), body: text(item.en?.body, 2000, true) } };
   });
-  return { enabled: input.enabled, contactEmail, locales, announcements };
+  return { enabled: input.enabled, contactEmail, locales, announcements, texts: texts(input.texts), images: images(input.images) };
 }
 class PublicSite {
   constructor(store) {
     this.store = store; this.db = store.db;
     this.db.exec(`CREATE TABLE IF NOT EXISTS site_content(id INTEGER PRIMARY KEY CHECK(id=1),draft TEXT NOT NULL,published TEXT NOT NULL,revision INTEGER NOT NULL,published_revision INTEGER NOT NULL,updated_at INTEGER NOT NULL,published_at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS site_images(slot TEXT NOT NULL,version INTEGER NOT NULL,type TEXT NOT NULL,data BLOB NOT NULL,created_at INTEGER NOT NULL,PRIMARY KEY(slot,version));
       CREATE TABLE IF NOT EXISTS site_history(revision INTEGER PRIMARY KEY,content TEXT NOT NULL,at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS site_leads(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL,business TEXT NOT NULL,message TEXT NOT NULL,language TEXT NOT NULL,stage TEXT NOT NULL,created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS security_rejections(minute INTEGER NOT NULL,category TEXT NOT NULL,status INTEGER NOT NULL,count INTEGER NOT NULL,PRIMARY KEY(minute,category,status));
@@ -63,18 +97,20 @@ class PublicSite {
     return this.store.transaction(() => {
       const row = this.state(); if (row.revision !== data.revision) fail('Content changed elsewhere. Refresh before publishing.', 409);
       const content = validate(JSON.parse(row.draft));
-      if (content.enabled && !content.contactEmail) fail('Set a contact email before publishing');
       const now = Date.now();
       this.db.prepare('INSERT OR REPLACE INTO site_history VALUES(?,?,?)').run(row.published_revision, row.published, row.published_at);
       this.db.prepare('DELETE FROM site_history WHERE revision NOT IN (SELECT revision FROM site_history ORDER BY revision DESC LIMIT 10)').run();
       this.db.prepare('UPDATE site_content SET published=draft,published_revision=revision,published_at=? WHERE id=1').run(now);
+      // Pictures nobody points to any more (not the draft, not the live site) are removed.
+      const keep = new Set(Object.entries(content.images).map(([slot, version]) => slot + ':' + version));
+      for (const row of this.db.prepare('SELECT slot,version FROM site_images').all()) if (!keep.has(row.slot + ':' + row.version)) this.db.prepare('DELETE FROM site_images WHERE slot=? AND version=?').run(row.slot, row.version);
       this.store.event('site.published'); return { ok: true };
     });
   }
   public() {
     const row = this.state(), content = validate(JSON.parse(row.published));
     if (!content.enabled) fail('Website temporarily unavailable', 503);
-    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), documents: this.documents?.public() || {}, demoAvailable: true, product: this.product?.() || null };
+    return { brand: 'LOMVIKO', revision: row.published_revision, publishedAt: row.published_at, contactEmail: content.contactEmail, locales: content.locales, texts: content.texts, images: content.images, announcements: content.announcements.filter(a => a.visible).sort((a,b) => b.at-a.at), documents: this.documents?.public() || {}, demoAvailable: true, product: this.product?.() || null };
   }
   lead(data) {
     // Requests are always accepted: they land in the site admin even when no contact email or SMTP is set.
@@ -93,6 +129,26 @@ class PublicSite {
     if (!this.db.prepare('UPDATE site_leads SET stage=? WHERE id=?').run(data.stage, data.id).changes) fail('Lead not found', 404);
     this.store.event('site.lead.updated'); return { ok: true };
   }
+  // A replaced picture goes into the draft; visitors see it after "Опублікувати".
+  saveImage(slot, buffer, revision) {
+    if (!IMAGE_SLOTS.includes(slot)) fail('Unknown picture');
+    if (!buffer.length || buffer.length > IMAGE_MAX) fail('The picture must be at most 3 MB', 413);
+    const type = imageType(buffer); if (!type) fail('Use a PNG, JPEG or WebP picture');
+    return this.store.transaction(() => {
+      const row = this.state(); if (row.revision !== revision) fail('Content changed elsewhere. Refresh before editing.', 409);
+      const content = validate(JSON.parse(row.draft)), version = Math.max(Date.now(), (content.images[slot] || 0) + 1);
+      this.db.prepare('INSERT INTO site_images VALUES(?,?,?,?,?)').run(slot, version, type, buffer, Date.now());
+      content.images[slot] = version;
+      this.db.prepare('UPDATE site_content SET draft=?,revision=revision+1,updated_at=? WHERE id=1').run(JSON.stringify(content), Date.now());
+      this.store.event('site.image.saved'); return { version, revision: this.state().revision };
+    });
+  }
+  image(slot, version) {
+    if (!IMAGE_SLOTS.includes(slot) || !Number.isSafeInteger(version)) fail('Picture not found', 404);
+    const row = this.db.prepare('SELECT type,data FROM site_images WHERE slot=? AND version=?').get(slot, version); if (!row) fail('Picture not found', 404);
+    return row;
+  }
+  publishedImage(slot) { const version = validate(JSON.parse(this.state().published)).images[slot]; if (!version) fail('Picture not found', 404); return { version, ...this.image(slot, version) }; }
   deleteLead(data) { this.mail?.cancelLead(data.id);this.db.prepare('DELETE FROM site_leads WHERE id=?').run(data.id); this.store.event('site.lead.deleted'); return { ok: true }; }
   reject(route, status) {
     const category = route.startsWith('/admin/') ? 'admin' : route.startsWith('/public/') ? 'website' : 'client';

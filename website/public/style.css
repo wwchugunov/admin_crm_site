@@ -683,3 +683,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 .doc-highlight{outline:3px solid #0a8f74;outline-offset:6px;border-radius:8px;animation:doc-pulse 1.2s ease-in-out 3}
 @keyframes doc-pulse{50%{outline-color:rgba(10,143,116,.25)}}
 @media (prefers-reduced-motion:reduce){.doc-highlight{animation:none}}
+
+/* Site editor (inside the site admin only): editable texts are outlined on hover, pictures get a Replace button */
+.editing .edit-text{outline:1px dashed transparent;outline-offset:3px;border-radius:4px;cursor:text;transition:outline-color .15s}
+.editing .edit-text:hover{outline-color:rgba(10,143,116,.55)}
+.editing .edit-text:focus{outline:2px solid #0a8f74;background:rgba(10,143,116,.06)}
+.editing .reveal{opacity:1!important;transform:none!important}
+.edit-picture-host{position:relative}
+.edit-picture{position:absolute;top:16px;right:16px;z-index:5;padding:10px 16px;border:0;border-radius:999px;background:#0a8f74;color:#fff;font:600 14px/1 inherit;box-shadow:0 8px 24px rgba(0,0,0,.2);cursor:pointer}
+.edit-picture:hover{background:#06664c}

@@ -118,3 +118,13 @@ html[data-theme="dark"] .security-status.alert { background: #2e1d1b; border-col
 .doc-where{padding:4px 24px 18px}.doc-where h3{margin:0 0 8px;font-size:12px;color:#8a8f98;font-weight:600}
 .doc-where ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}.doc-where li{display:flex;gap:12px;align-items:baseline;justify-content:space-between;font-size:13px}
 .doc-show{white-space:nowrap;font-weight:600;color:#0a8f74}
+
+/* Site editor: toolbar over the live page */
+.editor-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.editor-bar .segmented{display:inline-flex;padding:3px;border-radius:12px;background:#eef0f2}
+.editor-bar .segmented button{border:0;background:transparent;padding:8px 14px;border-radius:9px;font-weight:600;font-size:13px;color:#5b616a;cursor:pointer}
+.editor-bar .segmented button.active{background:#fff;color:#16181d;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.editor-status{margin-left:auto;font-size:13px;color:#5b616a}
+.editor-stage{border:1px solid #e3e6ea;border-radius:16px;overflow:hidden;background:#fff;height:calc(100vh - 230px);min-height:520px;display:flex;justify-content:center}
+.editor-stage iframe{width:100%;height:100%;border:0;background:#fff}
+.editor-stage.phone{background:#eef0f2;padding:18px 0}.editor-stage.phone iframe{width:390px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.12)}

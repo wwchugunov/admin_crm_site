@@ -287,7 +287,13 @@ const PLAN_FALLBACK = {
 
 function renderPublic(document, { language = 'uk', site = null, segment = 'beauty', story = 0, pageStyle = 'warm', bot = { step: 0 } } = {}, part = 'all') {
 const $ = (s) => document.querySelector(s), $$ = (s) => document.querySelectorAll(s);
-const t = (key) => translations[language][key];
+// Texts edited on the page in the site editor replace the built-in copy of the same shape; anything else is ignored.
+const t = (key) => {
+  const base = translations[language][key], edited = site?.texts?.[language]?.[key];
+  if (typeof base === 'string' && typeof edited === 'string') return edited;
+  if (Array.isArray(base) && base.length === 2 && Array.isArray(edited) && edited.length === 2) return edited;
+  return base;
+};
 const content = () => site?.locales?.[language] || fallbackContent[language];
 const documentSlugs = { 'site-privacy': 'privacy', 'site-terms': 'terms', 'site-offer': 'offer', presentation: 'presentation' };
 const documentHref = (kind) => (language === 'en' ? '/en/' : '/') + documentSlugs[kind];
@@ -295,8 +301,9 @@ function heading(el, parts) { el.innerHTML = `${esc(parts[0])} <em>${esc(parts[1
 
 function editorial(id, key, stock) {
   const el = $('#' + id); if (!el) return;
+  el.dataset.edit = key;
   const value = content()[stock];
-  if (!value || value === fallbackContent[language][stock]) {
+  if (site?.texts?.[language]?.[key] !== undefined || !value || value === fallbackContent[language][stock]) {
     const text = t(key);
     if (Array.isArray(text)) heading(el, text); else el.textContent = text;
   } else el.textContent = value;
@@ -334,6 +341,7 @@ function staticText() {
   $$('[data-h]').forEach((el) => heading(el, t(el.dataset.h)));
   $$('[data-t-label]').forEach((el) => el.setAttribute('aria-label', t(el.dataset.tLabel)));
   $$('[data-t-alt]').forEach((el) => el.setAttribute('alt', t(el.dataset.tAlt)));
+  $$('img[data-img]').forEach((el) => { const version = site?.images?.[el.dataset.img]; if (Number.isSafeInteger(version)) el.setAttribute('src', `/public/site-image/${el.dataset.img}?v=${version}`); });
   const board = t('board');
   $$('[data-m]').forEach((el) => { if (board[el.dataset.m]) el.textContent = board[el.dataset.m]; });
   $$('[data-lang]').forEach((b) => b.setAttribute('aria-current', b.dataset.lang === language ? 'page' : 'false'));
@@ -498,6 +506,9 @@ function publicSnapshot(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Invalid public site response');
   const pick = (object, keys) => Object.fromEntries(keys.filter(key => object?.[key] !== undefined).map(key => [key, object[key]]));
   const result = pick(value, ['contactEmail']);
+  const textValue = (v) => typeof v === 'string' ? v : Array.isArray(v) && v.length === 2 && v.every(part => typeof part === 'string') ? v : undefined;
+  if (value.texts) result.texts = Object.fromEntries(['uk', 'en'].map(lang => [lang, Object.fromEntries(Object.entries(value.texts[lang] || {}).filter(([key, v]) => /^[A-Za-z][A-Za-z0-9]{0,39}$/.test(key) && textValue(v) !== undefined))]));
+  if (value.images) result.images = Object.fromEntries(Object.entries(value.images).filter(([slot, v]) => /^[a-z][a-z0-9-]{0,30}$/.test(slot) && Number.isSafeInteger(v)));
   if (value.locales) result.locales = Object.fromEntries(['uk', 'en'].map(lang => [lang,
     pick(value.locales[lang], ['eyebrow', 'title', 'description', 'price', 'priceNote', 'about', 'privacy', 'features', 'faq'])]));
   if (value.announcements) result.announcements = value.announcements.map(item => ({ at: item.at, uk: pick(item.uk, ['title', 'body']), en: pick(item.en, ['title', 'body']) }));

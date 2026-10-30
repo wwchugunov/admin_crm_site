@@ -9,6 +9,8 @@ function problem(status,message){throw Object.assign(Error(message),{status});}
 function createAdminServer({apiUrl,origin,profile='website',publicDirectory=path.join(__dirname,'admin')}={}){
  const api=new URL(apiUrl||process.env.CH_API_URL||'http://127.0.0.1:4545');if(!['http:','https:'].includes(api.protocol)||api.username||api.password||api.pathname!=='/'||api.search||api.hash)throw Error('CH_API_URL must be an origin');
  const external=new URL(origin||process.env.CH_ADMIN_ORIGIN||`http://127.0.0.1:${DEFAULT_PORT[profile]}`);if(external.pathname!=='/'||external.username||external.password||external.search||external.hash||!(external.protocol==='https:'||(external.protocol==='http:'&&['127.0.0.1','localhost'].includes(external.hostname))))throw Error('CH_ADMIN_ORIGIN requires HTTPS or local loopback');
+ // The site editor shows the real site in a frame; only that origin may be framed.
+ const siteFrame=new URL(process.env.CH_WEBSITE_URL||'http://127.0.0.1:4546').origin;
  const sessions=new Map(),routes={...siteRoutes,...(profile==='product'?{...productRoutes,...memberRoutes}:{})};
  // All public documents live in the app admin, so there is one place to see what is shown where; the site admin only edits the site.
  const documentKinds=profile==='product'?['app-privacy','site-terms','site-offer','site-privacy','presentation']:[];const ownDocument=kind=>{if(!documentKinds.includes(kind))problem(403,'Document type unavailable in this admin');return kind;};// Failed sign-ins are counted per address: someone guessing cannot lock the real administrator out.
@@ -18,7 +20,7 @@ function createAdminServer({apiUrl,origin,profile='website',publicDirectory=path
  async function json(req){let raw='';for await(const b of req){raw+=b;if(Buffer.byteLength(raw)>65536)problem(413,'Request too large');}try{return JSON.parse(raw);}catch{problem(400,'Invalid JSON');}}
  const server=http.createServer(async(req,res)=>{
   const reply=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
-  res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+  res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Content-Security-Policy',`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; ${profile==='website'?`frame-src ${siteFrame}; `:''}object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`);
   try{
    const url=new URL(req.url,external);if(url.pathname.startsWith('/web/')){
     if(req.headers.host!==external.host)problem(403,'Invalid host');
@@ -40,6 +42,19 @@ function createAdminServer({apiUrl,origin,profile='website',publicDirectory=path
     const s=getSession(req);
     if(req.method==='POST'&&url.pathname==='/web/logout'){for(const[k,v]of sessions)if(v===s)sessions.delete(k);res.setHeader('Set-Cookie',`${cookie}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${external.protocol==='https:'?'; Secure':''}`);return reply(200,{ok:true});}
     if(req.method==='GET'&&url.pathname==='/web/session')return reply(200,{ok:true});
+    // Site editor pictures: only the website admin, at most 3 MB, signed like document uploads.
+    if(profile==='website'&&req.method==='PUT'&&url.pathname==='/web/site-image'){
+     const chunks=[];let size=0;for await(const b of req){size+=b.length;if(size>3*1024*1024)problem(413,'The picture must be at most 3 MB');chunks.push(b);}if(!size)problem(400,'Empty picture');
+     const body=Buffer.concat(chunks),route='/admin/site/image?'+new URLSearchParams({slot:url.searchParams.get('slot')||'',revision:url.searchParams.get('revision')||''});
+     const response=await fetch(api.origin+route,{method:'PUT',headers:{Authorization:'Bearer '+s.token,'Content-Type':'application/octet-stream','Content-Length':String(size),...signDigest('PUT',route,crypto.createHash('sha256').update(body).digest('hex'),s.token,s.key)},body,redirect:'error',signal:AbortSignal.timeout(60000)});
+     const result=await response.json();if(!response.ok)problem(response.status,result.error||'Upload rejected');return reply(201,result);
+    }
+    if(profile==='website'&&req.method==='GET'&&url.pathname==='/web/site-image'){
+     const route='/admin/site/image?'+new URLSearchParams({slot:url.searchParams.get('slot')||'',version:url.searchParams.get('version')||''});
+     const response=await fetch(api.origin+route,{headers:{Authorization:'Bearer '+s.token,...signRequest('GET',route,'',s.token,s.key)},redirect:'error',signal:AbortSignal.timeout(30000)});
+     if(!response.ok){const value=await response.json().catch(()=>({}));problem(response.status,value.error||'Picture unavailable');}
+     res.writeHead(200,{'Content-Type':response.headers.get('content-type'),'Cache-Control':'no-store'});return res.end(Buffer.from(await response.arrayBuffer()));
+    }
     if(req.method==='PUT'&&url.pathname==='/web/document'){
      const q=url.searchParams,meta={kind:ownDocument(q.get('kind')),language:q.get('language')||'',title:q.get('title')||'',filename:q.get('filename')||'',activate:q.get('activate')==='0'?'0':'1'};
      const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'ch-admin-document-')),file=path.join(temporary,'document');let size=0;const hash=crypto.createHash('sha256'),handle=await fs.promises.open(file,'wx',0o600);
@@ -58,7 +73,7 @@ function createAdminServer({apiUrl,origin,profile='website',publicDirectory=path
     }
     if(req.method==='POST'&&url.pathname==='/web/call'){
      const {channel,args=[]}=await json(req);if(!Array.isArray(args)||args.length>4)problem(400,'Invalid arguments');
-     if(channel==='owner:snapshot'){const d=await upstream(s,'/admin/snapshot');const documents=(d.documents||[]).filter(doc=>documentKinds.includes(doc.kind)),documentsDisabled=(d.documentsDisabled||[]).filter(kind=>documentKinds.includes(kind));return reply(200,profile==='product'?{...d,documents,documentsDisabled,documentKinds,endpoint:process.env.CH_PUBLIC_API_URL||api.origin,local:false}:{website:d.website&&{...d.website,leads:[],leadCount:0},releases:d.releases,documents,documentsDisabled,documentKinds,adminAccount:d.adminAccount,users:[],devices:[],businesses:[],events:[],policies:[],invites:[],endpoint:process.env.CH_PUBLIC_API_URL||api.origin,local:false});}
+     if(channel==='owner:snapshot'){const d=await upstream(s,'/admin/snapshot');const documents=(d.documents||[]).filter(doc=>documentKinds.includes(doc.kind)),documentsDisabled=(d.documentsDisabled||[]).filter(kind=>documentKinds.includes(kind));return reply(200,profile==='product'?{...d,documents,documentsDisabled,documentKinds,endpoint:process.env.CH_PUBLIC_API_URL||api.origin,local:false}:{website:d.website&&{...d.website,leads:[],leadCount:0},siteUrl:(process.env.CH_WEBSITE_URL||'http://127.0.0.1:4546').replace(/\/$/,''),releases:d.releases,documents,documentsDisabled,documentKinds,adminAccount:d.adminAccount,users:[],devices:[],businesses:[],events:[],policies:[],invites:[],endpoint:process.env.CH_PUBLIC_API_URL||api.origin,local:false});}
      let route=routes[channel];if(profile==='product'&&channel?.startsWith('owner:business:')){const type=channel.split(':')[2];if(['config','profile','service','resource'].includes(type))route='/admin/business/'+type+'?business_id='+encodeURIComponent(args[0]);}
      if(['owner:document:activate','owner:document:delete','owner:document:switch'].includes(channel)){const d=args[0]||{};ownDocument(d.kind);route={'owner:document:activate':'/admin/documents/activate','owner:document:delete':'/admin/documents/delete','owner:document:switch':'/admin/documents/switch'}[channel];}
      if(!route)problem(403,'Operation unavailable in this admin');const get=['owner:export','owner:site:export','owner:business:config'].includes(channel);const body=channel==='owner:key:revoke'?{id:args[0]}:channel==='owner:revoke'?{device_id:args[0]}:channel?.startsWith('owner:business:')&&channel!=='owner:business:add'?args[1]:args[0]||{};

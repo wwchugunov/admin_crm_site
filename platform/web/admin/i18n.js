@@ -225,7 +225,7 @@
     "licenseTrial": {"uk":"На пробному періоді","en":"On free trial"},
     "licenseBlocked": {"uk":"Вимкнені / прострочені","en":"Disabled / expired"},
     "keyRevokeQuestion": {"uk":"Відкликати посилання доступу? Воно більше не спрацює.","en":"Revoke the access link? It will no longer work."},
-    "siteTitle": {"uk":"Лендинг","en":"Landing page"},
+    "siteTitle": {"uk":"Анонси та налаштування","en":"Updates and settings"},
     "siteSubtitle": {"uk":"Тексти, анонси, завантаження та заявки на демо.","en":"Content, announcements, downloads and demo requests."},
     "securityTitle": {"uk":"Безпека","en":"Security"},
     "securitySubtitle": {"uk":"Відхилені запити, відкликані пристрої та адміністративні дії.","en":"Rejected requests, revoked devices and administrative actions."},

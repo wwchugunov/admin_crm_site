@@ -13,6 +13,7 @@ services:
     environment:
       CH_API_URL: http://orbit:4545
       CH_TRUST_PROXY: '1'
+      CH_EDITOR_ORIGIN: https://${CH_SITE_ADMIN_DOMAIN:?Set CH_SITE_ADMIN_DOMAIN}
       HOST: 0.0.0.0
       PORT: '4546'
     expose: ['4546']
@@ -114,6 +115,7 @@ services:
       CH_API_URL: http://orbit:4545
       CH_PUBLIC_API_URL: https://${ORBIT_DOMAIN:?Set ORBIT_DOMAIN}
       CH_ADMIN_ORIGIN: https://${CH_SITE_ADMIN_DOMAIN:?Set CH_SITE_ADMIN_DOMAIN}
+      CH_WEBSITE_URL: https://${ORBIT_WEBSITE_DOMAIN:?Set ORBIT_WEBSITE_DOMAIN}
     expose: ['4547']
     depends_on: {orbit: {condition: service_healthy}}
     healthcheck:

@@ -11,6 +11,7 @@ const STATIC = new Map([
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/motion.js', ['motion.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/ads.js', ['ads.js', 'text/javascript; charset=utf-8', 'no-cache']],
+  ['/editor.js', ['editor.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8', 'no-cache']],
   ['/favicon.svg', ['favicon.svg', 'image/svg+xml', DAY]],
   ['/assets/crm.png', ['assets/crm.png', 'image/png', DAY]],
@@ -62,14 +63,22 @@ function sendFile(req, res, file) {
 }
 // Google Ads tag hosts are the only third parties: the tag script, its conversion pings and their pixels.
 const ADS = 'https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://www.google.com.ua';
-const csp = `default-src 'self'; script-src 'self' ${ADS}; style-src 'self'; img-src 'self' ${ADS}; connect-src 'self' ${ADS}; frame-src https://td.doubleclick.net https://bid.g.doubleclick.net; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`;
+const cspFor = (editor) => `default-src 'self'; script-src 'self' ${ADS}; style-src 'self'; img-src 'self' data: ${ADS}; connect-src 'self' ${ADS}; frame-src https://td.doubleclick.net https://bid.g.doubleclick.net; object-src 'none'; base-uri 'none'; frame-ancestors ${editor || "'none'"}; form-action 'self'`;
 function upstream(raw) {
   const u = new URL(raw);
   if (u.username || u.password || u.search || u.hash || u.pathname !== '/' || !['http:', 'https:'].includes(u.protocol)) throw Error('CH_API_URL must be an origin without credentials or path');
   return u.origin;
 }
-function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, directory = path.join(__dirname, 'public'), siteCacheMs = 30000 } = {}) {
-  const origin = upstream(apiUrl), rates = new Map(), template = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
+// The site editor in the site admin opens these pages in a frame; only that one origin may frame them.
+function editorOrigin(value) {
+  if (!value) return '';
+  const url = new URL(value);
+  if (url.pathname !== '/' || url.search || url.hash || url.username || !(url.protocol === 'https:' || (url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname)))) throw Error('CH_EDITOR_ORIGIN must be an https origin');
+  return url.origin;
+}
+function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, directory = path.join(__dirname, 'public'), siteCacheMs = 30000, editor = '' } = {}) {
+  const editorAllowed = editorOrigin(editor), csp = cspFor(editorAllowed);
+  const origin = upstream(apiUrl), rates = new Map(), template = fs.readFileSync(path.join(directory, 'index.html'), 'utf8').replace('</head>', editorAllowed ? `<meta name="lomviko-editor" content="${editorAllowed}">\n</head>` : '</head>');
   const files = publicFiles(directory, template), fallbackPages = new Map([...PAGES.keys()].map(route => [route, files.get(route)]));
   let refreshAt = 0, refreshing = null, snapshot = '';
   const refreshPages = async () => {
@@ -97,14 +106,14 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
     try { await refreshing; } finally { refreshing = null; }
   };
   const server = http.createServer(async (req, res) => {
-    res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Content-Security-Policy',csp);res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Cache-Control','no-store');
+    res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Content-Security-Policy',csp);if(!editorAllowed)res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Cache-Control','no-store');
     const json = (status, value) => { if (!res.headersSent) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value)); } };
     try {
       const url = new URL(req.url,'http://localhost'), route = url.pathname, read = req.method === 'GET' || req.method === 'HEAD';
       const asset = STATIC.get(route), language = PAGES.get(route), document = DOCUMENTS.get(route);
       if (!asset && !language) res.setHeader('X-Robots-Tag', 'noindex');
       // Pages and static files ignore marketing parameters such as utm_source, gclid or fbclid; API paths stay strict.
-      if (url.search && route.startsWith('/public/') && !(read && (asset || language || document || route === '/en/'))) return json(400,{error:'Query parameters are not supported'});
+      if (url.search && route.startsWith('/public/') && !(read && (asset || language || document || route === '/en/' || route.startsWith('/public/site-image/')))) return json(400,{error:'Query parameters are not supported'});
       if (req.method === 'GET' && route === '/healthz') return json(200,{status:'ok'});
       if (read && route === '/en/') { res.writeHead(301,{Location:'/en'+url.search});return res.end(); }
       if (read && files.has(route)) { if (language) await refreshPages(); return sendFile(req, res, files.get(route)); }
@@ -128,6 +137,15 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
           if (req.method === 'HEAD' || !response.body) return res.end();
           await pipeline(Readable.fromWeb(response.body), res); return;
         } finally { clearTimeout(timeout); res.off('close', disconnect); }
+      }
+      const picture = /^\/public\/site-image\/([a-z][a-z0-9-]{0,30})$/.exec(route);
+      if (read && picture) {
+        const response = await fetch(`${origin}/public/site-image/${picture[1]}`, { method: req.method, redirect: 'error', signal: AbortSignal.timeout(15000) });
+        const type = (response.headers.get('content-type') || '').split(';')[0];
+        if (!response.ok || !['image/png', 'image/jpeg', 'image/webp'].includes(type)) return json(404, { error: 'Not found' });
+        const body = Buffer.from(await response.arrayBuffer());
+        res.writeHead(200, { 'Content-Type': type, 'Content-Length': body.length, 'Cache-Control': 'public, max-age=86400' });
+        return res.end(req.method === 'HEAD' ? undefined : body);
       }
       const allowed = (req.method === 'GET' && route === '/public/site') || (req.method === 'POST' && ['/public/demo','/public/access'].includes(route));
       if (!allowed) {
@@ -160,7 +178,7 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
 }
 module.exports = { createServer, upstream };
 if (require.main === module) {
-  const server=createServer({apiUrl:process.env.CH_API_URL||'http://127.0.0.1:4545',trustProxy:process.env.CH_TRUST_PROXY==='1'});
+  const server=createServer({apiUrl:process.env.CH_API_URL||'http://127.0.0.1:4545',trustProxy:process.env.CH_TRUST_PROXY==='1',editor:process.env.CH_EDITOR_ORIGIN||''});
   server.listen(Number(process.env.PORT||4546),process.env.HOST||'127.0.0.1',()=>console.log(`CH landing: http://${process.env.HOST||'127.0.0.1'}:${server.address().port}`));
   let stopping=false;const stop=()=>{if(stopping)return;stopping=true;server.close();server.closeIdleConnections();const deadline=setTimeout(()=>{server.closeAllConnections();},15000);deadline.unref();};process.on('SIGTERM',stop);process.on('SIGINT',stop);
 }
