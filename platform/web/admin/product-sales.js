@@ -19,6 +19,10 @@
       L('Коли закрито, сайт і застосунок замість «Спробувати» пропонують залишити заявку', 'When closed, the site and the app offer to leave a request instead of “Try”'),
       L('Ті, хто вже зареєстрований, працюють як раніше', 'Existing users keep working as before'),
       L('Ви можете й далі створювати акаунти вручну в «Користувачі»', 'You can still create accounts by hand under Users'),
+    ])}${toggle('owner', p.owner !== false, L('Власник сервісу на сайті', 'Service owner on the site'), L('Показано: у підвалі сайту «Власник сервісу — Чугунов Василь Васильович»', 'Shown: the site footer names the service owner'), L('Приховано: у підвалі лише © LOMVIKO', 'Hidden: the footer shows only © LOMVIKO'), [
+      L('Поки LOMVIKO безкоштовний, рядок можна приховати', 'While LOMVIKO is free the line can be hidden'),
+      L('Коли вмикаєте продажі, увімкніть і цей рядок: покупець має бачити, хто продає', 'When you turn sales on, show it too: buyers must see who sells'),
+      L('Ім’я власника все одно вказане в «Умовах користування» і Політиці конфіденційності', 'The owner is still named in the Terms of use and the Privacy policy'),
     ])}</div>${plans}`;
   };
   Object.assign(actions, {

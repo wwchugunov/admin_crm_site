@@ -144,7 +144,7 @@ const translations = {
     faqKicker: 'Питання', faqTitle: ['Перед', 'початком.'],
     finalTitle: ['Перший онлайн-запис —', 'вже сьогодні.'], finalBody: 'Зареєструйтеся за дві хвилини прямо в браузері й користуйтеся всім безкоштовно до 1 березня 2027.', finalWord: 'РИТМ',
     footerTagline: 'CRM для бізнесу, що працює за записом.', footerMade: 'Комп’ютер · Телефон · Українська · English',
-    legalLabel: 'Документи', operator: 'Власник сервісу — Чугунов, Україна', docTerms: 'Умови користування', docPrivacy: 'Політика конфіденційності', docOffer: 'Публічна оферта', docPresentation: 'Презентація', privacyLink: 'Політика конфіденційності',
+    legalLabel: 'Документи', operator: 'Власник сервісу — Чугунов Василь Васильович, Україна', docTerms: 'Умови користування', docPrivacy: 'Політика конфіденційності', docOffer: 'Публічна оферта', docPresentation: 'Презентація', privacyLink: 'Політика конфіденційності',
     deckTitle: ['Покажіть LOMVIKO', 'своїй команді.'], deckCover: ['Ваш день —', 'в ідеальному ритмі.'], deckBody: 'Коротка презентація: можливості, сценарії роботи, безпека даних і запуск. Зручно переслати партнеру чи власнику бізнесу.', deckButton: 'Відкрити презентацію',
     sending: 'Надсилаємо…', invalid: 'Перевірте ім’я та email і спробуйте ще раз.', success: 'Дякуємо! Заявку отримано. Зв’яжемося за вказаним email.', error: 'Не вдалося надіслати заявку. Спробуйте пізніше.', rate: 'Забагато спроб. Спробуйте пізніше.',
     unavailable: 'Сервіс тимчасово недоступний. Спробуйте трохи пізніше.', waiting: 'Перевіряємо доступні версії…',
@@ -262,7 +262,7 @@ const translations = {
     faqKicker: 'FAQ', faqTitle: ['Before', 'you start.'],
     finalTitle: ['Your first online booking —', 'today.'], finalBody: 'Sign up in two minutes right in your browser and use everything free until 1 March 2027.', finalWord: 'RHYTHM',
     footerTagline: 'The CRM for appointment-based businesses.', footerMade: 'Computer · Phone · Українська · English',
-    legalLabel: 'Documents', operator: 'Service owner — Chuhunov, Ukraine', docTerms: 'Terms of use', docPrivacy: 'Privacy policy', docOffer: 'Public offer', docPresentation: 'Presentation', privacyLink: 'Privacy policy',
+    legalLabel: 'Documents', operator: 'Service owner — Vasyl Chuhunov, Ukraine', docTerms: 'Terms of use', docPrivacy: 'Privacy policy', docOffer: 'Public offer', docPresentation: 'Presentation', privacyLink: 'Privacy policy',
     deckTitle: ['Show LOMVIKO', 'to your team.'], deckCover: ['Your day —', 'in perfect rhythm.'], deckBody: 'A short presentation: features, everyday scenarios, data security and getting started. Easy to forward to a partner or the business owner.', deckButton: 'Open the presentation',
     sending: 'Sending…', invalid: 'Check your name and email and try again.', success: 'Thank you! We received your request and will contact you by email.', error: 'We could not send your request. Please try again later.', rate: 'Too many attempts. Please try again later.',
     unavailable: 'The service is temporarily unavailable. Please try again a little later.', waiting: 'Checking available versions…',
@@ -455,6 +455,9 @@ function news() {
 
 function legal() {
   const docs = site?.documents || {}, has = (kind) => Boolean(docs[kind]?.[language]);
+  // The owner line is switched off in the admin while LOMVIKO is given away for free.
+  const owner = $('#footer-owner');
+  if (owner) owner.hidden = site?.product?.owner === false;
   $('#footer-legal').innerHTML = [['site-privacy', 'docPrivacy'], ['site-terms', 'docTerms'], ['site-offer', 'docOffer'], ['presentation', 'docPresentation']].filter(([kind]) => has(kind)).map(([kind, key]) => `<a href="${documentHref(kind)}" target="_blank" rel="noopener">${esc(t(key))}</a>`).join('');
   const inline = $('#privacy-inline');
   inline.hidden = !has('site-privacy');
@@ -501,7 +504,7 @@ function publicSnapshot(value) {
   result.documents = Object.fromEntries(['site-privacy', 'site-terms', 'site-offer', 'presentation'].filter(kind => value.documents?.[kind]).map(kind => [kind,
     Object.fromEntries(['uk', 'en'].filter(lang => value.documents[kind][lang]).map(lang => [lang, pick(value.documents[kind][lang], ['extension', 'size'])]))]));
   if (value.product) {
-    result.product = pick(value.product, ['sales', 'registration', 'free_until']);
+    result.product = pick(value.product, ['sales', 'registration', 'owner', 'free_until']);
     if (value.product.base) result.product.base = pick(value.product.base, ['uk', 'en']);
     result.product.plans = value.product.plans.map(plan => ({ ...pick(plan, ['price', 'uk', 'en', 'popular']),
       for: pick(plan.for, ['uk', 'en']), features: plan.features.map(feature => pick(feature, ['uk', 'en'])) }));

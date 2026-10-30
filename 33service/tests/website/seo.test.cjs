@@ -105,3 +105,14 @@ test('Google Ads queues conversions before deferring its runtime until page load
  assert.equal(context.window.dataLayer.length, 3); assert.equal(context.window.dataLayer[2][0], 'event');
  onload(); assert(!script); idle(); assert.match(script.src, /^https:\/\/www.googletagmanager.com\/gtag\/js\?id=/); assert.equal(script.async, true);
 });
+test('The admin can hide the service owner line in the footer while LOMVIKO is free', async t => {
+ const f = await fixture(t);
+ const shown = parseHTML(await (await fetch(f.url + '/')).text()).document;
+ assert.equal(shown.querySelector('#footer-owner').hidden, false);
+ assert.match(shown.querySelector('#footer-owner').textContent, /Чугунов Василь Васильович/);
+ // A fresh server, because the public snapshot is cached for 30 seconds.
+ const server = await fixture(t);
+ server.state.data = { ...defaults(), product: { sales: false, registration: true, owner: false, free_until: Date.now(), plans: [] } };
+ const hidden = parseHTML(await (await fetch(server.url + '/')).text()).document;
+ assert.equal(hidden.querySelector('#footer-owner').hidden, true);
+});

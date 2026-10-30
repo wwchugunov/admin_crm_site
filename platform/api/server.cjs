@@ -60,8 +60,8 @@ class ProductStore {
   }
   // Product switches the owner of LOMVIKO controls from the admin: selling (offer, prices, plan limits)
   // and whether new people can register.
-  product() { const get=(k,d)=>{const r=this.db.prepare('SELECT value FROM product_settings WHERE key=?').get(k);return r?r.value==='1':d;}; return { sales: get('sales', false), registration: get('registration', true) }; }
-  setProduct(key, on) { if(!['sales','registration'].includes(key)||typeof on!=='boolean')fail(400,'Invalid product switch'); this.db.prepare('INSERT INTO product_settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,on?'1':'0'); this.event(`product.${key}.${on?'on':'off'}`); }
+  product() { const get=(k,d)=>{const r=this.db.prepare('SELECT value FROM product_settings WHERE key=?').get(k);return r?r.value==='1':d;}; return { sales: get('sales', false), registration: get('registration', true), owner: get('owner', true) }; }
+  setProduct(key, on) { if(!['sales','registration','owner'].includes(key)||typeof on!=='boolean')fail(400,'Invalid product switch'); this.db.prepare('INSERT INTO product_settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,on?'1':'0'); this.event(`product.${key}.${on?'on':'off'}`); }
   transaction(fn) { const depth=this.transactionDepth||0,savepoint='owner_'+depth;this.db.exec(depth?'SAVEPOINT '+savepoint:'BEGIN IMMEDIATE');this.transactionDepth=depth+1;try{const value=fn();this.db.exec(depth?'RELEASE '+savepoint:'COMMIT');return value;}catch(e){this.db.exec(depth?'ROLLBACK TO '+savepoint:'ROLLBACK');if(depth)this.db.exec('RELEASE '+savepoint);throw e;}finally{this.transactionDepth=depth;} }
   event(event, user = null, device = null, platform = '', details = '') { const eventId = id(); this.db.prepare('INSERT INTO events VALUES(?,?,?,?,?,?,?)').run(eventId, user, device, event, platform, Date.now(), details); return eventId; }
   addUser(data) {
@@ -135,7 +135,7 @@ function createProductServer({ rateLimit=120, store, adminToken, privateKey, pub
         const inviter=()=>session?.name||administrator.account().login||'LOMVIKO';
         // Sales and registration switches. Sales on publishes the offer and turns plan limits on; off hides both.
         if(req.method==='GET'&&route==='/admin/product')return reply(200,{...store.product(),plans:Plans.PLANS,counts:Object.fromEntries(store.db.prepare("SELECT plan,count(*) n FROM users WHERE account_id IS NULL AND stage='active' GROUP BY plan").all().map(r=>[r.plan,r.n]))});
-        if(req.method==='POST'&&route==='/admin/product'){const d=req.parsedBody||{};administrator.owner(session);store.transaction(()=>{if(d.sales!==undefined){store.setProduct('sales',d.sales);documents.setEnabled({kind:'site-offer',enabled:d.sales});}if(d.registration!==undefined)store.setProduct('registration',d.registration);});return reply(200,store.product());}
+        if(req.method==='POST'&&route==='/admin/product'){const d=req.parsedBody||{};administrator.owner(session);store.transaction(()=>{if(d.sales!==undefined){store.setProduct('sales',d.sales);documents.setEnabled({kind:'site-offer',enabled:d.sales});}if(d.registration!==undefined)store.setProduct('registration',d.registration);if(d.owner!==undefined)store.setProduct('owner',d.owner);});return reply(200,store.product());}
         if(req.method==='POST'&&route==='/admin/account'){administrator.owner(session);return reply(200,administrator.setAccount(req.parsedBody));}
         if(req.method==='POST'&&route==='/admin/members/invite'){administrator.owner(session);return reply(201,members.invite(req.parsedBody,administrator.account().login,inviter()));}
         if(req.method==='POST'&&route==='/admin/members/resend'){administrator.owner(session);return reply(200,members.resend(req.parsedBody?.id,inviter()));}

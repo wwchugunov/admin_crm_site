@@ -83,3 +83,9 @@ test('When a subscription ends the whole team loses write access; renewing bring
  store.db.prepare("UPDATE users SET expires=?,stage='active' WHERE id=?").run(Date.now()+30*86400000,owner);
  assert.equal((await M('/v1/crm/client',{name:'Анна'})).status,200,'renewed');
 });
+
+test('The owner-line switch is stored like the other product switches and reaches the public site', async () => {
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'owner-switch-'));setup(dir);const store=new ProductStore(path.join(dir,'owner.sqlite'));
+ try{assert.equal(store.product().owner,true);store.setProduct('owner',false);assert.equal(store.product().owner,false);assert.throws(()=>store.setProduct('owner','no'));}
+ finally{store.db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
