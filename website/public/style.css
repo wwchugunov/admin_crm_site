@@ -678,3 +678,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 .tier-badge{position:absolute;top:24px;right:24px;margin:0}
 .request-dialog input:not([type=checkbox]){background:var(--soft);border-color:transparent}
 .request-dialog input:not([type=checkbox]):focus{background:#fff}
+
+/* Admin "Show on the site": the document link is outlined for a few seconds */
+.doc-highlight{outline:3px solid #0a8f74;outline-offset:6px;border-radius:8px;animation:doc-pulse 1.2s ease-in-out 3}
+@keyframes doc-pulse{50%{outline-color:rgba(10,143,116,.25)}}
+@media (prefers-reduced-motion:reduce){.doc-highlight{animation:none}}

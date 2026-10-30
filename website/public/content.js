@@ -458,7 +458,7 @@ function legal() {
   // The owner line is switched off in the admin while LOMVIKO is given away for free.
   const owner = $('#footer-owner');
   if (owner) owner.hidden = site?.product?.owner === false;
-  $('#footer-legal').innerHTML = [['site-privacy', 'docPrivacy'], ['site-terms', 'docTerms'], ['site-offer', 'docOffer'], ['presentation', 'docPresentation']].filter(([kind]) => has(kind)).map(([kind, key]) => `<a href="${documentHref(kind)}" target="_blank" rel="noopener">${esc(t(key))}</a>`).join('');
+  $('#footer-legal').innerHTML = [['site-privacy', 'docPrivacy'], ['site-terms', 'docTerms'], ['site-offer', 'docOffer'], ['presentation', 'docPresentation']].filter(([kind]) => has(kind)).map(([kind, key]) => `<a href="${documentHref(kind)}" data-doc="${kind}" target="_blank" rel="noopener">${esc(t(key))}</a>`).join('');
   const inline = $('#privacy-inline');
   inline.hidden = !has('site-privacy');
   if (has('site-privacy')) { inline.href = documentHref('site-privacy'); inline.textContent = t('privacyLink'); }

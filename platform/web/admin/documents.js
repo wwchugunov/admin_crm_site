@@ -56,15 +56,67 @@ const docLanguages = { uk: 'Українська', en: 'English' };
 const fileSize = (bytes) => bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 pages.documents = [dt('title'), dt('subtitle')];
 
+// What each document is for, whether it is required and every place people see it. "Показати" opens the
+// site with ?doc=<kind>, which scrolls to the link and highlights it.
+const documentGuide = {
+  uk: {
+    order: ['app-privacy', 'site-terms', 'site-offer', 'site-privacy', 'presentation'],
+    whereTitle: 'Де його бачать', show: 'Показати на сайті', open: 'Відкрити файл',
+    shown: 'Показується', hiddenNoFile: 'Не завантажено — посилання приховане', hiddenOff: 'Вимкнено — посилання приховане',
+    hiddenSalesOff: 'Не показується: продажі вимкнені', hiddenOffer: 'Не показується: діє публічна оферта', fallbackUsed: 'Не завантажено — на сайті показується загальна політика',
+    kinds: {
+      'app-privacy': { title: 'Політика конфіденційності', need: ['Обов’язковий', 'need-required'], about: 'Головна політика LOMVIKO: які дані збираємо і як захищаємо. Вимагає закон про захист персональних даних, навіть поки сервіс безкоштовний.',
+        where: [['Сайт: підвал і форма заявки — lomviko.com/privacy (якщо немає окремої політики сайту)', 'site-privacy'], ['Реєстрація в застосунку: галочка «Я приймаю…»'], ['Застосунок: Налаштування та дані → Про LOMVIKO → Документи']] },
+      'site-terms': { title: 'Умови користування', need: ['Потрібен, поки продажі вимкнені', 'need-now'], about: 'Договір на безкоштовне користування: що надаємо, чиї дані, відповідальність. Коли ввімкнете продажі, його замінить публічна оферта.',
+        where: [['Сайт: підвал — lomviko.com/terms', 'site-terms'], ['Реєстрація в застосунку: галочка «Я приймаю Умови користування…»'], ['Застосунок: банер «Прийміть умови», коли завантажите нову версію']] },
+      'site-offer': { title: 'Публічна оферта', need: ['Потрібен, коли ввімкнете продажі', 'need-later'], about: 'Договір для платних тарифів: ціни, оплата, повернення, реквізити ФОП. Показується лише тоді, коли в розділі «Продажі» продажі ввімкнено.',
+        where: [['Сайт: підвал — lomviko.com/offer', 'site-offer'], ['Реєстрація в застосунку: замість «Умов користування»'], ['Застосунок: банер «Прийміть умови» для всіх, коли оферта з’являється']] },
+      'site-privacy': { title: 'Окрема політика для сайту', need: ['Необов’язковий', 'need-optional'], about: 'Потрібна лише якщо для сайту хочете іншу політику, ніж для застосунку. Поки її немає, сайт показує загальну політику конфіденційності.',
+        where: [['Сайт: підвал і форма заявки — lomviko.com/privacy', 'site-privacy']] },
+      presentation: { title: 'Презентація', need: ['Необов’язковий', 'need-optional'], about: 'PDF для клієнтів: можливості, сценарії, безпека. Короткою адресою lomviko.com/presentation зручно ділитися.',
+        where: [['Сайт: блок «Покажіть LOMVIKO своїй команді» з кнопкою «Відкрити презентацію»', 'presentation']] },
+    },
+  },
+  en: {
+    order: ['app-privacy', 'site-terms', 'site-offer', 'site-privacy', 'presentation'],
+    whereTitle: 'Where people see it', show: 'Show on the site', open: 'Open file',
+    shown: 'Shown', hiddenNoFile: 'Not uploaded — the link is hidden', hiddenOff: 'Turned off — the link is hidden',
+    hiddenSalesOff: 'Not shown: sales are off', hiddenOffer: 'Not shown: the public offer applies', fallbackUsed: 'Not uploaded — the site shows the main policy',
+    kinds: {
+      'app-privacy': { title: 'Privacy policy', need: ['Required', 'need-required'], about: 'The main LOMVIKO policy: what data we collect and how we protect it. Required by data protection law even while the service is free.',
+        where: [['Site: footer and request form — lomviko.com/privacy (unless a separate site policy exists)', 'site-privacy'], ['App sign-up: the “I accept…” checkbox'], ['App: Settings and data → About LOMVIKO → Documents']] },
+      'site-terms': { title: 'Terms of use', need: ['Needed while sales are off', 'need-now'], about: 'The agreement for free use. When you turn sales on, the public offer replaces it.',
+        where: [['Site: footer — lomviko.com/terms', 'site-terms'], ['App sign-up: the “I accept the Terms of use…” checkbox'], ['App: the “Accept the terms” banner after a new version']] },
+      'site-offer': { title: 'Public offer', need: ['Needed once sales are on', 'need-later'], about: 'The agreement for paid plans. Shown only while sales are on in Sales.',
+        where: [['Site: footer — lomviko.com/offer', 'site-offer'], ['App sign-up: instead of the Terms of use'], ['App: the “Accept the terms” banner for everyone when the offer appears']] },
+      'site-privacy': { title: 'Separate site policy', need: ['Optional', 'need-optional'], about: 'Only if the site needs a different policy from the app. Until then the site shows the main privacy policy.',
+        where: [['Site: footer and request form — lomviko.com/privacy', 'site-privacy']] },
+      presentation: { title: 'Presentation', need: ['Optional', 'need-optional'], about: 'A PDF for clients. The short address lomviko.com/presentation is easy to share.',
+        where: [['Site: the “Show LOMVIKO to your team” block with the “Open presentation” button', 'presentation']] },
+    },
+  },
+};
+const dg = (key) => (documentGuide[OrbitI18n.language] || documentGuide.uk)[key];
+const siteBase = () => (data.mail?.siteUrl || 'https://lomviko.com').replace(/\/$/, '');
+
+function documentState(kind) {
+  const has = (k) => (data.documents || []).some((d) => d.kind === k && d.active), off = (k) => (data.documentsDisabled || []).includes(k), sales = data.product?.sales === true;
+  if (off(kind)) return [dg('hiddenOff'), 'state-off'];
+  if (!has(kind)) return kind === 'site-privacy' ? [dg('fallbackUsed'), 'state-info'] : [dg('hiddenNoFile'), kind === 'app-privacy' ? 'state-warn' : 'state-off'];
+  if (kind === 'site-offer' && !sales) return [dg('hiddenSalesOff'), 'state-off'];
+  if (kind === 'site-terms' && sales && has('site-offer') && !off('site-offer')) return [dg('hiddenOffer'), 'state-off'];
+  return [dg('shown'), 'state-ok'];
+}
+
 function documentsView() {
-  const kinds = data.documentKinds || [];
+  const kinds = dg('order').filter((k) => (data.documentKinds || []).includes(k));
   return `<div class="callout">${esc(dt('rules'))}<br>${esc(dt('fallback'))}</div>` + kinds.map((kind) => {
-    const [label, hint] = dt('kinds')[kind], rows = (data.documents || []).filter((d) => d.kind === kind), off = (data.documentsDisabled || []).includes(kind);
+    const guide = dg('kinds')[kind], rows = (data.documents || []).filter((d) => d.kind === kind), off = (data.documentsDisabled || []).includes(kind), [state, stateClass] = documentState(kind);
     const body = rows.length
       ? `<div class="table-wrap"><table class="table"><thead><tr><th>${dt('language')}</th><th>${dt('name')}</th><th>${dt('size')}</th><th>${dt('uploaded')}</th><th>${dt('status')}</th><th></th></tr></thead><tbody>${rows.map((d) => `<tr><td>${docLanguages[d.language]}</td><td><strong>${esc(d.title)}</strong><div class="sub">${esc(d.filename)}</div></td><td>${fileSize(d.size)} · ${esc(d.extension.toUpperCase())}</td><td>${date(d.uploaded_at)}</td><td><span class="badge ${d.active ? 'doc-current' : 'doc-archive'}">${d.active ? dt('current') : dt('archive')}</span></td><td class="doc-actions"><a class="secondary doc-link" href="/web/document?id=${encodeURIComponent(d.id)}&kind=${encodeURIComponent(kind)}" download>${dt('download')}</a>${d.active ? '' : `<button class="secondary" data-action="document-activate" data-id="${d.id}" data-kind="${kind}">${dt('activate')}</button>`}<button class="danger" data-action="document-delete" data-id="${d.id}" data-kind="${kind}" data-current="${d.active ? 1 : 0}">${dt('remove')}</button></td></tr>`).join('')}</tbody></table></div>`
-      : `<div class="empty"><div class="empty-icon">⎙</div><strong>${esc(dt('empty'))}</strong><p>${esc(dt('emptyHint'))}</p></div>`;
-    const links = ['uk', 'en'].map((lang) => `${esc(data.endpoint || '')}/public/documents/${kind}/${lang}`).join('<br>');
-    return `<section class="panel mt"><div class="panel-head"><div><h2>${esc(label)}</h2><div class="sub doc-hint">${esc(hint)}</div></div><div class="inline-actions">${off ? `<span class="badge">${dt('off')}</span>` : ''}<button class="secondary" data-action="document-switch" data-kind="${kind}" data-enabled="${off ? '1' : '0'}">${dt(off ? 'enable' : 'disable')}</button><button class="primary" data-action="document-upload" data-kind="${kind}">${dt('upload')}</button></div></div>${off ? `<div class="notice">${esc(dt('offNote'))}</div>` : ''}${body}${!off && rows.some((d) => d.active) ? `<div class="notice">${dt('publicLink')}:<br><span class="connection-url">${links}</span></div>` : ''}</section>`;
+      : '';
+    const where = `<div class="doc-where"><h3>${esc(dg('whereTitle'))}</h3><ul>${guide.where.map(([text, target]) => `<li><span>${esc(text)}</span>${target ? `<a class="doc-show" href="${esc(siteBase())}/?doc=${encodeURIComponent(target)}" target="_blank" rel="noopener">${esc(dg('show'))} ↗</a>` : ''}</li>`).join('')}</ul></div>`;
+    return `<section class="panel mt doc-card"><div class="panel-head"><div><h2>${esc(guide.title)} <span class="badge ${guide.need[1]}">${esc(guide.need[0])}</span></h2><p class="doc-about">${esc(guide.about)}</p><p class="doc-state ${stateClass}">${esc(state)}</p></div><div class="inline-actions"><button class="secondary" data-action="document-switch" data-kind="${kind}" data-enabled="${off ? '1' : '0'}">${dt(off ? 'enable' : 'disable')}</button><button class="primary" data-action="document-upload" data-kind="${kind}">${dt('upload')}</button></div></div>${where}${body}</section>`;
   }).join('');
 }
 

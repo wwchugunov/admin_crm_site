@@ -189,3 +189,18 @@ $('#access-form').addEventListener('submit', async (e) => {
 });
 window.addEventListener('hashchange', readAccessLink);
 readAccessLink();
+
+// Opened from the admin's "Show on the site": scroll to where this document appears and highlight it once.
+(() => {
+  const kind = new URLSearchParams(location.search).get('doc');
+  if (!/^(site-privacy|site-terms|site-offer|presentation)$/.test(kind || '')) return;
+  const show = () => {
+    const target = kind === 'presentation' ? $('#presentation:not([hidden])') : $(`#footer-legal [data-doc="${kind}"]`) || $('#footer-legal');
+    if (!target) return;
+    target.scrollIntoView({ block: 'center' });
+    target.classList.add('doc-highlight');
+    setTimeout(() => target.classList.remove('doc-highlight'), 6000);
+  };
+  document.addEventListener('lomviko:render', () => setTimeout(show, 300), { once: true });
+  setTimeout(show, 1200);
+})();

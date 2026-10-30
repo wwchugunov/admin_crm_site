@@ -14,23 +14,22 @@ async function fixture(t,profile){
  const upload=(kind,from=origin)=>fetch(origin+'/web/document?'+new URLSearchParams({kind,language:'uk',title:'Політика',filename:'policy.pdf',activate:'1'}),{method:'PUT',headers:{Origin:from,Cookie:cookie},body:Buffer.from('%PDF-1.7 test')});
  return{origin,cookie,calls,call,upload};
 }
-test('Website admin manages only website documents and signs uploads',async t=>{
- const f=await fixture(t,'website');
+test('Documents live only in the app admin; the site admin sees none of them',async t=>{
+ const site=await fixture(t,'website'),siteSnapshot=await (await site.call('owner:snapshot')).json();
+ assert.deepEqual(siteSnapshot.documentKinds,[]);assert.deepEqual(siteSnapshot.documents,[]);assert.equal((await site.upload('site-privacy')).status,403);
+ const f=await fixture(t,'product');
  const snapshot=await (await f.call('owner:snapshot')).json();
- assert.deepEqual(snapshot.documentKinds,['site-privacy','site-terms','site-offer','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['site-privacy']);
- assert.equal((await f.upload('app-privacy')).status,403);assert.equal((await f.upload('site-privacy','https://evil.test')).status,403);
+ assert.deepEqual(snapshot.documentKinds,['app-privacy','site-terms','site-offer','site-privacy','presentation']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['site-privacy','app-privacy']);
+ assert.equal((await f.upload('unknown-kind')).status,403);assert.equal((await f.upload('site-privacy','https://evil.test')).status,403);
  const ok=await f.upload('presentation');assert.equal(ok.status,201);
  const sent=f.calls.find(c=>c.method==='PUT');assert.match(sent.route,/^\/admin\/documents\/file\?kind=presentation&language=uk&title=/);assert.equal(sent.body.toString(),'%PDF-1.7 test');assert.equal(sent.headers.authorization,'Bearer upstream-session');assert(sent.headers['x-orbit-proof']);
- assert.equal((await f.call('owner:document:delete',[{id:docs[1].id,kind:'app-privacy'}])).status,403);
  assert.equal((await f.call('owner:document:activate',[{id:docs[0].id,kind:'site-privacy'}])).status,200);assert(f.calls.some(c=>c.route==='/admin/documents/activate'&&JSON.parse(c.body).kind==='site-privacy'));
  const file=await fetch(f.origin+'/web/document?id='+docs[0].id+'&kind=site-privacy',{headers:{Cookie:f.cookie}});assert.equal(file.status,200);assert.match(file.headers.get('content-disposition'),/^attachment; filename="policy.pdf"/);assert.equal(await file.text(),'%PDF-1.7');
- assert.equal((await fetch(f.origin+'/web/document?id='+docs[1].id+'&kind=app-privacy',{headers:{Cookie:f.cookie}})).status,403);
  assert.equal((await fetch(f.origin+'/web/document?id=x&kind=site-privacy',{headers:{Cookie:f.cookie}})).status,404);
 });
-test('Product admin manages only the app privacy policy',async t=>{
+test('Product admin manages the app policy and the site documents',async t=>{
  const f=await fixture(t,'product');
- const snapshot=await (await f.call('owner:snapshot')).json();assert.deepEqual(snapshot.documentKinds,['app-privacy']);assert.deepEqual(snapshot.documents.map(d=>d.kind),['app-privacy']);
- assert.equal((await f.upload('site-offer')).status,403);assert.equal((await f.upload('app-privacy')).status,201);
+ assert.equal((await f.upload('site-offer')).status,201);assert.equal((await f.upload('app-privacy')).status,201);
  assert.equal((await f.call('owner:document:delete',[{id:docs[1].id,kind:'app-privacy'}])).status,200);
 });
 test('Document routes require a session',async t=>{
