@@ -123,7 +123,11 @@ class BookingPage{
   // A person opening a wrong or switched-off link sees a clear page, not an error code.
   if(!c&&!m[2]&&req.method==='GET'){res.writeHead(404,this.headers('text/html; charset=utf-8',{'Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'"}));res.end('<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Сторінку запису не знайдено</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f6f6f7;color:#18181b;font:16px/1.5 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:24px;box-sizing:border-box}main{max-width:420px;text-align:center}h1{font-size:22px;margin:0 0 8px}p{color:#6b6b76;margin:0}</style></head><body><main><h1>Сторінку запису не знайдено</h1><p>Можливо, в посиланні помилка або салон тимчасово вимкнув онлайн-запис. Зателефонуйте, будь ласка, в салон.</p></main></body></html>');return true;}
   if(!c)missing();
-  if(!m[2]&&req.method==='GET'){this.page(res,m[1],c,url.searchParams.get('embed')==='1');return true;}
+  if(!m[2]&&req.method==='GET'){
+   const embed=url.searchParams.get('embed')==='1';
+   if(embed||url.searchParams.has('visit'))res.setHeader('X-Robots-Tag','noindex, nofollow');
+   this.page(res,m[1],c,embed);return true;
+  }
   if(m[2]==='logo'&&req.method==='GET'){this.picture(res,c.store.get('logo'));return true;}
   if(m[2]==='cover'&&req.method==='GET'){this.picture(res,c.store.get('booking_cover'));return true;}
   if(m[2]==='catalog'&&req.method==='GET'){reply(200,this.booking.catalog(c.store,url.searchParams));return true;}

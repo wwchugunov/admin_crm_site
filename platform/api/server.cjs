@@ -116,7 +116,7 @@ function createProductServer({ rateLimit=120, store, adminToken, privateKey, pub
   const bookingPage=new BookingPage({db:store.db,accounts,fail,booking:accounts.websiteBooking,publicUrl:process.env.CH_BOOKING_URL||(process.env.CH_WEBSITE_DOMAIN?'https://'+process.env.CH_WEBSITE_DOMAIN:(process.env.CH_API_URL||(process.env.CH_API_DOMAIN?'https://'+process.env.CH_API_DOMAIN:'')))});accounts.bookingPage=bookingPage;
 
   const server = http.createServer(async (req, res) => {
-    const reply = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(JSON.stringify(value)); };
+    const reply = (status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex' }); res.end(JSON.stringify(value)); };
     try {
       const forwarded=trustProxy&&typeof req.headers['x-forwarded-for']==='string'?req.headers['x-forwarded-for'].split(',').at(-1).trim():'';req.clientAddress=isIP(forwarded)?forwarded:req.socket.remoteAddress;
       const url = new URL(req.url, 'http://localhost'); const route = url.pathname;req.rawBody='';

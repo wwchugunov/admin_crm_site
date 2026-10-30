@@ -1,5 +1,6 @@
 'use strict';
 (() => {
+  document.documentElement.classList.add('js');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const header = document.querySelector('.header');
   const hero = document.querySelector('.hero');
@@ -18,23 +19,31 @@
     ['.plan', -0.04], ['.calc-save', -0.05], ['.final h2', 0.06],
   ];
   let layers = [];
-  const collect = () => { layers = DEPTHS.flatMap(([selector, depth]) => [...document.querySelectorAll(selector)].map((el) => ({ el, depth }))).filter((l) => l.depth); };
+  const collect = () => {
+    const shifts = new Map(layers.map(({ el, shift }) => [el, shift]));
+    layers = DEPTHS.flatMap(([selector, depth]) => [...document.querySelectorAll(selector)].map((el) => ({ el, depth, shift: shifts.get(el) || 0 }))).filter((l) => l.depth);
+  };
 
   let ticking = false;
   const frame = () => {
     ticking = false;
     const max = document.documentElement.scrollHeight - innerHeight;
+    // On phones the layout is a single column: shifting blocks only makes them overlap their neighbours.
+    const parallax = !reduce && innerWidth >= 760;
+    const middle = innerHeight / 2;
+    // Measure all layers before changing styles to avoid forcing layout once per layer.
+    const positions = parallax ? layers.map((layer) => ({ layer, rect: layer.el.getBoundingClientRect() })) : [];
     header.classList.toggle('is-scrolled', !hero || scrollY > 40);
     progress.style.setProperty('--progress', max > 0 ? Math.min(1, scrollY / max) : 0);
-    // On phones the layout is a single column: shifting blocks only makes them overlap their neighbours.
-    if (reduce || innerWidth < 760) { if (layers.some((l) => l.el.style.translate)) for (const { el } of layers) { el.style.translate = ''; el.dataset.shift = 0; } return; }
-    const middle = innerHeight / 2;
-    for (const { el, depth } of layers) {
-      const r = el.getBoundingClientRect();
+    if (!parallax) {
+      for (const layer of layers) if (layer.shift) { layer.el.style.translate = ''; layer.shift = 0; }
+      return;
+    }
+    for (const { layer, rect: r } of positions) {
       if (r.bottom < -200 || r.top > innerHeight + 200) continue;
-      const offset = (middle - (r.top + r.height / 2 - (parseFloat(el.dataset.shift) || 0))) * depth;
-      el.dataset.shift = offset;
-      el.style.translate = `0 ${offset.toFixed(1)}px`;
+      const offset = (middle - (r.top + r.height / 2 - (layer.shift || 0))) * layer.depth;
+      layer.shift = offset;
+      layer.el.style.translate = `0 ${offset.toFixed(1)}px`;
     }
   };
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
@@ -59,23 +68,31 @@
   if (board) {
     if (reduce) board.classList.add('is-live', 'is-remind');
     else {
-      let timers = [], running = false;
+      let timers = [], running = false, visible = false;
       const cycle = () => {
         board.classList.remove('is-live', 'is-remind');
         timers = [setTimeout(() => board.classList.add('is-live'), 1400), setTimeout(() => board.classList.add('is-remind'), 3400), setTimeout(cycle, 9000)];
       };
-      new IntersectionObserver(([entry]) => {
-        if (entry.isIntersecting) { if (!running) { running = true; cycle(); } }
+      const update = () => {
+        if (visible && !document.hidden) { if (!running) { running = true; cycle(); } }
         else if (running) { running = false; timers.forEach(clearTimeout); }
-      }, { threshold: 0.25 }).observe(stage);
+      };
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; update(); }, { threshold: 0.25 }).observe(stage);
+        document.addEventListener('visibilitychange', update);
+      } else board.classList.add('is-live', 'is-remind');
       // The phone turns towards the pointer.
       if (matchMedia('(hover: hover)').matches) {
+        let pointerFrame = 0, pointerX = 0, pointerY = 0;
         hero.addEventListener('pointermove', (e) => {
-          const x = e.clientX / innerWidth - 0.5, y = e.clientY / innerHeight - 0.5;
-          board.style.setProperty('--ry', `${(-18 + x * 16).toFixed(1)}deg`);
-          board.style.setProperty('--rx', `${(8 - y * 10).toFixed(1)}deg`);
+          pointerX = e.clientX / innerWidth - 0.5; pointerY = e.clientY / innerHeight - 0.5;
+          if (!pointerFrame) pointerFrame = requestAnimationFrame(() => {
+            pointerFrame = 0;
+            board.style.setProperty('--ry', `${(-18 + pointerX * 16).toFixed(1)}deg`);
+            board.style.setProperty('--rx', `${(8 - pointerY * 10).toFixed(1)}deg`);
+          });
         }, { passive: true });
-        hero.addEventListener('pointerleave', () => { board.style.removeProperty('--ry'); board.style.removeProperty('--rx'); });
+        hero.addEventListener('pointerleave', () => { cancelAnimationFrame(pointerFrame); pointerFrame = 0; board.style.removeProperty('--ry'); board.style.removeProperty('--rx'); });
       }
     }
   }

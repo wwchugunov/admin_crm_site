@@ -1,10 +1,13 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
+const { publicSnapshot, renderPage } = require('./render.cjs');
 const { Readable } = require('node:stream');
 const { pipeline } = require('node:stream/promises');
 const DAY = 'public, max-age=86400', YEAR = 'public, max-age=31536000, immutable';
 const STATIC = new Map([
+  ['/content.js', ['content.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/motion.js', ['motion.js', 'text/javascript; charset=utf-8', 'no-cache']],
   ['/ads.js', ['ads.js', 'text/javascript; charset=utf-8', 'no-cache']],
@@ -29,19 +32,33 @@ const DOCUMENTS = new Map([['privacy', 'site-privacy'], ['terms', 'site-terms'],
 const DOCUMENT_TYPES = new Set(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 function missingDocument(language) {
   const en = language === 'en';
-  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h1>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
 }
 // Unknown addresses opened in a browser get a page with a way back, not a JSON error.
 function notFound(language) {
   const en = language === 'en';
-  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>${en ? 'Page not found' : 'Сторінку не знайдено'} · LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h2>${en ? 'This page <em>does not exist.</em>' : 'Такої сторінки <em>немає.</em>'}</h2><p class="section-intro">${en ? 'The link may be outdated or mistyped. Everything about LOMVIKO is on the home page.' : 'Можливо, посилання застаріло або в ньому помилка. Усе про LOMVIKO — на головній сторінці.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>${en ? 'Page not found' : 'Сторінку не знайдено'} · LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h1>${en ? 'This page <em>does not exist.</em>' : 'Такої сторінки <em>немає.</em>'}</h2><p class="section-intro">${en ? 'The link may be outdated or mistyped. Everything about LOMVIKO is on the home page.' : 'Можливо, посилання застаріло або в ньому помилка. Усе про LOMVIKO — на головній сторінці.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
 }
-// The English page reuses index.html with its own head metadata, so crawlers and link previews see English text.
-function page(directory, language) {
-  const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
-  if (language === 'uk') return html;
-  const head = fs.readFileSync(path.join(directory, `head.${language}.html`), 'utf8').trim();
-  return html.replace('<html lang="uk">', `<html lang="${language}">`).replace(/<!--meta:start-->[\s\S]*?<!--meta:end-->/, head);
+// File bytes are stable within a deployed release; published copy is refreshed separately.
+function fileEntry(body, type, cache, language) {
+  return { body, headers: { 'Content-Type': type, 'Cache-Control': cache,
+    ETag: `"${createHash('sha256').update(body).digest('hex')}"`,
+    ...(language ? { 'Content-Language': language } : {}) } };
+}
+function publicFiles(directory, template) {
+  const files = new Map();
+  for (const [route, [name, type, cache]] of STATIC) files.set(route, fileEntry(fs.readFileSync(path.join(directory, name)), type, cache));
+  for (const [route, language] of PAGES) files.set(route, fileEntry(Buffer.from(renderPage(template, language)), 'text/html; charset=utf-8', 'no-cache', language));
+  return files;
+}
+function sendFile(req, res, file) {
+  const tags = String(req.headers['if-none-match'] || '').split(',').map(tag => tag.trim().replace(/^W\//, ''));
+  if (tags.includes('*') || tags.includes(file.headers.ETag)) {
+    res.writeHead(304, file.headers);
+    return res.end();
+  }
+  res.writeHead(200, { ...file.headers, 'Content-Length': file.body.length });
+  res.end(req.method === 'HEAD' ? undefined : file.body);
 }
 // Google Ads tag hosts are the only third parties: the tag script, its conversion pings and their pixels.
 const ADS = 'https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://www.google.com.ua';
@@ -51,23 +68,46 @@ function upstream(raw) {
   if (u.username || u.password || u.search || u.hash || u.pathname !== '/' || !['http:', 'https:'].includes(u.protocol)) throw Error('CH_API_URL must be an origin without credentials or path');
   return u.origin;
 }
-function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, directory = path.join(__dirname, 'public') } = {}) {
-  const origin = upstream(apiUrl), rates = new Map();
+function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, directory = path.join(__dirname, 'public'), siteCacheMs = 30000 } = {}) {
+  const origin = upstream(apiUrl), rates = new Map(), template = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
+  const files = publicFiles(directory, template), fallbackPages = new Map([...PAGES.keys()].map(route => [route, files.get(route)]));
+  let refreshAt = 0, refreshing = null, snapshot = '';
+  const refreshPages = async () => {
+    if (Date.now() < refreshAt) return;
+    if (refreshing) return refreshing;
+    refreshing = (async () => {
+      try {
+        const response = await fetch(origin + '/public/site', { redirect: 'error', signal: AbortSignal.timeout(1500) });
+        if (!response.ok) { await response.body?.cancel(); throw Error('Public site unavailable'); }
+        const chunks = []; let size = 0;
+        for await (const chunk of response.body) { size += chunk.length; if (size > 1048576) throw Error('Public site response too large'); chunks.push(chunk); }
+        const site = publicSnapshot(JSON.parse(Buffer.concat(chunks))), key = JSON.stringify(site);
+        if (key !== snapshot) {
+          // Render both locales before swapping either: malformed upstream data cannot publish half a snapshot.
+          const pages = [...PAGES].map(([route, language]) => [route, fileEntry(Buffer.from(renderPage(template, language, site)), 'text/html; charset=utf-8', 'no-cache', language)]);
+          for (const [route, file] of pages) files.set(route, file);
+          snapshot = key;
+        }
+        refreshAt = Date.now() + siteCacheMs;
+      } catch {
+        for (const [route, file] of fallbackPages) files.set(route, file);
+        snapshot = ''; refreshAt = Date.now() + Math.min(siteCacheMs, 5000);
+      }
+    })();
+    try { await refreshing; } finally { refreshing = null; }
+  };
   const server = http.createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Content-Security-Policy',csp);res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Cache-Control','no-store');
     const json = (status, value) => { if (!res.headersSent) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8'});res.end(JSON.stringify(value)); } };
     try {
       const url = new URL(req.url,'http://localhost'), route = url.pathname, read = req.method === 'GET' || req.method === 'HEAD';
       const asset = STATIC.get(route), language = PAGES.get(route), document = DOCUMENTS.get(route);
+      if (!asset && !language) res.setHeader('X-Robots-Tag', 'noindex');
       // Pages and static files ignore marketing parameters such as utm_source, gclid or fbclid; API paths stay strict.
       if (url.search && route.startsWith('/public/') && !(read && (asset || language || document || route === '/en/'))) return json(400,{error:'Query parameters are not supported'});
       if (req.method === 'GET' && route === '/healthz') return json(200,{status:'ok'});
       if (read && route === '/en/') { res.writeHead(301,{Location:'/en'+url.search});return res.end(); }
-      if (read && language) {
-        const html = Buffer.from(page(directory, language));
-        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':html.length,'Cache-Control':'no-cache','Content-Language':language});
-        return res.end(req.method === 'HEAD' ? undefined : html);
-      }
+      if (read && files.has(route)) { if (language) await refreshPages(); return sendFile(req, res, files.get(route)); }
       if (read && document) {
         const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 120000), disconnect = () => { if (!res.writableFinished) abort.abort(); };
         res.once('close', disconnect);
@@ -88,11 +128,6 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
           if (req.method === 'HEAD' || !response.body) return res.end();
           await pipeline(Readable.fromWeb(response.body), res); return;
         } finally { clearTimeout(timeout); res.off('close', disconnect); }
-      }
-      if (read && asset) {
-        const filename = path.join(directory, asset[0]), stat = fs.statSync(filename);res.writeHead(200,{'Content-Type':asset[1],'Content-Length':stat.size,'Cache-Control':asset[2]});
-        if (req.method === 'HEAD') return res.end();
-        await pipeline(fs.createReadStream(filename),res);return;
       }
       const allowed = (req.method === 'GET' && route === '/public/site') || (req.method === 'POST' && ['/public/demo','/public/access'].includes(route));
       if (!allowed) {

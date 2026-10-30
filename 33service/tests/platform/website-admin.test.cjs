@@ -4,6 +4,7 @@ async function port(){const s=net.createServer();await new Promise(r=>s.listen(0
 test('Web admin requires login and origin, limits site operations and redacts product data',async()=>{
  const calls=[],api=http.createServer(async(req,res)=>{let body='';for await(const b of req)body+=b;calls.push({route:req.url,body,headers:req.headers});res.setHeader('Content-Type','application/json');res.end(JSON.stringify(req.url==='/admin/session'?{session:'private-upstream-session',expires:Date.now()+900000}:req.url==='/admin/snapshot'?{website:{revision:1},releases:[],users:[{email:'private@example.test'}],mail:{passwordSet:true},devices:[],businesses:[],events:[]}:{ok:true}));});await new Promise(r=>api.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+await port(),admin=createAdminServer({origin,apiUrl:'http://127.0.0.1:'+api.address().port});await new Promise(r=>admin.listen(Number(new URL(origin).port),'127.0.0.1',r));
  try{
+  const page=await fetch(origin);assert.equal(page.status,200);assert.equal(page.headers.get('x-robots-tag'),'noindex, nofollow');
   const send=(route,body,cookie='',from=origin)=>fetch(origin+route,{method:'POST',headers:{Origin:from,'Content-Type':'application/json',Cookie:cookie},body:JSON.stringify(body)});
   assert.equal((await send('/web/call',{channel:'owner:snapshot'})).status,401);
   assert.equal((await send('/web/login',{token:'t'.repeat(40),otp:'123456'},'','https://evil.test')).status,403);

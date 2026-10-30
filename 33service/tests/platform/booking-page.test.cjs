@@ -113,3 +113,9 @@ test('A booking from the page comes with a private link to see, move or cancel t
  const after=JSON.parse((await f.get('/b/studio-olena/visit/'+token)).text);assert.deepEqual([after.status,after.can_change],['cancelled',false]);
  assert.equal((await f.post('/b/studio-olena/visit/'+token+'/cancel',{})).status,409,'nothing to change after cancelling');
 });
+
+test('Private visit links and embedded booking copies are non-indexable; the public company page stays indexable',async t=>{
+ const f=await fixture(t);f.page.save(f.business,f.runtime,{slug:'studio-olena',enabled:true});
+ const publicPage=await f.get('/b/studio-olena');assert.equal(publicPage.status,200);assert.equal(publicPage.headers.get('x-robots-tag'),null);
+ for(const query of ['?embed=1','?visit=invalid','?visit=' ]){const page=await f.get('/b/studio-olena'+query);assert.equal(page.status,200);assert.equal(page.headers.get('x-robots-tag'),'noindex, nofollow');}
+});

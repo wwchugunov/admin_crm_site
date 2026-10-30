@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-29",
+  "kind": "local-laboratory-not-field-data",
+  "method": "Same local Node site, public API snapshot from lomviko.com, Chrome headless, Lighthouse default simulated mobile / desktop preset. No Caddy compression on localhost. Existing Google Ads enabled. Baseline includes the earlier caching and motion changes. Mobile: 3 sequential runs per version; desktop: 1 run per version. Wide variance; no statistical or field-performance guarantee.",
+  "runs": [
+    {
+      "label": "before-mobile",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 93,
+        "accessibility": 97,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 1790.5288,
+      "TBT_ms": 266,
+      "CLS": 0,
+      "transferredBytes": 429113,
+      "serverResponse_ms": 10
+    },
+    {
+      "label": "before-mobile-2",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 84,
+        "accessibility": 97,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 1195.72335,
+      "TBT_ms": 440,
+      "CLS": 0.003093533284157688,
+      "transferredBytes": 429130,
+      "serverResponse_ms": 5
+    },
+    {
+      "label": "before-mobile-3",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 63,
+        "accessibility": 97,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 3757.03705,
+      "TBT_ms": 1115,
+      "CLS": 0.00304451148899589,
+      "transferredBytes": 429428,
+      "serverResponse_ms": 2
+    },
+    {
+      "label": "final-mobile",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 1348.3299,
+      "TBT_ms": 325,
+      "CLS": 0,
+      "transferredBytes": 469647,
+      "serverResponse_ms": 3
+    },
+    {
+      "label": "final-mobile-2",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 78,
+        "accessibility": 100,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 2629.0575,
+      "TBT_ms": 691,
+      "CLS": 0,
+      "transferredBytes": 469653,
+      "serverResponse_ms": 7
+    },
+    {
+      "label": "final-mobile-3",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 1324.2440000000001,
+      "TBT_ms": 322,
+      "CLS": 0,
+      "transferredBytes": 469642,
+      "serverResponse_ms": 3
+    },
+    {
+      "label": "before-desktop",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 100,
+        "accessibility": 97,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 553.01275,
+      "TBT_ms": 26,
+      "CLS": 0.00153249195560809,
+      "transferredBytes": 429102,
+      "serverResponse_ms": 1
+    },
+    {
+      "label": "final-desktop",
+      "lighthouse": "13.6.0",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 77,
+        "seo": 100
+      },
+      "LCP_ms": 354.16355,
+      "TBT_ms": 1,
+      "CLS": 0.0007235878949857993,
+      "transferredBytes": 470061,
+      "serverResponse_ms": 155
+    }
+  ]
+}

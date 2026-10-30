@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
+Allow: /public/site$
 Disallow: /public/
+Disallow: /admin/
+Disallow: /v1/
+Disallow: /web/
 
 Sitemap: https://lomviko.com/sitemap.xml

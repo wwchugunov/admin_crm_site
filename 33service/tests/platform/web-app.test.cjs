@@ -20,7 +20,7 @@ async function fixture(t,{seats=2}={}){
 }
 test('Web app: sign in, work with the company, sign out',async t=>{
  const f=await fixture(t),b=f.browser();
- const page=await b.send('/');assert.equal(page.status,200);assert.match(await page.text(),/web\.js/);assert.match(page.headers.get('content-security-policy'),/connect-src 'self'/);
+ const page=await b.send('/');assert.equal(page.status,200);assert.equal(page.headers.get('x-robots-tag'),'noindex, nofollow');assert.match(await page.text(),/web\.js/);assert.match(page.headers.get('content-security-policy'),/connect-src 'self'/);
  await assert.rejects(b.call('snapshot'),e=>e.status===401&&e.signedOut===true);
  await assert.rejects(b.call('account:login','','owner@lira.test','wrong-password-1'),e=>e.status===401);
  await b.call('account:login','','owner@lira.test','owner-password-1');
