@@ -26,7 +26,7 @@
 
   // Applies the draft over whatever the page just rendered, then makes every text and heading editable.
   function apply() {
-    for (const el of document.querySelectorAll('main [data-t], footer [data-t], main [data-edit]')) {
+    for (const el of document.querySelectorAll('header [data-t], main [data-t], footer [data-t], main [data-edit]')) {
       const key = textKey(el);
       if (el.closest('#request-dialog, noscript') || el.children.length) continue;
       if (typeof draft[key] === 'string') el.textContent = draft[key];

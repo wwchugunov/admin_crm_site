@@ -1,6 +1,6 @@
 services:
   landing:
-    image: lomviko-landing:1.4.0
+    image: lomviko-landing:1.4.1
     build:
       context: ${CH_LANDING_CONTEXT:-../../website}
       dockerfile: deploy/Dockerfile
