@@ -582,14 +582,12 @@ class Store {
       if (!service) throw Error(OrbitI18n.t("m538"));
       const start = Number(data.start),
         end = start + service.duration * 60000;
-      // A visit that already happened (a walk-in, or one written down later) may be added up to 31 days back.
       if (
         !Number.isSafeInteger(start) ||
-        start < Date.now() - 31 * 86400000 ||
+        start < Date.now() - 60000 ||
         start > Date.now() + 366 * 86400000
       )
-        throw Error(OrbitI18n.t("m539past"));
-      const past = start < Date.now() - 60000;
+        throw Error(OrbitI18n.t("m539"));
       const clients = this.bookingClients(data),
         resources = [
           ...new Set(
@@ -655,14 +653,13 @@ class Store {
         this.db
           .prepare("INSERT INTO appointment_resources VALUES(?,?)")
           .run(id, r);
-      // Nothing to remind about for a visit in the past.
-      for (const kind of past ? [] : ["24h", "2h"])
+      for (const kind of ["24h", "2h"])
         this.db
           .prepare(
             "INSERT INTO reminders(appointment_id,kind,status) VALUES(?,?,'pending')",
           )
           .run(id, kind);
-      for (const kind of past ? [] : ["24h", "2h"])
+      for (const kind of ["24h", "2h"])
         for (const client of clients)
           this.db
             .prepare(
@@ -676,8 +673,6 @@ class Store {
           )
           .run(id, text(data.wait_id));
       this.audit("appointment.created", id);
-      // Added after it ended: the client came, so it counts as done (materials are written off as usual).
-      if (past && end <= Date.now()) this.status(id, "completed");
       return id;
     });
   }
