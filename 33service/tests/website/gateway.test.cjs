@@ -11,7 +11,7 @@ test('Short document addresses stream the current file or show a friendly placeh
  const deck=await fetch(f.url+'/en/presentation?utm_source=mail');assert.equal(deck.status,200);assert.equal(deck.headers.get('content-type'),'application/pdf');assert.equal(deck.headers.get('content-disposition'),'inline; filename="deck.pdf"');assert.equal(await deck.text(),'%PDF-1.7');
  assert.equal((await fetch(f.url+'/en/presentation',{method:'HEAD'})).status,200);
  const missing=await fetch(f.url+'/privacy');assert.equal(missing.status,404);assert.equal(missing.headers.get('content-type'),'text/html; charset=utf-8');assert.match(await missing.text(),/Документ <em>готується/);
- assert.equal((await fetch(f.url+'/offer')).status,502,'non-document content types are never relayed');
+ const offer=await fetch(f.url+'/offer');assert.equal(offer.status,200,'a legal text arrives as a web page');assert.match(offer.headers.get('content-security-policy'),/default-src 'none'/,'with every script forbidden');assert.doesNotMatch(offer.headers.get('content-security-policy'),/script-src/);
  assert.deepEqual(f.requests.map(r=>r.path).filter(p=>p.startsWith('/public/documents/')).slice(0,1),['/public/documents/presentation/en']);
  assert.equal((await fetch(f.url+'/secret')).status,404);});
 test('Unknown pages opened in a browser get an HTML 404 with a way home; API clients still get JSON',async t=>{const f=await fixture(t);

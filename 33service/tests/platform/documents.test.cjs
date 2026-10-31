@@ -2,7 +2,9 @@ const{test}=require('node:test'),assert=require('node:assert/strict'),fs=require
 const{setup,ProductStore,createProductServer}=require('../../../platform/api/server.cjs'),{totp}=require('../../../platform/api/admin-auth.cjs'),{signRequest,signDigest}=require('../../../platform/core/request-proof.cjs');
 
 const PDF=Buffer.from('%PDF-1.7\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n');
-const DOCX=Buffer.concat([Buffer.from([0x50,0x4b,0x03,0x04]),Buffer.from('word/document.xml')]);
+// A real Word file: legal texts are turned into a web page, so their .docx must contain readable text.
+const DOCX=fs.readFileSync(path.join(__dirname,'fixtures','policy.docx'));
+const FAKE_DOCX=Buffer.concat([Buffer.from([0x50,0x4b,0x03,0x04]),Buffer.from('word/document.xml')]);
 const DOC=Buffer.concat([Buffer.from([0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1]),Buffer.from('legacy word')]);
 
 async function fixture(t){
@@ -70,7 +72,10 @@ test('Public downloads serve the current file with safe headers and detect tampe
  assert.deepEqual(Buffer.from(await r.arrayBuffer()),PDF);
  const head=await fetch(f.url+'/public/documents/presentation/uk',{method:'HEAD'});assert.equal(head.status,200);assert.equal(await head.text(),'');
  const word=(await f.upload(DOCX,{kind:'site-offer',filename:'offer.docx'})).value;
- assert.match((await fetch(f.url+'/public/documents/site-offer/uk')).headers.get('content-disposition'),/^attachment;/);
+ const page=await fetch(f.url+'/public/documents/site-offer/uk');assert.match(page.headers.get('content-type'),/text\/html/,'a legal Word file opens as a web page');
+ const html=await page.text();assert.match(html,/<h2>1\. Хто ми<\/h2>/);assert.match(html,/<strong>жирним<\/strong>/);assert.match(html,/<table>/);assert.doesNotMatch(html,/<script/i);
+ assert.match(page.headers.get('content-security-policy'),/default-src 'none'/);
+ assert.equal((await f.upload(FAKE_DOCX,{kind:'site-offer',filename:'broken.docx'})).status,400,'a Word file without text is refused for a legal page');
  assert.equal((await fetch(f.url+'/public/documents/../../owner.sqlite/uk')).status,404);
  assert.equal((await fetch(f.url+'/public/documents/unknown/uk')).status,400);
  fs.writeFileSync(path.join(f.directory,'documents',doc.id),Buffer.concat([PDF,Buffer.from('tampered')]));
@@ -115,7 +120,8 @@ test('A document keeps a current PDF for the site and a current Word file for ed
  assert.equal((await f.upload(DOCX,{kind:'site-terms',filename:'terms.docx'})).status,201);
  const list=f.server.documents.list().filter(d=>d.kind==='site-terms');
  assert.deepEqual(list.filter(d=>d.active).map(d=>d.extension).sort(),['docx','pdf'],'both stay current');
- const site=await fetch(f.url+'/public/documents/site-terms/uk');assert.equal(site.headers.get('content-type'),'application/pdf','visitors get the PDF');
+ const site=await fetch(f.url+'/public/documents/site-terms/uk');assert.match(site.headers.get('content-type'),/text\/html/,'visitors get the web page');assert.match(await site.text(),/Завантажити PDF/);
+ const pdf=await fetch(f.url+'/public/documents/site-terms/uk?file=pdf');assert.equal(pdf.headers.get('content-type'),'application/pdf','the PDF stays one click away');
  assert.equal((await f.upload(DOCX,{kind:'site-terms',filename:'terms-v2.docx'})).status,201);
  const after=f.server.documents.list().filter(d=>d.kind==='site-terms'&&d.active);
  assert.deepEqual(after.map(d=>d.filename).sort(),['terms-v2.docx','terms.pdf'],'a new Word file replaces only the Word file');

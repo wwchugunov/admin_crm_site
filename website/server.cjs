@@ -30,7 +30,7 @@ const STATIC = new Map([
 const PAGES = new Map([['/', 'uk'], ['/en', 'en']]);
 // Short public addresses for replaceable documents managed in the website admin.
 const DOCUMENTS = new Map([['privacy', 'site-privacy'], ['terms', 'site-terms'], ['offer', 'site-offer'], ['presentation', 'presentation']].flatMap(([slug, kind]) => [[`/${slug}`, [kind, 'uk']], [`/en/${slug}`, [kind, 'en']]]));
-const DOCUMENT_TYPES = new Set(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
+const DOCUMENT_TYPES = new Set(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/html']);
 function missingDocument(language) {
   const en = language === 'en';
   return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#ffffff"><title>LOMVIKO</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"></head><body><main class="wrap final"><h1>${en ? 'This document is <em>on its way.</em>' : 'Документ <em>готується.</em>'}</h2><p class="section-intro">${en ? 'We are updating it right now. Please check back a little later.' : 'Ми саме оновлюємо його. Будь ласка, загляньте трохи пізніше.'}</p><div class="hero-actions"><a class="btn btn-light" href="${en ? '/en' : '/'}">${en ? 'Back to LOMVIKO' : 'На головну LOMVIKO'}</a></div></main></body></html>`;
@@ -121,7 +121,9 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
         const abort = new AbortController(), timeout = setTimeout(() => abort.abort(), 120000), disconnect = () => { if (!res.writableFinished) abort.abort(); };
         res.once('close', disconnect);
         try {
-          const response = await fetch(`${origin}/public/documents/${document[0]}/${document[1]}`, { method: req.method, redirect: 'error', signal: abort.signal });
+          // ?file=pdf asks for the PDF behind a legal page; any other query is ignored.
+          const asPdf = url.searchParams.get('file') === 'pdf' ? '?file=pdf' : '';
+          const response = await fetch(`${origin}/public/documents/${document[0]}/${document[1]}${asPdf}`, { method: req.method, redirect: 'error', signal: abort.signal });
           const type = (response.headers.get('content-type') || '').split(';')[0];
           if (!response.ok || !DOCUMENT_TYPES.has(type)) {
             if (response.status !== 404 && response.ok) throw Error('Unexpected document response');
@@ -130,8 +132,10 @@ function createServer({ apiUrl = 'http://127.0.0.1:4545', trustProxy = false, di
             return res.end(req.method === 'HEAD' ? undefined : html);
           }
           // The site CSP (object-src 'none') would stop the browser PDF viewer; documents are type-restricted and nosniff.
-          res.removeHeader('Content-Security-Policy');
-          const headers = { 'Content-Type': type, 'Cache-Control': 'no-cache' };
+          // A legal web page is relayed under a fixed policy that forbids every script, whatever the API sent.
+          if (type === 'text/html') { res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"); res.removeHeader('X-Robots-Tag'); }
+          else res.removeHeader('Content-Security-Policy');
+          const headers = { 'Content-Type': type === 'text/html' ? 'text/html; charset=utf-8' : type, 'Cache-Control': 'no-cache' };
           for (const key of ['content-length', 'content-disposition', 'last-modified']) if (response.headers.has(key)) headers[key] = response.headers.get(key);
           res.writeHead(200, headers);
           if (req.method === 'HEAD' || !response.body) return res.end();

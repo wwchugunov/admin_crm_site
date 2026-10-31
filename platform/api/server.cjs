@@ -13,6 +13,7 @@ const {PasswordReset}=require('./password-reset.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX,unavailable}=require('./documents.cjs');
+const {legalPage}=require('./docx-page.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
 const {Monobank}=require('./monobank.cjs');
@@ -210,7 +211,12 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
       const imageMatch=/^\/public\/site-image\/([a-z][a-z0-9-]{0,30})$/.exec(route);
       if(imageMatch&&['GET','HEAD'].includes(req.method)){const picture=website.publishedImage(imageMatch[1]);res.writeHead(200,{'Content-Type':picture.type,'Content-Length':picture.data.length,'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex'});return res.end(req.method==='HEAD'?undefined:picture.data);}
       const documentMatch=/^\/public\/documents\/([a-z-]+)\/([a-z]{2})$/.exec(route);
-      if(documentMatch&&['GET','HEAD'].includes(req.method)){let row;try{row=documents.resolve(documentMatch[1],documentMatch[2]);}catch(error){if(error.status!==404)throw error;return unavailable(res,documentMatch[2],req.method==='HEAD');}return await documents.send(res,row,req.method==='HEAD');}
+      if(documentMatch&&['GET','HEAD'].includes(req.method)){let row;try{row=documents.resolve(documentMatch[1],documentMatch[2]);}catch(error){if(error.status!==404)throw error;return unavailable(res,documentMatch[2],req.method==='HEAD');}
+        // Legal texts uploaded as Word open as a web page; ?file=pdf (or the absence of a page) serves a file.
+        const wantsPdf=url.searchParams.get('file')==='pdf',pdf=documents.currentPdf(row.kind,row.language),page=!wantsPdf&&documents.page(row);
+        if(wantsPdf&&pdf)return await documents.send(res,pdf,req.method==='HEAD');
+        if(page){const html=Buffer.from(legalPage({lang:documentMatch[2],title:page.title,html:page.html,updatedAt:row.uploaded_at,pdfHref:pdf?`?file=pdf`:null,siteUrl:process.env.CH_WEBSITE_DOMAIN?'https://'+process.env.CH_WEBSITE_DOMAIN:''}));res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':html.length,'Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",'Referrer-Policy':'strict-origin-when-cross-origin'});return res.end(req.method==='HEAD'?undefined:html);}
+        return await documents.send(res,row,req.method==='HEAD');}
       if(req.method==='POST'&&route==='/public/access'){const d=req.parsedBody;if(!d||typeof d.token!=='string'||d.token.length>128)fail(401,'Invalid or expired access key');const encoded=passwordHash(d.password);return reply(200,store.transaction(()=>{const i=store.findInvite(d.token,true),u=store.db.prepare('SELECT * FROM users WHERE id=?').get(i.user_id);accounts.allowed(u);store.db.prepare('UPDATE invites SET used_at=? WHERE id=?').run(Date.now(),i.id);store.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,u.id);store.db.prepare('DELETE FROM sessions WHERE user_id=?').run(u.id);store.event('password.set.by.email',u.id);return{ok:true,login:u.email};}));}
       if(req.method==='POST'&&route==='/public/demo')return reply(201,website.lead(req.parsedBody));
       if(req.method==='POST'&&route==='/public/support')return reply(201,support.create(req.parsedBody));

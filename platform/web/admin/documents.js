@@ -113,7 +113,11 @@ function documentsView() {
       : '';
     const current = (group, lang) => rows.find((d) => d.active && d.language === lang && (group === 'pdf' ? d.extension === 'pdf' : d.extension !== 'pdf'));
     const fileCell = (group) => ['uk', 'en'].map((lang) => { const d = current(group, lang); return d ? `<a class="doc-file" href="/web/document?id=${encodeURIComponent(d.id)}&kind=${encodeURIComponent(kind)}" download>${lang.toUpperCase()} · ${esc(d.filename)}</a>` : (lang === 'uk' ? `<span class="doc-missing">${L2('не завантажено', 'not uploaded')}</span>` : ''); }).join('');
-    const files = `<div class="doc-files"><div><h3>${L2('PDF — показується на сайті й у застосунку', 'PDF — shown on the site and in the app')}</h3>${fileCell('pdf')}</div><div><h3>${L2('Word — для редагування та юриста', 'Word — to edit and send to a lawyer')}</h3>${fileCell('word')}</div></div>`;
+    // Legal texts: the Word file becomes the page on the site, the PDF is an optional download. The presentation is a PDF.
+    const legal = kind !== 'presentation';
+    const files = legal
+      ? `<div class="doc-files"><div><h3>${L2('Word — це текст сторінки на сайті', 'Word — the text of the page on the site')}</h3>${fileCell('word')}</div><div><h3>${L2('PDF — необов’язково, кнопка «Завантажити PDF» на сторінці', 'PDF — optional, a “Download PDF” link on the page')}</h3>${fileCell('pdf')}</div></div>`
+      : `<div class="doc-files"><div><h3>${L2('PDF — показується на сайті', 'PDF — shown on the site')}</h3>${fileCell('pdf')}</div><div><h3>${L2('Word — для редагування', 'Word — to edit')}</h3>${fileCell('word')}</div></div>`;
     const where = `<div class="doc-where"><h3>${esc(dg('whereTitle'))}</h3><ul>${guide.where.map(([text, target]) => `<li><span>${esc(text)}</span>${target ? `<a class="doc-show" href="${esc(siteBase())}/?doc=${encodeURIComponent(target)}" target="_blank" rel="noopener">${esc(dg('show'))} ↗</a>` : ''}</li>`).join('')}</ul></div>`;
     return `<section class="panel mt doc-card"><div class="panel-head"><div><h2>${esc(guide.title)} <span class="badge ${guide.need[1]}">${esc(guide.need[0])}</span></h2><p class="doc-about">${esc(guide.about)}</p><p class="doc-state ${stateClass}">${esc(state)}</p></div><div class="inline-actions"><button class="secondary" data-action="document-switch" data-kind="${kind}" data-enabled="${off ? '1' : '0'}">${dt(off ? 'enable' : 'disable')}</button><button class="primary" data-action="document-upload" data-kind="${kind}">${dt('upload')}</button></div></div>${files}${where}${body}</section>`;
   }).join('');
@@ -124,11 +128,13 @@ const L2 = (uk, en) => (OrbitI18n.language === 'en' ? en : uk);
 function uploadDocument(kind, language = OrbitI18n.language === 'en' ? 'en' : 'uk') {
   const defaults = documentText[language].kinds[kind][2];
   modal(dt('kinds')[kind][0],
-    `<p class="hint">${L2('Відредагуйте документ у Word, збережіть його ще й як PDF («Файл → Зберегти як → PDF») і завантажте обидва файли. На сайті й у застосунку показується PDF, а Word лишається тут для наступних правок.', 'Edit the document in Word, also save it as PDF (File → Save as → PDF) and upload both. The site and the app show the PDF; the Word file stays here for the next edits.')}</p>`
+    (kind === 'presentation'
+      ? `<p class="hint">${L2('Завантажте PDF — його відкриває кнопка на сайті. Word можна додати для власних правок.', 'Upload the PDF the site button opens. Add the Word file for your own edits.')}</p>`
+      : `<p class="hint">${L2('Завантажте Word (.docx) — його текст стане сторінкою на сайті: заголовки, списки, таблиці й посилання збережуться. PDF — за бажанням, для кнопки «Завантажити PDF».', 'Upload the Word file (.docx) — its text becomes the page on the site with headings, lists, tables and links. A PDF is optional, for a “Download PDF” link.')}</p>`)
     + `<label for="f-language">${dt('language')}</label><select id="f-language" name="language">${Object.entries(docLanguages).map(([value, name]) => `<option value="${value}" ${value === language ? 'selected' : ''}>${name}</option>`).join('')}</select>`
     + field(dt('name'), 'title', 'text', `required maxlength="160" value="${esc(defaults)}"`)
     + `<label for="f-word">${L2('Файл Word (.docx або .doc)', 'Word file (.docx or .doc)')}</label><input id="f-word" name="word" type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">`
-    + `<label for="f-pdf">${L2('Файл PDF — його побачать люди', 'PDF file — what people see')}</label><input id="f-pdf" name="pdf" type="file" accept=".pdf,application/pdf">`
+    + `<label for="f-pdf">${kind === 'presentation' ? L2('Файл PDF — його побачать люди', 'PDF file — what people see') : L2('Файл PDF — необов’язково', 'PDF file — optional')}</label><input id="f-pdf" name="pdf" type="file" accept=".pdf,application/pdf">`
     + `<p class="hint">${esc(dt('rules'))}</p>`,
     async (v) => {
       const picked = [v.word, v.pdf].filter((f) => f instanceof File && f.size);

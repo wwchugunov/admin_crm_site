@@ -1,4 +1,7 @@
 const crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path');
+const {docxPage}=require('./docx-page.cjs');
+// Legal texts become a web page from their Word file; the presentation stays a file.
+const LEGAL=['site-privacy','site-terms','site-offer','app-privacy'];
 // Replaceable public documents. Each kind keeps one current version per language plus an archive.
 const KINDS=['site-privacy','site-terms','site-offer','presentation','app-privacy'];
 const LANGUAGES=['uk','en'];
@@ -44,12 +47,15 @@ class Documents{
   if(!Number.isSafeInteger(size)||size<1||size>MAX_SIZE)fail('Document must be at most 25 MiB',413);
   sniff(temporary,extension);
   const id=crypto.randomUUID(),activate=meta.activate!==false;
+  let page=null;
+  if(extension==='docx'&&LEGAL.includes(k)){try{page=docxPage(fs.readFileSync(temporary));}catch{fail('Не вдалося прочитати текст із Word-файлу. Відкрийте його у Word, збережіть як .docx і завантажте ще раз / The Word file could not be read');}}
   fs.linkSync(temporary,this.path(id));
+  if(page)fs.writeFileSync(this.path(id)+'.page.json',JSON.stringify({title:page.title||t,html:page.html}),{mode:0o600});
   try{this.store.transaction(()=>{
    if(activate)this.db.prepare(`UPDATE documents SET active=0 WHERE kind=? AND language=? AND ${SAME_GROUP}`).run(k,lang,GROUP(extension));
    this.db.prepare('INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?)').run(id,k,lang,t,name,extension,size,sha256,Date.now(),activate?1:0);
    this.store.event('document.uploaded',null,null,lang,k);
-  });}catch(error){fs.rmSync(this.path(id),{force:true});throw error;}
+  });}catch(error){fs.rmSync(this.path(id),{force:true});fs.rmSync(this.path(id)+'.page.json',{force:true});throw error;}
   return this.row(id);
  }
  row(id){const row=this.db.prepare('SELECT * FROM documents WHERE id=?').get(id);if(!row)fail('Document not found',404);return row;}
@@ -63,7 +69,7 @@ class Documents{
    if(row.active){const next=this.db.prepare(`SELECT id FROM documents WHERE kind=? AND language=? AND ${SAME_GROUP} ORDER BY uploaded_at DESC LIMIT 1`).get(row.kind,row.language,GROUP(row.extension));if(next)this.db.prepare('UPDATE documents SET active=1 WHERE id=?').run(next.id);}
    this.store.event('document.deleted',null,null,row.language,row.kind);
   });
-  fs.rmSync(this.path(row.id),{force:true});return{ok:true};
+  fs.rmSync(this.path(row.id),{force:true});fs.rmSync(this.path(row.id)+'.page.json',{force:true});return{ok:true};
  }
  // A switched-off kind keeps its files but disappears from the website and the app until switched on again.
  disabled(k){return Boolean(this.db.prepare('SELECT disabled FROM document_switches WHERE kind=?').get(k)?.disabled);}
@@ -75,7 +81,11 @@ class Documents{
  }
  list(){return this.db.prepare('SELECT id,kind,language,title,filename,extension,size,sha256,uploaded_at,active FROM documents ORDER BY kind,language,uploaded_at DESC').all().map(r=>({...r,active:!!r.active}));}
  // What people see: the current PDF; a Word file only while no PDF has been uploaded.
- current(k,lang){return this.db.prepare("SELECT * FROM documents WHERE kind=? AND language=? AND active=1 ORDER BY extension='pdf' DESC,uploaded_at DESC LIMIT 1").get(k,lang)||null;}
+ // Legal texts: the Word file is the source (it becomes the page); otherwise the current PDF comes first.
+ current(k,lang){return this.db.prepare(`SELECT * FROM documents WHERE kind=? AND language=? AND active=1 ORDER BY ${LEGAL.includes(k)?"extension='docx' DESC,":''}extension='pdf' DESC,uploaded_at DESC LIMIT 1`).get(k,lang)||null;}
+ currentPdf(k,lang){return this.db.prepare("SELECT * FROM documents WHERE kind=? AND language=? AND active=1 AND extension='pdf'").get(k,lang)||null;}
+ // The web page of a legal text, when its current Word file was readable.
+ page(row){if(!row||row.extension!=='docx'||!LEGAL.includes(row.kind))return null;try{return JSON.parse(fs.readFileSync(this.path(row.id)+'.page.json','utf8'));}catch{return null;}}
  // Public metadata: the current version per kind and language, falling back to the other language.
  public(){
   const result={};
@@ -99,4 +109,4 @@ function unavailable(res,lang,head=false){
  const en=lang==='en',html=Buffer.from(`<!doctype html><html lang="${en?'en':'uk'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>LOMVIKO</title></head><body><h1>${en?'This document is not available right now.':'Документ зараз недоступний.'}</h1><p>${en?'Please check back a little later.':'Будь ласка, загляньте трохи пізніше.'}</p></body></html>`);
  res.writeHead(404,{'Content-Type':'text/html; charset=utf-8','Content-Length':html.length,'Cache-Control':'no-cache'});res.end(head?undefined:html);
 }
-module.exports={Documents,KINDS,LANGUAGES,MAX_SIZE,unavailable};
+module.exports={Documents,KINDS,LEGAL,LANGUAGES,MAX_SIZE,unavailable};
