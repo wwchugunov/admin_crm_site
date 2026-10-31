@@ -77,6 +77,21 @@ const EXTRAS = [
   "vehicle",
   "plate",
 ];
+// A client phone: optional, but when given it must be a real number. Ukrainian "067…" and "380…" become
+// "+380…"; other numbers keep their country code. Rejected: letters, too short or long, one repeated digit
+// (00000000) and a Ukrainian number whose operator code starts with 0.
+function clientPhone(raw) {
+  const value = String(raw ?? "").trim();
+  if (!value) return "";
+  if (!/^[+\d\s().-]+$/.test(value)) throw Error(OrbitI18n.t("clientPhoneInvalid"));
+  let digits = value.replace(/\D/g, "");
+  if (!value.startsWith("+") && /^0\d{9}$/.test(digits)) digits = "38" + digits;
+  if (digits.length < 9 || digits.length > 15 || /^(\d)\1+$/.test(digits) || /^0/.test(digits))
+    throw Error(OrbitI18n.t("clientPhoneInvalid"));
+  if (digits.startsWith("380") && (digits.length !== 12 || digits[3] === "0" || /^0+$/.test(digits.slice(3))))
+    throw Error(OrbitI18n.t("clientPhoneInvalid"));
+  return "+" + digits;
+}
 // Optional client details; a field left out of an update keeps its value (older apps send none).
 function clientExtras(data, old = {}) {
   const out = {};
@@ -94,7 +109,7 @@ function clientExtras(data, old = {}) {
     throw Error(OrbitI18n.t("clientBirthdayInvalid"));
   if (
     out.email &&
-    (out.email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email))
+    (out.email.length > 120 || !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[a-z]{2,}$/i.test(out.email))
   )
     throw Error(OrbitI18n.t("clientEmailInvalid"));
   if (out.source && !SOURCES.includes(out.source)) out.source = "other";
@@ -436,7 +451,7 @@ class Store {
       .run(
         id,
         text(data.name, 120),
-        String(data.phone || "").slice(0, 40),
+        clientPhone(data.phone),
         String(data.notes || "").slice(0, 2000),
         randomBytes(24).toString("base64url"),
         ...EXTRAS.map((k) => extra[k]),
@@ -551,13 +566,15 @@ class Store {
       const name = text(draft.name, 120),
         phone = String(draft.phone || "").trim();
       if (phone.length > 40) throw Error(OrbitI18n.t("m533"));
-      const digits = phone.replace(/[^0-9]/g, "");
+      // Numbers are compared in one format, so "050 123 45 67" finds the client saved as "+380501234567".
+      const same = (v) => { try { return clientPhone(v).replace(/\D/g, ""); } catch { return String(v || "").replace(/\D/g, ""); } };
+      const digits = same(phone);
       const matches =
         digits.length >= 7
           ? this.db
               .prepare("SELECT id,name,phone FROM clients")
               .all()
-              .filter((c) => c.phone.replace(/[^0-9]/g, "") === digits)
+              .filter((c) => same(c.phone) === digits)
           : [];
       if (matches.length) {
         if (
@@ -882,7 +899,8 @@ class Store {
       )
       .run(
         text(data.name, 120),
-        String(data.phone || "").slice(0, 40),
+        // An unchanged old number is kept as it was, so clients saved before this check stay editable.
+        String(data.phone ?? "").trim() === String(old.phone || "").trim() ? String(old.phone || "") : clientPhone(data.phone),
         String(data.notes || "").slice(0, 2000),
         ...EXTRAS.map((k) => extra[k]),
         id,

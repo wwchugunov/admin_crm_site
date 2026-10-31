@@ -4,7 +4,8 @@ const siteRoutes={ 'owner:site:save':'/admin/site/draft','owner:site:publish':'/
 const memberRoutes={'owner:product':'/admin/product','owner:lead':'/admin/site/lead','owner:lead:delete':'/admin/site/lead/delete','owner:lead:grant':'/admin/leads/grant','owner:members:invite':'/admin/members/invite','owner:members:resend':'/admin/members/resend','owner:members:delete':'/admin/members/delete','owner:support:stage':'/admin/support/stage','owner:support:delete':'/admin/support/delete','owner:support:status':'/admin/support/status','owner:support:reply':'/admin/support/reply'};
 const productRoutes={'owner:user:add':'/admin/users','owner:user:update':'/admin/user','owner:password':'/admin/password','owner:user:delete':'/admin/user/delete','owner:business:add':'/admin/business','owner:revoke':'/admin/revoke','owner:demo':'/admin/demo','owner:key:revoke':'/admin/invite/revoke','owner:export':'/admin/export','owner:mail:settings':'/admin/mail/settings','owner:mail:verify':'/admin/mail/verify','owner:mail:test':'/admin/mail/test','owner:mail:retry':'/admin/mail/retry','owner:mail:access':'/admin/mail/access','owner:purchase':'/admin/purchase'};
 // Panel sessions slide with activity (30 minutes idle) and end 12 hours after sign-in.
-const IDLE=30*60000,MAX=12*3600000,DEFAULT_PORT={product:4548,website:4547};
+// Admins stay signed in for 4 hours without activity (a working morning), at most 12 hours per sign-in.
+const IDLE=4*3600000,MAX=12*3600000,DEFAULT_PORT={product:4548,website:4547};
 function problem(status,message){throw Object.assign(Error(message),{status});}
 function createAdminServer({apiUrl,origin,profile='website',publicDirectory=path.join(__dirname,'admin')}={}){
  const api=new URL(apiUrl||process.env.CH_API_URL||'http://127.0.0.1:4545');if(!['http:','https:'].includes(api.protocol)||api.username||api.password||api.pathname!=='/'||api.search||api.hash)throw Error('CH_API_URL must be an origin');

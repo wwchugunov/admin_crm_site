@@ -3,7 +3,7 @@ const{verifyRequest,verifyDigest,digest}=require('../core/request-proof.cjs');
 const{passwordHash,passwordValid}=require('./accounts.cjs');
 const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 // Admin sessions stay alive while the panel is in use (sliding 30 minutes), up to 12 hours after sign-in.
-const IDLE=30*60000,MAX=12*3600000;
+const IDLE=4*3600000,MAX=12*3600000;
 function base32(bytes){let bits=0,value=0,result='';for(const byte of bytes){value=(value<<8)|byte;bits+=8;while(bits>=5){bits-=5;result+=alphabet[(value>>>bits)&31];}}if(bits)result+=alphabet[(value<<(5-bits))&31];return result;}
 function decode(secret){let bits=0,value=0,out=[];for(const char of secret){const n=alphabet.indexOf(char);if(n<0)throw Error('Invalid TOTP secret');value=(value<<5)|n;bits+=5;if(bits>=8){bits-=8;out.push((value>>>bits)&255);}}return Buffer.from(out);}
 function totp(secret,counter=Math.floor(Date.now()/30000)){const b=Buffer.alloc(8);b.writeBigUInt64BE(BigInt(counter));const h=crypto.createHmac('sha1',decode(secret)).update(b).digest(),o=h[19]&15;return String((h.readUInt32BE(o)&0x7fffffff)%1000000).padStart(6,'0');}

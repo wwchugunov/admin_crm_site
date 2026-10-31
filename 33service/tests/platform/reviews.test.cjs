@@ -10,7 +10,7 @@ async function fixture(t){
  const sent=[],events=[];runtime.vault.put('telegram','000000:test');runtime.telegram.call=async(m,p)=>{if(m==='sendMessage')sent.push(p);return{};};
  const original=Telegram.onEvent;Telegram.onEvent=(tg,kind,id,extra)=>events.push({kind,id,extra});
  const service=store.addService({name:'Стрижка',duration:60,price:500}),resource=store.addResource({name:'Олена'});
- let n=0;const done=(chat,hoursAgo)=>{const c=store.addClient({name:'Клієнт '+chat,phone:'+38067000000'+chat});store.db.prepare('UPDATE clients SET chat_id=? WHERE id=?').run(String(chat),c);
+ let n=0;const done=(chat,hoursAgo)=>{const c=store.addClient({name:'Клієнт '+chat,phone:'+380671'+String(chat).padStart(6,'0')});store.db.prepare('UPDATE clients SET chat_id=? WHERE id=?').run(String(chat),c);
   const a=store.book({client_id:c,service_id:service,resource_ids:[resource],start:Date.parse(new Date(Date.now()+(3+ ++n)*86400000).toISOString().slice(0,10)+'T07:00:00Z')});
   const end=Date.now()-hoursAgo*3600000;store.db.prepare("UPDATE appointments SET start=?,end=?,status='completed' WHERE id=?").run(end-3600000,end,a);return a;};
  const press=(chat,data)=>runtime.telegram.handle({update_id:1,callback_query:{id:'q',data,from:{id:chat},message:{chat:{id:chat,type:'private'}}}});

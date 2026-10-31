@@ -42,7 +42,7 @@ test('A typed number works too, and a client already in the CRM with that number
  await f.say(502,{text:'не скажу'});assert.equal(visits(f.store,502).length,0);
  await f.say(502,{text:'+380 67 765 43 21'});
  const linked=f.store.db.prepare('SELECT * FROM clients WHERE chat_id=?').get('502');
- assert.equal(linked.id,maria,'the existing card is used');assert.equal(linked.phone,'+38 (067) 765-43-21','the CRM phone is kept');
+ assert.equal(linked.id,maria,'the existing card is used');assert.equal(linked.phone,'+380677654321','the CRM phone is kept (in the one saved format)');
  assert.equal(f.store.db.prepare("SELECT count(*) n FROM clients WHERE name='Гість'").get().n,0,'the empty bot card is removed');
  assert.equal(visits(f.store,502).length,1);
  await f.say(503,{text:'12'});assert.equal(f.store.db.prepare('SELECT count(*) n FROM clients WHERE chat_id=?').get('503').n,0,'unknown chats still get the consent screen');

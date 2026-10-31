@@ -23,7 +23,8 @@
     },
     // More about the client
     clientBirthdayInvalid: { uk: "Перевірте дату народження", en: "Check the date of birth" },
-    clientEmailInvalid: { uk: "Перевірте email", en: "Check the email" },
+    clientEmailInvalid: { uk: "Перевірте email, наприклад name@gmail.com", en: "Check the email, e.g. name@gmail.com" },
+    clientPhoneInvalid: { uk: "Перевірте номер телефону: 10–15 цифр, наприклад +380 67 123 45 67", en: "Check the phone number: 10–15 digits, e.g. +380 67 123 45 67" },
     clientEmail: { uk: "Email", en: "Email" },
     clientBirthday: { uk: "Дата народження", en: "Date of birth" },
     clientVehicle: { uk: "Автомобіль", en: "Car" },
