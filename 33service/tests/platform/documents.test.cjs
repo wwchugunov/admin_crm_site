@@ -126,3 +126,10 @@ test('A document keeps a current PDF for the site and a current Word file for ed
  const after=f.server.documents.list().filter(d=>d.kind==='site-terms'&&d.active);
  assert.deepEqual(after.map(d=>d.filename).sort(),['terms-v2.docx','terms.pdf'],'a new Word file replaces only the Word file');
 });
+
+test('The site shows the one privacy policy even when an old separate site file is still stored',async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.upload(PDF,{kind:'site-privacy',filename:'old-site.pdf'})).status,201);
+ assert.equal((await f.upload(DOCX,{kind:'app-privacy',filename:'policy.docx'})).status,201);
+ const page=await fetch(f.url+'/public/documents/site-privacy/uk');assert.match(page.headers.get('content-type'),/text\/html/,'the current policy page, not the old file');
+});

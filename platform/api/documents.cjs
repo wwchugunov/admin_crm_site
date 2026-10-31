@@ -92,8 +92,8 @@ class Documents{
   for(const k of KINDS){const entry={};for(const lang of LANGUAGES){const row=this.pick(k,lang);if(row)entry[lang]={title:row.title,extension:row.extension,size:row.size,updatedAt:row.uploaded_at,language:row.language,path:`/public/documents/${k}/${lang}`};}if(Object.keys(entry).length)result[k]=entry;}
   return result;
  }
- // One privacy policy covers the site and the app: until a separate site version is uploaded, the site shows the app's.
- pick(k,lang){const other=LANGUAGES.find(l=>l!==lang),get=x=>this.disabled(x)?null:this.current(x,lang)||this.current(x,other);return get(k)||(k==='site-privacy'?get('app-privacy'):null);}
+ // The site and the app share one privacy policy (managed as app-privacy); an old separate site file is only a fallback.
+ pick(k,lang){const other=LANGUAGES.find(l=>l!==lang),get=x=>this.disabled(x)?null:this.current(x,lang)||this.current(x,other);return k==='site-privacy'?get('app-privacy')||get('site-privacy'):get(k);}
  resolve(k,lang){kind(k);language(lang);const row=this.pick(k,lang);if(!row)fail('Document is not published',404);return row;}
  async send(res,row,head=false){
   const file=this.path(row.id),digest=crypto.createHash('sha256');
