@@ -210,6 +210,10 @@
     },
     slotOutsideHint: { uk: "Поза робочим часом. Графік:", en: "Outside working hours. Schedule:" },
     slotDayOff: { uk: "Цей день — вихідний за графіком.", en: "This day is a day off in your schedule." },
+    slotPastHint: {
+      uk: "Цей час уже минув — візит збережеться як такий, що відбувся («Прийшов»). Нагадування клієнту не надсилаються.",
+      en: "This time has passed — the visit is saved as done (“Came”). No reminders are sent to the client.",
+    },
     slotNoneLeft: {
       uk: "На цей день вільного часу вже не залишилося — оберіть іншу дату.",
       en: "No time left on this day — choose another date.",
@@ -2480,6 +2484,10 @@
     m539: {
       uk: "Виберіть час у майбутньому, не далі року",
       en: "Choose a future time within one year",
+    },
+    m539past: {
+      uk: "Час візиту — не раніше ніж 31 день тому й не далі ніж за рік",
+      en: "The visit time must be within the last 31 days or the next year",
     },
     m540: {
       uk: "Перевірте учасників, місткість послуги й кількість ресурсів",

@@ -63,7 +63,7 @@ function bookingModal(options = {}) {
       select(OrbitI18n.t("m275"), "service_id", data.services) +
       resourceChips(chosen) +
       `<div class="form-grid booking-when">` +
-      `<div>${field(OrbitI18n.t("bookingDate"), "date", "date", `required value="${escape(options.date || selectedDate)}"`)}</div>` +
+      `<div>${field(OrbitI18n.t("bookingDate"), "date", "date", `required value="${escape(options.date || selectedDate)}" min="${businessDate(Date.now() - 31 * 86400000)}"`)}</div>` +
       `<div><label for="field-time">${OrbitI18n.t("bookingTime")}</label><select id="field-time" name="time" required></select></div></div>` +
       `<p class="hint booking-when-hint" id="booking-when-hint" role="status"></p>` +
       `<label for="field-client_zone">${OrbitI18n.t("zoneClient")}</label><select id="field-client_zone" name="client_zone">${OrbitZones.options(data.timezone)}</select>` +
@@ -118,7 +118,7 @@ function bookingModal(options = {}) {
   if (options.serviceId) $("#field-service_id").value = service.id;
   setupBookingClients();
   syncBookingStaff(!options.resourceId);
-  setupBookingTime(options.time);
+  setupBookingTime(options.time, true);
 }
 // Booking form: hide people who do not do the service, mark those off that day, and
 // pick working people automatically when the service changes.
@@ -205,7 +205,8 @@ function bookingSlots() {
   }
   return { slots, workDay, workFrom, workTo };
 }
-function setupBookingTime(preferred) {
+// allowPast: a new visit may be written down after it happened; moving a visit stays in the future.
+function setupBookingTime(preferred, allowPast = false) {
   const select = $("#field-time");
   function fill() {
     const { slots, workDay, workFrom, workTo } = bookingSlots();
@@ -216,14 +217,16 @@ function setupBookingTime(preferred) {
     select.innerHTML = slots
       .map(
         (s) =>
-          `<option value="${s.value}" ${s.past ? "disabled" : ""}>${s.value}${zone !== data.timezone ? ` (${OrbitI18n.t("zoneForClient")} ${OrbitZones.clock(zone, timestamp(`${day}T${s.value}`))})` : ""}${s.busy ? ` · ${OrbitI18n.t("slotBusy")}` : s.outside ? ` · ${OrbitI18n.t("slotOutside")}` : ""}</option>`,
+          `<option value="${s.value}" ${s.past && !allowPast ? "disabled" : ""}>${s.value}${zone !== data.timezone ? ` (${OrbitI18n.t("zoneForClient")} ${OrbitZones.clock(zone, timestamp(`${day}T${s.value}`))})` : ""}${s.busy ? ` · ${OrbitI18n.t("slotBusy")}` : s.outside ? ` · ${OrbitI18n.t("slotOutside")}` : ""}</option>`,
       )
       .join("");
+    // The time that was clicked or chosen stays, even in the past; otherwise the first free future slot.
     const usable = slots.filter((s) => !s.past);
     const pick =
-      usable.find((s) => s.value === keep) ||
+      (allowPast ? slots : usable).find((s) => s.value === keep) ||
       usable.find((s) => !s.busy && !s.outside) ||
-      usable[0];
+      usable[0] ||
+      (allowPast ? slots.find((s) => !s.busy) || slots[0] : undefined);
     if (pick) select.value = pick.value;
     hint(slots, workDay, workFrom, workTo);
   }
@@ -233,7 +236,10 @@ function setupBookingTime(preferred) {
     if (!box) return;
     const range = `${String(Math.floor(workFrom / 60)).padStart(2, "0")}:${String(workFrom % 60).padStart(2, "0")}–${String(Math.floor(workTo / 60)).padStart(2, "0")}:${String(workTo % 60).padStart(2, "0")}`;
     box.className = "hint booking-when-hint";
-    if (!slots.some((s) => !s.past)) {
+    if (allowPast && current?.past) {
+      box.textContent = OrbitI18n.t("slotPastHint");
+      box.classList.add("warn");
+    } else if (!allowPast && !slots.some((s) => !s.past)) {
       box.textContent = OrbitI18n.t("slotNoneLeft");
       box.classList.add("warn");
     } else if (current?.busy) {

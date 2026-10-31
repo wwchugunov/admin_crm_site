@@ -61,6 +61,7 @@
     "m537": {"uk":"Перевірте тривалість, кількість учасників і ресурсів","en":"Check duration, participants and resources"},
     "m538": {"uk":"Послугу не знайдено","en":"Service not found"},
     "m539": {"uk":"Виберіть час у майбутньому, не далі року","en":"Choose a future time within one year"},
+    "m539past": {"uk":"Час візиту — не раніше ніж 31 день тому й не далі ніж за рік","en":"The visit time must be within the last 31 days or the next year"},
     "m540": {"uk":"Перевірте учасників, місткість послуги й кількість ресурсів","en":"Check participants, service capacity and resource count"},
     "m541": {"uk":"Цей час уже зайнятий. Виберіть інший інтервал.","en":"This time is already booked. Choose another time."},
     "m542": {"uk":"Клієнт уже має запис на цей час.","en":"The client already has an appointment at this time."},
