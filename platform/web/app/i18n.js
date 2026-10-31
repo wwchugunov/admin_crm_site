@@ -322,8 +322,8 @@
     appearanceDark: { uk: "Темна", en: "Dark" },
     appearanceBlocks: { uk: "Розташування блоків", en: "Block layout" },
     appearanceLayout: { uk: "Змінити розташування", en: "Rearrange" },
-    apptCompletePay: { uk: "Завершити й оплатити", en: "Complete and take payment" },
-    apptCompleted: { uk: "Візит завершено, оплату записано", en: "Visit completed, payment recorded" },
+    apptCompletePay: { uk: "Прийшов і оплатив", en: "Came and paid" },
+    apptCompleted: { uk: "Клієнт прийшов, оплату записано", en: "Client came, payment recorded" },
     apptMove: { uk: "Перенести", en: "Reschedule" },
     apptMoved: { uk: "Запис перенесено", en: "Appointment rescheduled" },
     apptMoveResources: { uk: "Оберіть стільки ж спеціалістів, скільки в записі: {n}", en: "Choose as many specialists as the booking has: {n}" },
@@ -1121,8 +1121,8 @@
       en: "Payment / refund",
     },
     m167: {
-      uk: "Завершити",
-      en: "Complete",
+      uk: "Прийшов",
+      en: "Came",
     },
     m168: {
       uk: "Скасувати",

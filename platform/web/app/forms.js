@@ -352,20 +352,22 @@ function appointmentModal(id) {
     ...(a.notes ? [[OrbitI18n.t("m282"), a.notes]] : []),
   ];
   const open = status === "confirmed",
-    // Finishing a visit or marking a no-show only makes sense once it has started.
-    started = open && a.start <= Date.now();
+    // A no-show only makes sense once the visit has started; "came" and payment work all day, because
+    // clients often arrive early. Before that day a payment is a prepayment.
+    started = open && a.start <= Date.now(),
+    arrivable = open && (started || businessDate(a.start) === businessDate(Date.now()));
   const buttons = [
-    started &&
+    arrivable &&
       !staff &&
       due > 0 && ["complete-pay", OrbitI18n.t("apptCompletePay"), "primary"],
-    started && [
+    arrivable && [
       "complete",
       OrbitI18n.t("m167"),
       !staff && due > 0 ? "secondary" : "primary",
     ],
     open && ["reschedule", OrbitI18n.t("apptMove"), "secondary"],
     !staff &&
-      ((!open && due > 0) || due < 0) && [
+      ((!arrivable && due > 0 && status !== "cancelled") || due < 0) && [
         "payment",
         OrbitI18n.t("m166"),
         "primary",
