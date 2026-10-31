@@ -108,3 +108,15 @@ test('The site shows the app privacy policy until a separate site policy is uplo
  const site=await (await fetch(f.url+'/public/site')).json();assert.equal(site.documents['site-privacy'].uk.path,'/public/documents/site-privacy/uk');
  const file=await fetch(f.url+'/public/documents/site-privacy/uk');assert.equal(file.status,200);assert.deepEqual(Buffer.from(await file.arrayBuffer()),PDF);
 });
+
+test('A document keeps a current PDF for the site and a current Word file for editing; replacing one keeps the other',async t=>{
+ const f=await fixture(t);
+ assert.equal((await f.upload(PDF,{kind:'site-terms',filename:'terms.pdf'})).status,201);
+ assert.equal((await f.upload(DOCX,{kind:'site-terms',filename:'terms.docx'})).status,201);
+ const list=f.server.documents.list().filter(d=>d.kind==='site-terms');
+ assert.deepEqual(list.filter(d=>d.active).map(d=>d.extension).sort(),['docx','pdf'],'both stay current');
+ const site=await fetch(f.url+'/public/documents/site-terms/uk');assert.equal(site.headers.get('content-type'),'application/pdf','visitors get the PDF');
+ assert.equal((await f.upload(DOCX,{kind:'site-terms',filename:'terms-v2.docx'})).status,201);
+ const after=f.server.documents.list().filter(d=>d.kind==='site-terms'&&d.active);
+ assert.deepEqual(after.map(d=>d.filename).sort(),['terms-v2.docx','terms.pdf'],'a new Word file replaces only the Word file');
+});

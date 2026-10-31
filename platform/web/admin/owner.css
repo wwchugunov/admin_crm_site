@@ -128,3 +128,9 @@ html[data-theme="dark"] .security-status.alert { background: #2e1d1b; border-col
 .editor-stage{border:1px solid #e3e6ea;border-radius:16px;overflow:hidden;background:#fff;height:calc(100vh - 230px);min-height:520px;display:flex;justify-content:center}
 .editor-stage iframe{width:100%;height:100%;border:0;background:#fff}
 .editor-stage.phone{background:#eef0f2;padding:18px 0}.editor-stage.phone iframe{width:390px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+
+.doc-files{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px 14px}
+.doc-files>div{padding:12px 14px;border-radius:12px;background:#f6f8f7}
+.doc-files h3{margin:0 0 6px;font-size:12px;color:#8a8f98;font-weight:600}
+.doc-file{display:block;font-size:13px;font-weight:600;color:#0a8f74;overflow-wrap:anywhere}.doc-missing{font-size:13px;color:#a32020}
+@media(max-width:800px){.doc-files{grid-template-columns:1fr}}

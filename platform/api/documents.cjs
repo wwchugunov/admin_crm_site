@@ -8,6 +8,10 @@ const TYPES={
  docx:{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',inline:false},
  doc:{type:'application/msword',inline:false},
 };
+// Each document keeps two current files per language: a PDF that the site and the app show, and a Word file
+// to edit and send to a lawyer. Uploading one replaces only the current file of the same format.
+const GROUP=extension=>extension==='pdf'?'pdf':'word';
+const SAME_GROUP="(CASE WHEN extension='pdf' THEN 'pdf' ELSE 'word' END)=?";
 function fail(message,status=400){throw Object.assign(Error(message),{status});}
 function kind(value){if(!KINDS.includes(value))fail('Unknown document type');return value;}
 function language(value){if(!LANGUAGES.includes(value))fail('Unsupported document language');return value;}
@@ -42,7 +46,7 @@ class Documents{
   const id=crypto.randomUUID(),activate=meta.activate!==false;
   fs.linkSync(temporary,this.path(id));
   try{this.store.transaction(()=>{
-   if(activate)this.db.prepare('UPDATE documents SET active=0 WHERE kind=? AND language=?').run(k,lang);
+   if(activate)this.db.prepare(`UPDATE documents SET active=0 WHERE kind=? AND language=? AND ${SAME_GROUP}`).run(k,lang,GROUP(extension));
    this.db.prepare('INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?)').run(id,k,lang,t,name,extension,size,sha256,Date.now(),activate?1:0);
    this.store.event('document.uploaded',null,null,lang,k);
   });}catch(error){fs.rmSync(this.path(id),{force:true});throw error;}
@@ -50,13 +54,13 @@ class Documents{
  }
  row(id){const row=this.db.prepare('SELECT * FROM documents WHERE id=?').get(id);if(!row)fail('Document not found',404);return row;}
  owned(data){const row=this.row(String(data?.id||''));if(data.kind!==undefined&&row.kind!==data.kind)fail('Document not found',404);return row;}
- activate(data){const row=this.owned(data);this.store.transaction(()=>{this.db.prepare('UPDATE documents SET active=0 WHERE kind=? AND language=?').run(row.kind,row.language);this.db.prepare('UPDATE documents SET active=1 WHERE id=?').run(row.id);this.store.event('document.activated',null,null,row.language,row.kind);});return{ok:true};}
+ activate(data){const row=this.owned(data);this.store.transaction(()=>{this.db.prepare(`UPDATE documents SET active=0 WHERE kind=? AND language=? AND ${SAME_GROUP}`).run(row.kind,row.language,GROUP(row.extension));this.db.prepare('UPDATE documents SET active=1 WHERE id=?').run(row.id);this.store.event('document.activated',null,null,row.language,row.kind);});return{ok:true};}
  // Deleting the current version promotes the newest remaining one, so public links keep working.
  delete(data){
   const row=this.owned(data);
   this.store.transaction(()=>{
    this.db.prepare('DELETE FROM documents WHERE id=?').run(row.id);
-   if(row.active){const next=this.db.prepare('SELECT id FROM documents WHERE kind=? AND language=? ORDER BY uploaded_at DESC LIMIT 1').get(row.kind,row.language);if(next)this.db.prepare('UPDATE documents SET active=1 WHERE id=?').run(next.id);}
+   if(row.active){const next=this.db.prepare(`SELECT id FROM documents WHERE kind=? AND language=? AND ${SAME_GROUP} ORDER BY uploaded_at DESC LIMIT 1`).get(row.kind,row.language,GROUP(row.extension));if(next)this.db.prepare('UPDATE documents SET active=1 WHERE id=?').run(next.id);}
    this.store.event('document.deleted',null,null,row.language,row.kind);
   });
   fs.rmSync(this.path(row.id),{force:true});return{ok:true};
@@ -70,7 +74,8 @@ class Documents{
   return{ok:true};
  }
  list(){return this.db.prepare('SELECT id,kind,language,title,filename,extension,size,sha256,uploaded_at,active FROM documents ORDER BY kind,language,uploaded_at DESC').all().map(r=>({...r,active:!!r.active}));}
- current(k,lang){return this.db.prepare('SELECT * FROM documents WHERE kind=? AND language=? AND active=1').get(k,lang)||null;}
+ // What people see: the current PDF; a Word file only while no PDF has been uploaded.
+ current(k,lang){return this.db.prepare("SELECT * FROM documents WHERE kind=? AND language=? AND active=1 ORDER BY extension='pdf' DESC,uploaded_at DESC LIMIT 1").get(k,lang)||null;}
  // Public metadata: the current version per kind and language, falling back to the other language.
  public(){
   const result={};

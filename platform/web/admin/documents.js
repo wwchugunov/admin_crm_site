@@ -111,19 +111,33 @@ function documentsView() {
     const body = rows.length
       ? `<div class="table-wrap"><table class="table"><thead><tr><th>${dt('language')}</th><th>${dt('name')}</th><th>${dt('size')}</th><th>${dt('uploaded')}</th><th>${dt('status')}</th><th></th></tr></thead><tbody>${rows.map((d) => `<tr><td>${docLanguages[d.language]}</td><td><strong>${esc(d.title)}</strong><div class="sub">${esc(d.filename)}</div></td><td>${fileSize(d.size)} · ${esc(d.extension.toUpperCase())}</td><td>${date(d.uploaded_at)}</td><td><span class="badge ${d.active ? 'doc-current' : 'doc-archive'}">${d.active ? dt('current') : dt('archive')}</span></td><td class="doc-actions"><a class="secondary doc-link" href="/web/document?id=${encodeURIComponent(d.id)}&kind=${encodeURIComponent(kind)}" download>${dt('download')}</a>${d.active ? '' : `<button class="secondary" data-action="document-activate" data-id="${d.id}" data-kind="${kind}">${dt('activate')}</button>`}<button class="danger" data-action="document-delete" data-id="${d.id}" data-kind="${kind}" data-current="${d.active ? 1 : 0}">${dt('remove')}</button></td></tr>`).join('')}</tbody></table></div>`
       : '';
+    const current = (group, lang) => rows.find((d) => d.active && d.language === lang && (group === 'pdf' ? d.extension === 'pdf' : d.extension !== 'pdf'));
+    const fileCell = (group) => ['uk', 'en'].map((lang) => { const d = current(group, lang); return d ? `<a class="doc-file" href="/web/document?id=${encodeURIComponent(d.id)}&kind=${encodeURIComponent(kind)}" download>${lang.toUpperCase()} · ${esc(d.filename)}</a>` : (lang === 'uk' ? `<span class="doc-missing">${L2('не завантажено', 'not uploaded')}</span>` : ''); }).join('');
+    const files = `<div class="doc-files"><div><h3>${L2('PDF — показується на сайті й у застосунку', 'PDF — shown on the site and in the app')}</h3>${fileCell('pdf')}</div><div><h3>${L2('Word — для редагування та юриста', 'Word — to edit and send to a lawyer')}</h3>${fileCell('word')}</div></div>`;
     const where = `<div class="doc-where"><h3>${esc(dg('whereTitle'))}</h3><ul>${guide.where.map(([text, target]) => `<li><span>${esc(text)}</span>${target ? `<a class="doc-show" href="${esc(siteBase())}/?doc=${encodeURIComponent(target)}" target="_blank" rel="noopener">${esc(dg('show'))} ↗</a>` : ''}</li>`).join('')}</ul></div>`;
-    return `<section class="panel mt doc-card"><div class="panel-head"><div><h2>${esc(guide.title)} <span class="badge ${guide.need[1]}">${esc(guide.need[0])}</span></h2><p class="doc-about">${esc(guide.about)}</p><p class="doc-state ${stateClass}">${esc(state)}</p></div><div class="inline-actions"><button class="secondary" data-action="document-switch" data-kind="${kind}" data-enabled="${off ? '1' : '0'}">${dt(off ? 'enable' : 'disable')}</button><button class="primary" data-action="document-upload" data-kind="${kind}">${dt('upload')}</button></div></div>${where}${body}</section>`;
+    return `<section class="panel mt doc-card"><div class="panel-head"><div><h2>${esc(guide.title)} <span class="badge ${guide.need[1]}">${esc(guide.need[0])}</span></h2><p class="doc-about">${esc(guide.about)}</p><p class="doc-state ${stateClass}">${esc(state)}</p></div><div class="inline-actions"><button class="secondary" data-action="document-switch" data-kind="${kind}" data-enabled="${off ? '1' : '0'}">${dt(off ? 'enable' : 'disable')}</button><button class="primary" data-action="document-upload" data-kind="${kind}">${dt('upload')}</button></div></div>${files}${where}${body}</section>`;
   }).join('');
 }
 
+const L2 = (uk, en) => (OrbitI18n.language === 'en' ? en : uk);
+// One dialog for both files: edit the Word file, save it as PDF in Word, upload both. Either one is enough.
 function uploadDocument(kind, language = OrbitI18n.language === 'en' ? 'en' : 'uk') {
   const defaults = documentText[language].kinds[kind][2];
   modal(dt('kinds')[kind][0],
-    `<p class="hint">${esc(dt('rules'))}</p><label for="f-language">${dt('language')}</label><select id="f-language" name="language">${Object.entries(docLanguages).map(([value, name]) => `<option value="${value}" ${value === language ? 'selected' : ''}>${name}</option>`).join('')}</select>`
+    `<p class="hint">${L2('Відредагуйте документ у Word, збережіть його ще й як PDF («Файл → Зберегти як → PDF») і завантажте обидва файли. На сайті й у застосунку показується PDF, а Word лишається тут для наступних правок.', 'Edit the document in Word, also save it as PDF (File → Save as → PDF) and upload both. The site and the app show the PDF; the Word file stays here for the next edits.')}</p>`
+    + `<label for="f-language">${dt('language')}</label><select id="f-language" name="language">${Object.entries(docLanguages).map(([value, name]) => `<option value="${value}" ${value === language ? 'selected' : ''}>${name}</option>`).join('')}</select>`
     + field(dt('name'), 'title', 'text', `required maxlength="160" value="${esc(defaults)}"`)
-    + `<label for="f-file">${dt('file')}</label><input id="f-file" name="file" type="file" required accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"><p class="hint">${esc(dt('chooseFile'))}</p>`
-    + `<label class="checkbox-line"><input type="checkbox" name="activate" checked>${dt('makeCurrent')}</label>`,
-    async (v) => { await window.owner.call('owner:document:upload', { kind, language: v.language, title: v.title, file: v.file, activate: Object.hasOwn(v, 'activate') }); toast(dt('uploaded_ok')); },
+    + `<label for="f-word">${L2('Файл Word (.docx або .doc)', 'Word file (.docx or .doc)')}</label><input id="f-word" name="word" type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">`
+    + `<label for="f-pdf">${L2('Файл PDF — його побачать люди', 'PDF file — what people see')}</label><input id="f-pdf" name="pdf" type="file" accept=".pdf,application/pdf">`
+    + `<p class="hint">${esc(dt('rules'))}</p>`,
+    async (v) => {
+      const picked = [v.word, v.pdf].filter((f) => f instanceof File && f.size);
+      if (!picked.length) throw Error(L2('Оберіть файл Word, PDF або обидва', 'Choose a Word file, a PDF or both'));
+      if (v.pdf?.size && !/\.pdf$/i.test(v.pdf.name)) throw Error(L2('У поле PDF оберіть файл .pdf', 'Choose a .pdf file in the PDF field'));
+      if (v.word?.size && !/\.docx?$/i.test(v.word.name)) throw Error(L2('У поле Word оберіть файл .docx або .doc', 'Choose a .docx or .doc file in the Word field'));
+      for (const file of picked) await window.owner.call('owner:document:upload', { kind, language: v.language, title: v.title, file, activate: true });
+      toast(dt('uploaded_ok'));
+    },
     dt('upload'));
 }
 

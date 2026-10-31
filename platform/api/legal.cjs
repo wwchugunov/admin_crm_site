@@ -11,7 +11,7 @@ class Legal{
  version(kind){
   // A document the owner switched off is not shown and not accepted; switching it on asks everyone again.
   try{if(this.db.prepare('SELECT disabled FROM document_switches WHERE kind=?').get(kind)?.disabled)return{version:'off',date:null};}catch{}
-  try{const r=this.db.prepare("SELECT sha256,uploaded_at FROM documents WHERE kind=? AND language='uk' AND active=1").get(kind);if(r)return{version:r.sha256.slice(0,16),date:r.uploaded_at};}catch{}
+  try{const r=this.db.prepare("SELECT sha256,uploaded_at FROM documents WHERE kind=? AND language='uk' AND active=1 ORDER BY extension='pdf' DESC,uploaded_at DESC LIMIT 1").get(kind);if(r)return{version:r.sha256.slice(0,16),date:r.uploaded_at};}catch{}
   return{version:'none',date:null};
  }
  // The contract people accept: the public offer while it is published (sales on), otherwise the free terms of use.

@@ -9,10 +9,10 @@ const fail = (status, message) => {
 test("Acceptance is recorded per document version; a new upload asks again; stale versions are refused", async (t) => {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
-  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER)");
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER,extension TEXT NOT NULL DEFAULT 'pdf')");
   const upload = (kind, sha) => {
     db.prepare("UPDATE documents SET active=0 WHERE kind=?").run(kind);
-    db.prepare("INSERT INTO documents VALUES(?,?,?,?,?,1)").run(sha, kind, "uk", sha.repeat(4), Date.now());
+    db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES(?,?,?,?,?,1)").run(sha, kind, "uk", sha.repeat(4), Date.now());
   };
   upload("site-offer", "aaaa");
   upload("app-privacy", "bbbb");
@@ -43,9 +43,9 @@ test("Acceptance is recorded per document version; a new upload asks again; stal
 test("While the offer is switched off only the privacy policy is accepted; switching it on asks again", (t) => {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
-  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER);CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
-  db.prepare("INSERT INTO documents VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
-  db.prepare("INSERT INTO documents VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER,extension TEXT NOT NULL DEFAULT 'pdf');CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
+  db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
+  db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
   db.prepare("INSERT INTO document_switches VALUES('site-offer',1)").run();
   const legal = new Legal({ store: { db }, fail }),
     user = { id: "u1", email: "anna@salon.ua" };
@@ -59,10 +59,10 @@ test("While the offer is switched off only the privacy policy is accepted; switc
 test("While sales are off the terms of use are the contract; publishing the offer asks again", (t) => {
   const db = new DatabaseSync(":memory:");
   t.after(() => db.close());
-  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER);CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
-  db.prepare("INSERT INTO documents VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
-  db.prepare("INSERT INTO documents VALUES('t','site-terms','uk',?,1,1)").run("t".repeat(16));
-  db.prepare("INSERT INTO documents VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER,extension TEXT NOT NULL DEFAULT 'pdf');CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
+  db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES('o','site-offer','uk',?,1,1)").run("a".repeat(16));
+  db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES('t','site-terms','uk',?,1,1)").run("t".repeat(16));
+  db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES('p','app-privacy','uk',?,1,1)").run("b".repeat(16));
   db.prepare("INSERT INTO document_switches VALUES('site-offer',1)").run();
   const legal = new Legal({ store: { db }, fail }),
     user = { id: "u1", email: "anna@salon.ua" };
