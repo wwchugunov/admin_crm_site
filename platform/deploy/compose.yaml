@@ -1,7 +1,7 @@
 name: orbit-admin
 services:
   orbit:
-    image: lomviko-platform:2.9.1
+    image: lomviko-platform:2.9.2
     build:
       context: ..
       dockerfile: deploy/Dockerfile

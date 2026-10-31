@@ -16,3 +16,15 @@ test('A request from the site becomes a company with one click, even while regis
  assert.equal((await f.call('/admin/leads/grant',{id:'missing'})).status,404);
  assert.equal((await f.call('/admin/site/lead',{id,stage:'contacted'})).status,200);
 });
+test('Giving access with a chosen plan, end date and company name puts all three in the account and the letter',async t=>{
+ const f=await fixture(t);
+ await f.call('/public/demo',{name:'Чугунов Василь Васильович',email:'vasyl@studio.test',business:'non',consent:true,language:'uk'});
+ const id=f.store.db.prepare('SELECT id FROM site_leads').get().id,expires=Date.now()+30*86400000;
+ for(const bad of [{plan:'gold'},{expires:Date.now()-1000},{expires:Date.now()+5*366*86400000},{business:'   '}])assert.equal((await f.call('/admin/leads/grant',{id,...bad})).status,400,JSON.stringify(bad));
+ const r=await f.call('/admin/leads/grant',{id,plan:'business',expires,business:'Студія Василя'});assert.equal(r.status,201,JSON.stringify(r.value));
+ const u=f.store.db.prepare('SELECT * FROM users WHERE email=?').get('vasyl@studio.test');assert.equal(u.plan,'business');assert.equal(u.stage,'active');assert.equal(u.expires,expires);
+ assert.equal(f.store.db.prepare('SELECT b.name FROM businesses b JOIN memberships m ON m.business_id=b.id WHERE m.user_id=?').get(u.id).name,'Студія Василя');
+ await f.server.mail.tick();const letter=f.sent.find(m=>m.to==='vasyl@studio.test'&&/доступ готовий/i.test(m.subject));
+ assert.match(letter.text,/Вітаємо, Василь!/);assert.match(letter.text,/Тариф: «Бізнес»/);assert.match(letter.text,/Доступ діє до/);assert.match(letter.text,/Логін: vasyl@studio\.test/);
+ assert.equal((letter.html.match(/background:#0a8f74;color:#ffffff/g)||[]).length,1,'one green button');assert.match(letter.html,/Якщо кнопка не працює/);assert.doesNotMatch(letter.html,/>Задати пароль \(/,'the link note is not on the button');
+});
