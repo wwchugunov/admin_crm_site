@@ -307,6 +307,9 @@ function zoneBanner() {
 // Offer and privacy policy: shown until the signed-in person accepts the current versions.
 let legalState = null;
 async function loadLegal() {
+  // The screen is drawn by scripts that load after this one: wait for all of them before drawing.
+  if (document.readyState !== "complete")
+    await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
   try {
     legalState = await window.orbit.call("legal:status");
   } catch {
