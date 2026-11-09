@@ -38,9 +38,9 @@ test('After permanent deletion the same email and the same computer can register
  const again=await register(f,start('comeback@example.test',first.pair));
  assert.equal(again.result.status,201,'a fresh registration with the same email and device succeeds');
 });
-test('Registration during the launch offer runs free until 1 March 2027 and sends a welcome email',async t=>{
+test('Registration during the launch offer runs free until 1 December 2027 and sends a welcome email',async t=>{
  const f=await fixture(t),request=start('welcome@example.test'),{result}=await register(f,request);assert.equal(result.status,201,JSON.stringify(result.value));
- const u=f.store.db.prepare('SELECT * FROM users WHERE email=?').get('welcome@example.test'),freeUntil=Date.parse('2027-03-01T00:00:00+02:00');
+ const u=f.store.db.prepare('SELECT * FROM users WHERE email=?').get('welcome@example.test'),freeUntil=Date.parse('2027-12-01T00:00:00+02:00');
  assert.equal(u.expires,Math.max(freeUntil,u.expires));assert(u.expires>=Date.now()+30*86400000-60000,'never shorter than 30 days');
  await f.server.mail.tick();const welcome=f.sent.find(m=>m.to==='welcome@example.test'&&/безкоштовний період почався/.test(m.subject));
  assert(welcome,'welcome email sent');assert.match(welcome.text,/Telegram/);assert.match(welcome.text,/app\.lomviko\.com|Відкрити LOMVIKO/);

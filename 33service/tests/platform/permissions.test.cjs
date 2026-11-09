@@ -63,10 +63,13 @@ test('Plans: everything is open while sales are off or during a trial; with sale
  store.db.prepare("UPDATE users SET plan='pro' WHERE id=?").run(owner);
  assert.equal((await sell()).status,200);
  // The admin switch publishes or hides the offer together with sales.
- assert.equal((await f.call('/admin/product',{sales:false})).status,200);
+ assert.equal((await f.call('/admin/product',{sales:false})).status,409,'paying clients need a confirmation');
+ assert.equal((await f.call('/admin/product',{sales:false,confirm:true})).status,200);
  assert.equal(store.db.prepare("SELECT disabled FROM document_switches WHERE kind='site-offer'").get().disabled,1);
- assert.equal((await f.call('/admin/product',{sales:true})).status,200);
- assert.equal(store.db.prepare("SELECT disabled FROM document_switches WHERE kind='site-offer'").get().disabled,0);
+ const later=new Date(store.freeUntil()+400*86400000).toISOString().slice(0,10);assert.equal((await f.call('/admin/sales/date',{date:later})).status,200,'the date is set through the admin route');assert.equal(store.freeUntil(),Date.parse(later+'T00:00:00+02:00'));
+ assert.equal((await f.call('/admin/sales/date',{date:'bad'})).status,400);
+ const unready=await f.call('/admin/product',{sales:true});assert.equal(unready.status,409,'selling needs the checks to pass');assert.equal(store.product().sales,false);
+ assert.equal(store.db.prepare("SELECT disabled FROM document_switches WHERE kind='site-offer'").get().disabled,1);
 });
 
 test('When a subscription ends the whole team loses write access; renewing brings it back',async t=>{

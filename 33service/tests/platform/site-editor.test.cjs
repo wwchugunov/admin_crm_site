@@ -23,5 +23,5 @@ test('The editor refuses malformed texts, unknown picture slots and files that a
 test('The renderer applies edited texts of the right shape and ignores anything else',()=>{
  const {renderPage}=require('../../../website/render.cjs'),template=fs.readFileSync(path.join(__dirname,'../../../website/public/index.html'),'utf8');
  const html=renderPage(template,'uk',{texts:{uk:{navPrice:'Тарифи <b>x</b>',heroTitle:['Перша','друга'],priceTitle:'not an array',unknownKey:'x'},en:{}},images:{app:42}});
- assert.match(html,/Тарифи &lt;b&gt;x&lt;\/b&gt;/);assert.match(html,/Перша <em>друга<\/em>/);assert.doesNotMatch(html,/>not an array</);assert.match(html,/Три тарифи./);assert.match(html,/\/public\/site-image\/app\?v=42/);
+ assert.match(html,/Тарифи &lt;b&gt;x&lt;\/b&gt;/);assert.match(html,/Перша <em>друга<\/em>/);assert.doesNotMatch(html,/>not an array</);assert.match(html,/Зараз усе безкоштовно/);assert.match(html,/\/public\/site-image\/app\?v=42/);
 });

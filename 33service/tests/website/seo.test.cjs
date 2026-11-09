@@ -34,7 +34,7 @@ test('Initial HTML contains localized content, crawlable language links and cons
   assert.equal(document.querySelectorAll('h1').length, 1);
   assert(document.querySelector('h1').textContent.includes(titleText));
   assert(document.querySelectorAll('#features-grid article').length >= 6);
-  assert.equal(document.querySelectorAll('#plans article').length, 3);
+  assert.equal(document.querySelectorAll('#plans article').length, 1);
   assert(document.querySelectorAll('#faq-list details').length >= 4);
   assert(document.querySelector('#owner-points').textContent.length > 100);
   assert.equal(document.querySelector('link[rel="canonical"]').href, 'https://lomviko.com' + route);
@@ -80,7 +80,7 @@ test('Unavailable, slow or malformed public API never removes the primary market
   const response = await fetch(f.url + '/en'); assert.equal(response.status, 200);
   const { document } = parseHTML(await response.text());
   assert(document.querySelectorAll('#features-grid article').length >= 6);
-  assert.equal(document.querySelectorAll('#plans article').length, 3);
+  assert.equal(document.querySelectorAll('#plans article').length, 1);
   assert.match(document.querySelector('h1').textContent, /Online booking/);
  }
 });

@@ -1,12 +1,12 @@
 const crypto = require('node:crypto');
-// Launch offer: everyone who registers before it ends uses LOMVIKO free until 1 March 2027 (Kyiv); later sign-ups get 30 days.
-const FREE_UNTIL=Date.parse('2027-03-01T00:00:00+02:00');
-const trialEnd=()=>Math.max(Date.now()+30*86400000,FREE_UNTIL);
+// Launch offer: everyone who registers before it ends uses LOMVIKO free until the date set in the admin (Kyiv); later sign-ups get 30 days.
+const FREE_UNTIL=Date.parse('2027-12-01T00:00:00+02:00');
 const fs = require('node:fs');
 const path = require('node:path');
 const {passwordHash} = require('./accounts.cjs');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 class Registration {
+  trialEnd(){return Math.max(Date.now()+30*86400000,this.store.freeUntil?.()??FREE_UNTIL);}
   constructor({store,accounts,mail,fail,string}) {
     Object.assign(this,{store,db:store.db,accounts,mail,fail,string});
     const file=path.join(store.directory,'registration.secret');
@@ -76,17 +76,17 @@ class Registration {
     const userId=this.store.transaction(()=>{
       const device=hash(crypto.createPublicKey(pending.public_key).export({type:'spki',format:'der'}));
       if(this.db.prepare('SELECT device FROM trial_consumptions WHERE device=? OR email_hash=?').get(device,hash(pending.email)))this.fail(409,'Trial already used');
-      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:30,expires:trialEnd(),max_devices:10,password_hash:pending.password_hash});
+      const id=this.store.addUser({name:pending.name,email:pending.email,business:pending.business,days:30,expires:this.trialEnd(),max_devices:10,password_hash:pending.password_hash});this.store.markFree?.(id);
       this.accounts.addBusiness(id,pending.business);
       this.db.prepare('INSERT INTO trial_consumptions VALUES(?,?,?)').run(device,hash(pending.email),Date.now());
       this.db.prepare('DELETE FROM registration_pending WHERE id=?').run(pending.id);
-      this.store.event('trial.started',id,null,'',`until ${new Date(trialEnd()).toISOString().slice(0,10)}; verified email`);
+      this.store.event('trial.started',id,null,'',`until ${new Date(this.trialEnd()).toISOString().slice(0,10)}; verified email`);
       this.legal?.record({userId:id,email:pending.email,method:pending.accepted?'registration-checkbox+email-code':'registration-email-code',ip:req.clientAddress||req.socket?.remoteAddress,device:device,app:String(data.version||'')});
-      try{this.mail.enqueue('welcome',pending.email,data.language,{name:pending.name,business:pending.business,until_ms:trialEnd()},{userId:id,dedupe:'welcome:'+id});}catch{}
+      try{this.mail.enqueue('welcome',pending.email,data.language,{name:pending.name,business:pending.business,until_ms:this.trialEnd()},{userId:id,dedupe:'welcome:'+id});}catch{}
       const c=this.mail.settings();if(c.ownerNotice)this.mail.enqueue('trial-started',c.ownerEmail||c.fromEmail,data.language,{name:pending.name,email:pending.email,business:pending.business},{userId:id,dedupe:'trial:'+id});
       return id;
     });
-    reply(201,{ok:true,user_id:userId,login:pending.email,trial_days:Math.round((trialEnd()-Date.now())/86400000)});return true;
+    reply(201,{ok:true,user_id:userId,login:pending.email,trial_days:Math.round((this.trialEnd()-Date.now())/86400000)});return true;
   }
   cleanup(){this.db.prepare('DELETE FROM registration_pending WHERE expires<?').run(Date.now());this.db.prepare('DELETE FROM registration_limits WHERE at<?').run(Date.now()-86400000);}
   codeHash(id,code){return crypto.createHmac('sha256',this.key).update(id+':'+code).digest('hex');}

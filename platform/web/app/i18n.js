@@ -14,8 +14,8 @@
       en: "Bookings, clients and payments in one place",
     },
     webGateText: {
-      uk: "Увійдіть до своєї компанії або почніть безкоштовно до 1 березня 2027 — без встановлення, з комп’ютера чи телефона.",
-      en: "Sign in to your company or start free until 1 March 2027 — nothing to install, on a computer or a phone.",
+      uk: "Увійдіть до своєї компанії або почніть безкоштовно — без встановлення, з комп’ютера чи телефона.",
+      en: "Sign in to your company or start free — nothing to install, on a computer or a phone.",
     },
     webUnavailable: {
       uk: "Ця дія недоступна у веб-версії",
@@ -1498,8 +1498,8 @@
       en: "JSON and CSV contain personal data in plain text. The .orbit backup is password protected. LOMVIKO support restores data from a backup.",
     },
     m265: {
-      uk: "Зареєструйтеся й користуйтеся всім безкоштовно до 1 березня 2027 або увійдіть. Якщо отримали одноразовий ключ, активуйте його нижче.",
-      en: "Register and use every feature free until 1 March 2027, or sign in. If you received a one-time key, activate it below.",
+      uk: "Зареєструйтеся й користуйтеся всім безкоштовно або увійдіть. Якщо отримали одноразовий ключ, активуйте його нижче.",
+      en: "Register and use every feature free, or sign in. If you received a one-time key, activate it below.",
     },
     m266: {
       uk: "Увійти за логіном",

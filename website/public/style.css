@@ -641,6 +641,8 @@ input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--ne
 .pricing-head .section-intro{margin-top:18px}
 .free-banner{display:inline-block;margin:22px 0 0;padding:12px 18px;border-radius:16px;background:var(--mint);color:var(--brand-ink);font-weight:600;line-height:1.45}
 .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:40px;align-items:stretch}
+.plans.plans-free{grid-template-columns:minmax(0,560px)}
+.tier-free .tier-price strong{font-size:clamp(38px,4vw,52px)}
 .tier{position:relative;display:flex;flex-direction:column;gap:6px;padding:30px 28px 28px;border-radius:28px;background:var(--soft);overflow:hidden}
 .tier h3{font-size:24px;letter-spacing:-.03em;margin:0}
 .tier-for{margin:0 0 14px;color:#5b616a;line-height:1.45;min-height:2.9em}
