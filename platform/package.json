@@ -1,6 +1,6 @@
 {
   "name": "lomviko-platform",
-  "version": "2.9.9",
+  "version": "2.9.10",
   "description": "LOMVIKO API, web app and browser administration",
   "main": "api/server.cjs",
   "private": true,

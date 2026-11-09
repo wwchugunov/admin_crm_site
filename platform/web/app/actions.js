@@ -599,6 +599,9 @@ $("#modal-form").addEventListener("submit", async (event) => {
   }
 });
 run(async () => {
+  // The first screen is drawn by scripts that load after this one: wait for all of them.
+  if (document.readyState !== "complete")
+    await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
   await refresh();
   loadSupport();
   loadLegal();

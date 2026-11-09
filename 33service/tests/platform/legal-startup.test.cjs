@@ -9,3 +9,9 @@ test('The legal check does not draw the screen before every script has loaded',a
  assert.equal(renders,0,'nothing is drawn while scripts are loading');assert.equal(listeners[0][0],'load');
  context.document.readyState='complete';listeners[0][1]();await done;assert.equal(renders,1,'drawn once everything is loaded');
 });
+test('The app starts drawing only after every script on the page has loaded',()=>{
+ const actions=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/actions.js'),'utf8'),html=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/index.html'),'utf8');
+ const boot=actions.slice(actions.indexOf('The first screen is drawn')-40,actions.indexOf('loadSupport();\n  loadLegal();'));
+ assert.match(boot,/readyState !== "complete"[\s\S]*addEventListener\("load"[\s\S]*await refresh\(\)/,'the first refresh waits for the load event');
+ const order=name=>html.indexOf(`src="${name}"`);assert(order('actions.js')>0&&order('schedule-free.js')>order('actions.js'),'schedule-free.js loads after the boot code, which is why the wait is needed');
+});
