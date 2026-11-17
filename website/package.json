@@ -1,6 +1,6 @@
 {
   "name": "lomviko-website",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": true,
   "description": "LOMVIKO marketing website and public API gateway",
   "engines": {

@@ -3,6 +3,7 @@
   const TAG = 'AW-10954716152';
   window.dataLayer = window.dataLayer || [];
   window.gtag = function gtag() { window.dataLayer.push(arguments); };
+  window.gtag('set', 'linker', { domains: ['lomviko.com', 'app.lomviko.com'] });
   window.gtag('js', new Date());
   window.gtag('config', TAG);
   // Queue attribution and conversions immediately, then load the third-party runtime after

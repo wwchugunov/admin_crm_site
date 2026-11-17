@@ -1,6 +1,6 @@
 services:
   landing:
-    image: lomviko-landing:1.4.3
+    image: lomviko-landing:1.4.4
     build:
       context: ${CH_LANDING_CONTEXT:-../../website}
       dockerfile: deploy/Dockerfile
@@ -43,7 +43,7 @@ services:
     networks: [default, mail]
 
   app-admin:
-    image: lomviko-platform:2.9.10
+    image: lomviko-platform:2.9.11
     pull_policy: never
     command: [node, web/admin-server.cjs]
     restart: unless-stopped
@@ -71,7 +71,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # LOMVIKO in the browser: the company workspace at app.lomviko.com.
   app-web:
-    image: lomviko-platform:2.9.10
+    image: lomviko-platform:2.9.11
     pull_policy: never
     command: [node, web/app-server.cjs]
     restart: unless-stopped
@@ -86,6 +86,7 @@ services:
       CH_PUBLIC_API_URL: https://${ORBIT_DOMAIN:?Set ORBIT_DOMAIN}
       CH_API_URL: http://orbit:4545
       CH_WEB_APP_ORIGIN: https://${CH_WEB_APP_DOMAIN:?Set CH_WEB_APP_DOMAIN}
+      CH_GOOGLE_ADS_REGISTRATION_SEND_TO: ${CH_GOOGLE_ADS_REGISTRATION_SEND_TO:-}
     expose: ['4549']
     depends_on: {orbit: {condition: service_healthy}}
     healthcheck:
@@ -99,7 +100,7 @@ services:
       options: {max-size: 10m, max-file: '3'}
   # The website admin runs from the platform image with its own panel profile.
   site-admin:
-    image: lomviko-platform:2.9.10
+    image: lomviko-platform:2.9.11
     pull_policy: never
     command: [node, web/admin-server.cjs]
     restart: unless-stopped

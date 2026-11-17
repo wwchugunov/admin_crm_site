@@ -102,7 +102,7 @@ test('Google Ads queues conversions before deferring its runtime until page load
  const context = { window: { addEventListener: (event, callback) => { assert.equal(event, 'load'); onload = callback; }, requestIdleCallback: callback => { idle = callback; } }, document: { readyState: 'loading', createElement: () => ({}), head: { append: element => { script = element; } } } };
  vm.runInNewContext(fs.readFileSync(path.join(publicDirectory, 'ads.js'), 'utf8'), context);
  assert(!script); context.window.lomvikoConversion();
- assert.equal(context.window.dataLayer.length, 3); assert.equal(context.window.dataLayer[2][0], 'event');
+ assert.equal(context.window.dataLayer.length, 4); assert.equal(context.window.dataLayer[0][0], 'set'); assert.equal(context.window.dataLayer[0][1], 'linker'); assert.equal(context.window.dataLayer[3][0], 'event');
  onload(); assert(!script); idle(); assert.match(script.src, /^https:\/\/www.googletagmanager.com\/gtag\/js\?id=/); assert.equal(script.async, true);
 });
 test('The admin can hide the service owner line in the footer while LOMVIKO is free', async t => {

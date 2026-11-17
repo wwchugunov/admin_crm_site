@@ -92,3 +92,36 @@ test('The owner-line switch is stored like the other product switches and reache
  try{assert.equal(store.product().owner,true);store.setProduct('owner',false);assert.equal(store.product().owner,false);assert.throws(()=>store.setProduct('owner','no'));}
  finally{store.db.close();fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('Restricted snapshots omit private clients and prices, including after live permission changes',async t=>{
+ const f=await fixture(t),all=Permissions.PRESETS.admin;
+ const service=(await f.O('/v1/crm/service',{name:'Cut',duration:60,price:500})).value.value;
+ const resource=(await f.O('/v1/crm/resource',{name:'Max'})).value.value;
+ const linked=(await f.O('/v1/crm/client',{name:'Linked',phone:'+380671112233',notes:'PRIVATE LINKED NOTES'})).value.value;
+ const privateClient=(await f.O('/v1/crm/client',{name:'Private',phone:'+380671112234',notes:'PRIVATE UNBOOKED NOTES'})).value.value;
+ await f.O('/v1/crm/book',{client_ids:[linked],resource_ids:[resource],service_id:service,start:Date.now()+86400000,total:500});
+ await f.O('/v1/crm/users/add',{name:'Restricted',email:'restricted@example.test',password:'restricted-password-123',role:'admin',perms:all});
+ const member=await f.login('restricted@example.test','restricted-password-123');
+ const route='/v1/crm/snapshot'+f.q+'&window=1',before=(await f.get(route,member)).value;
+ assert.ok(before.clients.some(c=>c.id===privateClient));assert.equal(before.services[0].price,50000);
+ const id=(await f.get('/v1/crm/users'+f.q,f.owner)).value.find(u=>u.email==='restricted@example.test').id;
+ const can=Object.fromEntries(Permissions.KEYS.map(k=>[k,false]));
+ await f.O('/v1/crm/users/update',{id,role:'admin',stage:'active',perms:can});
+ const after=(await f.get(route+'&revision='+encodeURIComponent(before.revision)+'&from='+before.loaded_from,member)).value;
+ assert.ok(!after.unchanged,'a changed permission invalidates a cached revision');
+ assert.notEqual(after.revision,before.revision);
+ assert.deepEqual(after.clients,[{id:linked,name:'Linked'}]);
+ assert.ok(!JSON.stringify(after).includes('PRIVATE'));
+ assert.equal(after.appointments[0].phone,undefined);
+ for(const key of ['price','total','cost','paid','deposit'])assert.equal(after.appointments[0][key],0,key);
+ assert.equal(after.services[0].price,0);assert.deepEqual(after.payments,[]);
+ const range=await f.as(member)('/v1/crm/range',{from:Date.now()-86400000,to:Date.now()+3*86400000});
+ assert.equal(range.status,200);assert.equal(range.value.value.appointments[0].price,0);assert.equal(range.value.value.appointments[0].phone,undefined);
+ const unchanged=(await f.get(route+'&revision='+encodeURIComponent(after.revision)+'&from='+after.loaded_from,member)).value;
+ assert.equal(unchanged.unchanged,true);
+ const owner=(await f.get(route,f.owner)).value;
+ assert.equal(owner.services[0].price,50000);assert.equal(owner.clients.find(c=>c.id===privateClient).notes,'PRIVATE UNBOOKED NOTES','filtering never changes owner data');
+ await f.O('/v1/crm/users/update',{id,role:'admin',stage:'active',perms:all});
+ const restored=(await f.get(route+'&revision='+encodeURIComponent(after.revision)+'&from='+after.loaded_from,member)).value;
+ assert.ok(!restored.unchanged);assert.equal(restored.services[0].price,50000);
+});

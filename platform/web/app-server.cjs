@@ -35,10 +35,12 @@ function csv(exported){
  const lines=['entity,id,data'];for(const[table,rows]of Object.entries(exported.tables))for(const row of rows)lines.push([table,row.id||row.key||row.appointment_id,row].map(cell).join(','));
  return Buffer.from('﻿'+lines.join('\r\n'));
 }
-function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__dirname,'app')}={}){
+function createAppServer({apiUrl,origin,publicApi,registrationConversion=process.env.CH_GOOGLE_ADS_REGISTRATION_SEND_TO,publicDirectory=path.join(__dirname,'app')}={}){
  const api=new URL(apiUrl||process.env.CH_API_URL||'http://127.0.0.1:4545');if(!['http:','https:'].includes(api.protocol)||api.pathname!=='/'||api.search||api.username)throw Error('CH_API_URL must be an origin');
  const external=new URL(origin||process.env.CH_WEB_APP_ORIGIN||'http://127.0.0.1:4549');if(external.pathname!=='/'||external.search||external.username||!(external.protocol==='https:'||['127.0.0.1','localhost'].includes(external.hostname)))throw Error('CH_WEB_APP_ORIGIN requires HTTPS or local loopback');
  const apiPublic=(publicApi||process.env.CH_PUBLIC_API_URL||api.origin).replace(/\/$/,''),secure=external.protocol==='https:';
+ const ads=registrationConversion?{registrationSendTo:registrationConversion}:null;
+ if(ads&&!/^AW-\d+\/[A-Za-z0-9_-]+$/.test(ads.registrationSendTo))throw Error('CH_GOOGLE_ADS_REGISTRATION_SEND_TO must be AW-ID/conversion-label');
  // Static files are read once: the container image never changes them.
  const files=new Map();
  const add=(name,full)=>{const type=TYPES[name.split('.').pop()];if(!type)return;const body=fs.readFileSync(full);files.set(name,{body,type,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'});};
@@ -129,7 +131,8 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
  const server=http.createServer(async(req,res)=>{
   const reply=(status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
   res.setHeader('X-Robots-Tag','noindex, nofollow');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Frame-Options','DENY');
-  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+  const google=ads?' https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://www.google.com.ua':'';
+  res.setHeader('Content-Security-Policy',`default-src 'self'; script-src 'self'${google}; style-src 'self'; img-src 'self' data: blob:${google}; font-src 'self'; connect-src 'self'${google}; frame-src ${ads?'https://td.doubleclick.net https://bid.g.doubleclick.net':"'none'"}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`);
   try{
    const url=new URL(req.url,external);
    if(req.method==='GET'&&url.pathname==='/healthz')return reply(200,{status:'ok'});
@@ -138,7 +141,7 @@ function createAppServer({apiUrl,origin,publicApi,publicDirectory=path.join(__di
     if(req.method!=='POST'||req.headers.origin!==external.origin)problem(403,'Invalid origin');
     if(!String(req.headers['content-type']||'').startsWith('application/json'))problem(415,'JSON required');
     // Whether the public offer is published decides what registration asks people to accept.
-    if(url.pathname==='/web/info'){let offer=true,contract='site-offer',registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok){const j=await r.json();offer=j?.offer?.version!=='off';contract=j?.offer?.kind||contract;}}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,contract,registration});}
+    if(url.pathname==='/web/info'){let offer=true,contract='site-offer',registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok){const j=await r.json();offer=j?.offer?.version!=='off';contract=j?.offer?.kind||contract;}}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,contract,registration,ads});}
     if(url.pathname==='/web/call'){const {channel,args=[]}=await json(req,4*1024*1024);return reply(200,{value:(await call(req,res,channel,args))??null});}
     if(url.pathname==='/web/export'){
      const {format,password}=await json(req,4096),s=session(req);if(!['json','csv','orbit'].includes(format))problem(400,'Unknown format');

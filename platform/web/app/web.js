@@ -15,6 +15,7 @@
     .then((r) => r.json())
     .then((value) => {
       info = value;
+      window.OrbitAds?.configure(value.ads);
       if (value.registration === false)
         for (const b of document.querySelectorAll('[data-action="register"] span'))
           b.textContent = OrbitI18n.t("registrationClosedButton");

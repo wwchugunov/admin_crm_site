@@ -1049,6 +1049,7 @@ function registrationModal() {
               ),
             async (v) => {
               await window.orbit.call("account:register:confirm", v.code);
+              try { window.OrbitAds?.registrationComplete(); } catch {}
               team = [];
               selectedLogo = undefined;
               if (!localStorage.getItem("biz.welcome.seen"))

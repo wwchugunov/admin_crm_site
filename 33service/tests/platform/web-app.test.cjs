@@ -77,3 +77,16 @@ test('Web app: malformed arguments are refused with a clear 400, never a server 
  for(const args of [[],[null],[{}],['x'],[{id:{a:1},role:'staff',stage:'active'}]])await assert.rejects(owner.call('account:user:update',...args),e=>e.status===400||e.status===403,JSON.stringify(args));
  assert.ok((await owner.call('snapshot')).revision,'the session still works');
 });
+test('Registration Ads target is explicit and controls CSP without an overriding HTML policy',async t=>{
+ const f=await fixture(t),target='AW-123/confirmed_registration';
+ const probe=require('node:http').createServer(),port=await listen(probe);await new Promise(r=>probe.close(r));const origin='http://127.0.0.1:'+port;
+ const app=createAppServer({apiUrl:f.origin,origin,registrationConversion:target});
+ await new Promise(r=>app.listen(port,'127.0.0.1',r));t.after(()=>app.close());
+ const home=await fetch('http://127.0.0.1:'+port+'/'),html=await home.text();
+ assert.match(home.headers.get('content-security-policy'),/script-src 'self' https:\/\/www.googletagmanager.com/);
+ assert.doesNotMatch(html,/http-equiv="Content-Security-Policy"/);assert.match(html,/src="ads.js"/);
+ const info=await fetch('http://127.0.0.1:'+port+'/web/info',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}'});
+ assert.equal(info.status,200);assert.equal((await info.json()).ads.registrationSendTo,target);
+ assert.throws(()=>createAppServer({registrationConversion:'https://evil.test'}),/CH_GOOGLE_ADS_REGISTRATION_SEND_TO/);
+ const plain=await f.browser().send('/');assert.doesNotMatch(plain.headers.get('content-security-policy'),/googletagmanager/);
+});

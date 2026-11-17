@@ -238,6 +238,10 @@ async function refresh({ preserveView = false } = {}) {
       : undefined;
   const next = await window.orbit.call("snapshot", known);
   window.OrbitWeb.signedIn();
+  if (data && (data.role !== next.role || JSON.stringify(data.perms) !== JSON.stringify(next.perms))) {
+    older = emptyOlder();
+    if ($("#modal").open) closeModal();
+  }
   if (next.unchanged && windowData && data)
     data = { ...data, ...next, unchanged: undefined };
   else {

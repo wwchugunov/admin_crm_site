@@ -65,7 +65,7 @@ class Accounts {
     if(route==='/v1/auth/me'&&req.method==='GET'){const{user}=this.session(req);reply(200,{user:{id:user.id,name:user.name,email:user.email},businesses:this.memberships(user.id)});return true;}
     if(route.startsWith('/v1/crm/')){
       const viewOnly=['/v1/crm/snapshot','/v1/crm/book','/v1/crm/client','/v1/crm/status','/v1/crm/reschedule','/v1/crm/waitlist','/v1/crm/waitlist/remove'].includes(route),needs=Permissions.ROUTE_PERMISSION[route],ctx=this.tenant(req,url,viewOnly||needs?null:['owner','admin'],req.method==='GET'&&['/v1/crm/snapshot','/v1/crm/export'].includes(route)),{store,vault,telegram}=ctx.runtime;if(needs&&!ctx.business.can[needs])this.fail(403,OrbitI18n.t('m106'));const hideMoney=!ctx.business.can.money,plan=this.plan(ctx.user),feature=Plans.ROUTE_FEATURE[route];if(feature&&!plan.features[feature]){const p=Plans.cheapest(feature);this.fail(403,`Доступно в тарифі «${p.uk}» / Available on the ${p.en} plan`);}
-      if(req.method==='GET'&&route==='/v1/crm/snapshot'){const known=url.searchParams.get('revision');let snapshot=store.snapshot(url.searchParams.get('window')!=='1'?{all:true}:known?{revision:known,from:Number(url.searchParams.get('from'))}:{});if(hideMoney&&!snapshot.unchanged){snapshot=structuredClone(snapshot);for(const c of snapshot.clients){c.stats.paid=0;c.stats.due=0;}snapshot.payments=[];snapshot.payment_links=[];for(const a of snapshot.appointments){a.cost=0;a.paid=0;}this.hideMoney(snapshot);}reply(200,{...snapshot,business_id:ctx.business.id,role:ctx.business.role,perms:ctx.business.can,plan,account:{id:ctx.user.id,name:ctx.user.name},subscription:(a=>a?{stage:a.stage,expires:a.expires>=253402300799000?null:a.expires}:null)(this.account(ctx.user)),businesses:this.memberships(ctx.user.id),integrations:{telegram:this.botWorkers?this.botWorkers.status(ctx.business):{connected:vault.has('telegram'),username:store.get('bot_username'),state:telegram.state},monobank:this.monobank?this.monobank.status(ctx.runtime):{connected:false},lapsed:this.lapsed?this.lapsed.settings(store):null,fiscal:this.fiscal?this.fiscal.status(ctx.runtime):{connected:false},liqpay:this.liqpay?this.liqpay.status(ctx.runtime):{connected:false},booking:this.bookingPage?this.bookingPage.status(ctx.business,ctx.runtime,this.origin(req)):null,notifications:this.notify&&ctx.business.can.integrations?this.notify.status(ctx.business,ctx.user):null,website:{enabled:Boolean(store.get('website_enabled')),path:`/v1/website/${ctx.business.id}`}}});return true;}
+      if(req.method==='GET'&&route==='/v1/crm/snapshot'){const scope='.'+hash(JSON.stringify([ctx.business.role,ctx.business.can])).slice(0,16),requested=url.searchParams.get('revision'),known=requested?.endsWith(scope)?requested.slice(0,-scope.length):null;let snapshot=store.snapshot(url.searchParams.get('window')!=='1'?{all:true}:known?{revision:known,from:Number(url.searchParams.get('from'))}:{});snapshot=this.filterSnapshot(snapshot,ctx.business.can);snapshot.revision+=scope;reply(200,{...snapshot,business_id:ctx.business.id,role:ctx.business.role,perms:ctx.business.can,plan,account:{id:ctx.user.id,name:ctx.user.name},subscription:(a=>a?{stage:a.stage,expires:a.expires>=253402300799000?null:a.expires}:null)(this.account(ctx.user)),businesses:this.memberships(ctx.user.id),integrations:{telegram:this.botWorkers?this.botWorkers.status(ctx.business):{connected:vault.has('telegram'),username:store.get('bot_username'),state:telegram.state},monobank:this.monobank?this.monobank.status(ctx.runtime):{connected:false},lapsed:this.lapsed?this.lapsed.settings(store):null,fiscal:this.fiscal?this.fiscal.status(ctx.runtime):{connected:false},liqpay:this.liqpay?this.liqpay.status(ctx.runtime):{connected:false},booking:this.bookingPage?this.bookingPage.status(ctx.business,ctx.runtime,this.origin(req)):null,notifications:this.notify&&ctx.business.can.integrations?this.notify.status(ctx.business,ctx.user):null,website:{enabled:Boolean(store.get('website_enabled')),path:`/v1/website/${ctx.business.id}`}}});return true;}
       if(req.method==='GET'&&route==='/v1/crm/export'){reply(200,store.export());return true;}
       if(req.method==='GET'&&route==='/v1/crm/users'){reply(200,this.db.prepare('SELECT u.id,u.name,u.email,u.stage,m.role,m.perms FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.business_id=?').all(ctx.business.id).map(u=>({...u,perms:Permissions.effective(u.role,u.perms),custom:Boolean(u.perms)})));return true;}
       if(req.method!=='POST')this.fail(404,OrbitI18n.t('m652'));const data=await this.body(req);let value;
@@ -97,7 +97,7 @@ class Accounts {
       else if(route==='/v1/crm/liqpay/disconnect'){if(ctx.business.role!=='owner')this.fail(403,OrbitI18n.t('m656'));this.liqpay.disconnect(ctx.runtime);}
       else if(route==='/v1/crm/liqpay/invoice')value=await this.liqpay.invoice(ctx.business,ctx.runtime,data);
       // Older months and a client's full history, loaded only when the owner opens them.
-      else if(route==='/v1/crm/range'){value=store.range(data.from,data.to);if(hideMoney){value.payments=[];for(const a of value.appointments){a.cost=0;a.paid=0;}this.hideMoney(value);}}
+      else if(route==='/v1/crm/range'){value=this.filterSnapshot(store.range(data.from,data.to),ctx.business.can);}
       // Expenses, stock, certificates, passes and pay: owners and administrators only.
       else if(FINANCE[route]){value=FINANCE[route](store,data);if(route==='/v1/crm/certificate')this.fiscal?.queueSale(ctx.business,ctx.runtime,'certificate',value.id);if(route==='/v1/crm/pass')this.fiscal?.queueSale(ctx.business,ctx.runtime,'pass',value);}
       // Fiscal receipts: only the owner connects or disconnects the provider and accepts responsibility.
@@ -105,7 +105,7 @@ class Accounts {
       else if(route==='/v1/crm/fiscal/disconnect'){if(ctx.business.role!=='owner')this.fail(403,OrbitI18n.t('m656'));await this.fiscal.disconnect(ctx.runtime);}
       else if(route==='/v1/crm/fiscal/settings'){if(ctx.business.role!=='owner')this.fail(403,OrbitI18n.t('m656'));value=this.fiscal.configure(ctx.runtime,data);}
       else if(route==='/v1/crm/fiscal/retry')value=this.fiscal.retry(ctx.business,ctx.runtime,data);
-      else if(route==='/v1/crm/client/history'){value=store.clientHistory(data.id);if(hideMoney)for(const a of value){a.cost=0;a.paid=0;}}
+      else if(route==='/v1/crm/client/history'){value=store.clientHistory(data.id);if(hideMoney)for(const a of value)this.hideVisitMoney(a);}
       // Team notifications: each owner/administrator links their own Telegram and picks what to receive.
       else if(route==='/v1/crm/notify/link')value=this.notify.link(ctx.business,ctx.user);
       else if(route==='/v1/crm/notify/unlink')value=this.notify.unlink(ctx.business,ctx.user);
@@ -131,8 +131,26 @@ class Accounts {
     if(await this.websiteBooking.handle(req,url,reply))return true;
     return false;
   }
-  // Staff see the stock but not money: no expenses, voucher sales, purchase prices or anyone's pay.
-  hideMoney(v){v.fiscal_receipts=[];v.expenses=[];v.certificates=[];v.passes=[];for(const m of v.materials||[])m.unit_cost=0;for(const r of v.resources||[]){r.pay_percent=0;r.pay_daily=0;}for(const s of v.services||[])s.pay_percent=null;}
+  // Always clone: the store caches snapshots shared by owners and employees.
+  filterSnapshot(value,can){
+    const v=structuredClone(value);
+    if(v.unchanged)return v;
+    if(!can.clients){
+      const linked=new Set([...(v.appointments||[]).flatMap(a=>[a.client_id,...(a.clients||[]).map(c=>c.id)]),...(v.waitlist||[]).map(w=>w.client_id)]);
+      if(v.clients)v.clients=v.clients.filter(c=>linked.has(c.id)).map(c=>({id:c.id,name:c.name}));
+      for(const a of [...(v.appointments||[]),...(v.waitlist||[])]){delete a.phone;delete a.chat_id;}
+    }
+    if(!can.money){
+      for(const c of v.clients||[]){if(c.stats){c.stats.paid=0;c.stats.due=0;}if("discount" in c)c.discount=0;}
+      v.payments=[];v.payment_links=[];v.fiscal_receipts=[];v.certificates=[];v.passes=[];
+      for(const a of v.appointments||[])this.hideVisitMoney(a);
+      for(const m of v.materials||[])m.unit_cost=0;
+      for(const s of v.services||[]){s.price=0;s.deposit=0;s.pay_percent=null;}
+    }
+    if(!can.finance||!can.money){v.expenses=[];for(const r of v.resources||[]){r.pay_percent=0;r.pay_daily=0;}}
+    return v;
+  }
+  hideVisitMoney(a){for(const key of ['price','total','cost','paid','deposit'])if(key in a)a[key]=0;}
   cleanup(){const now=Date.now();this.db.prepare('DELETE FROM login_challenges WHERE expires<?').run(now);this.db.prepare('DELETE FROM sessions WHERE expires<?').run(now);for(const[k,v]of this.failures)if(now-v.at>900000)this.failures.delete(k);}
   close(){this.businesses.close();}
 }
