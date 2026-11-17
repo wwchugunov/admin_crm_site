@@ -160,7 +160,11 @@
       if (document.querySelector("#modal")?.open) closeModal();
       // The website's "Try it free" lands on registration, "Sign in" on the sign-in form.
       const start = new URLSearchParams(location.search).get("start");
-      if (start) history.replaceState(null, "", location.pathname);
+      if (start) {
+        const landing = new URL(location.href);
+        landing.searchParams.delete("start");
+        history.replaceState(null, "", landing.pathname + landing.search + landing.hash);
+      }
       setTimeout(
         () => (start === "register" ? registrationModal() : loginModal()),
         0,

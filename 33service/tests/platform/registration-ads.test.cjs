@@ -10,3 +10,10 @@ test('Registration conversion is opt-in, contains no CRM data and fires once',()
  assert.deepEqual(JSON.parse(JSON.stringify(window.dataLayer.find(x=>x[0]==='set'&&x[1]==='linker')[2].domains)),['lomviko.com','app.lomviko.com']);
 });
 test('Malformed conversion targets do not load third party code',()=>{const {window,scripts}=browser();for(const registrationSendTo of ['https://evil.test','AW-123','AW-123/ok?email=private'])window.OrbitAds.configure({registrationSendTo});assert.equal(scripts.length,0);});
+test('Opening registration preserves Google attribution parameters while consuming start',()=>{
+ const code=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/web.js'),'utf8');
+ const window={},location=new URL('https://app.lomviko.com/?start=register&_gl=linker-value&gclid=click-value#section');let replacement,opened;
+ const context={window,location,URL,URLSearchParams,fetch:async()=>({json:async()=>({registration:true})}),history:{replaceState:(a,b,url)=>replacement=url},document:{body:{classList:{contains:()=>false,add(){}}},querySelector:()=>({open:false}),querySelectorAll:()=>[]},setTimeout:fn=>fn(),registrationModal:()=>opened='register',loginModal:()=>opened='login'};
+ vm.runInNewContext(code,context);window.OrbitWeb.signedOut();
+ const remaining=new URL(replacement,location.origin);assert.equal(remaining.searchParams.has('start'),false);assert.equal(remaining.searchParams.get('_gl'),'linker-value');assert.equal(remaining.searchParams.get('gclid'),'click-value');assert.equal(remaining.hash,'#section');assert.equal(opened,'register');
+});

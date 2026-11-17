@@ -2,6 +2,8 @@ const{test}=require('node:test'),assert=require('node:assert/strict'),fs=require
 const{setup,ProductStore,createProductServer}=require('../../../platform/api/server.cjs'),{totp}=require('../../../platform/api/admin-auth.cjs'),{signRequest}=require('../../../platform/core/request-proof.cjs');
 
 async function fixture(t){
+ // Keep the deliberately previous-window OTP valid when a test crosses a 30-second boundary.
+ t.mock.timers.enable({apis:['Date'],now:Date.now()});
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'orbit-admin-members-')),keys=setup(directory),store=new ProductStore(path.join(directory,'owner.sqlite')),server=createProductServer({store,...keys});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
  t.after(async()=>{await server.shutdown();store.db.close();fs.rmSync(directory,{recursive:true,force:true});});
