@@ -9,7 +9,7 @@ window.OrbitAds = (() => {
       target = config.registrationSendTo;
       const tag = target.split("/")[0];
       window.dataLayer = window.dataLayer || [];
-      window.gtag = (...args) => window.dataLayer.push(args);
+      window.gtag = function () { window.dataLayer.push(arguments); };
       window.gtag("set", "linker", { domains: ["lomviko.com", "app.lomviko.com"] });
       window.gtag("js", new Date());
       window.gtag("config", tag);
