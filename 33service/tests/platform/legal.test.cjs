@@ -76,3 +76,18 @@ test("While sales are off the terms of use are the contract; publishing the offe
   assert.equal(legal.current().offer.kind, "site-offer");
   assert.equal(legal.status(user).required, true, "sales on: the offer needs consent");
 });
+
+test("The offer and the terms of use are listed separately and follow the admin switch", (t) => {
+  const db = new DatabaseSync(":memory:");
+  t.after(() => db.close());
+  db.exec("CREATE TABLE documents(id TEXT,kind TEXT,language TEXT,sha256 TEXT,uploaded_at INTEGER,active INTEGER,extension TEXT NOT NULL DEFAULT 'pdf');CREATE TABLE document_switches(kind TEXT PRIMARY KEY,disabled INTEGER NOT NULL)");
+  for (const [id, kind] of [["o", "site-offer"], ["t", "site-terms"], ["p", "app-privacy"]])
+    db.prepare("INSERT INTO documents(id,kind,language,sha256,uploaded_at,active) VALUES(?,?,'uk',?,1,1)").run(id, kind, id.repeat(16));
+  db.prepare("INSERT INTO document_switches VALUES('site-offer',1)").run();
+  const legal = new Legal({ store: { db }, fail });
+  assert.deepEqual(legal.current().documents, { offer: false, terms: true }, "offer switched off: no offer link");
+  assert.equal(legal.current().offer.kind, "site-terms");
+  db.prepare("UPDATE document_switches SET disabled=0").run();
+  assert.deepEqual(legal.current().documents, { offer: true, terms: true }, "offer switched on: both links");
+  assert.equal(legal.current().offer.kind, "site-offer", "the offer link opens the offer, not the terms");
+});

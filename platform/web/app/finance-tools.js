@@ -162,7 +162,7 @@ function financeTabs() {
     ["vouchers", "finTabVouchers"],
   ]
     .map(([tab, key]) => `<button class="secondary ${financeTab === tab ? "selected" : ""}" aria-pressed="${financeTab === tab}" data-action="finance-tab" data-tab="${tab}">${ft(key)}</button>`)
-    .join("")}</div>`;
+    .join("")}<button class="secondary report-button" data-action="report-xlsx">⬇ ${OrbitI18n.t("reportButton")}</button></div>`;
 }
 function financeToolView() {
   const toolbar = `<div class="finance-toolbar"><input id="finance-month" type="month" value="${financeMonth}" aria-label="${OrbitI18n.t("m125")}"><span class="hint">${escape(data.currency)} · ${escape(data.timezone)}</span></div>`;

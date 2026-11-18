@@ -26,7 +26,7 @@
     money: ["payment", "monobank/invoice", "monobank/cancel", "liqpay/invoice", "liqpay/cancel", "certificate", "certificate/void", "pass", "pass/void", "fiscal/retry", "visit/update"],
     clients: ["client/update", "client/delete", "client/history", "client/import", "lapsed/days", "lapsed/invite", "lapsed/invite-all", "lapsed/settings", "reviews/save"],
     catalog: ["service", "service/update", "service/delete", "resource", "resource/update", "resource/delete", "absence", "absence/delete", "material", "material/update", "material/delete", "material/move"],
-    finance: ["expense", "expense/delete", "payroll"],
+    finance: ["expense", "expense/delete", "payroll", "report"],
     integrations: ["telegram/check", "telegram/connect", "telegram/disconnect", "telegram/external", "telegram/link", "monobank/connect", "monobank/disconnect", "liqpay/connect", "liqpay/disconnect", "fiscal/connect", "fiscal/disconnect", "fiscal/settings", "booking/save", "notify/save", "notify/test", "notify/link", "notify/unlink"],
     settings: ["profile", "export"],
   };

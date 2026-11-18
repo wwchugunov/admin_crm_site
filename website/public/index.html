@@ -127,7 +127,6 @@
             <span><strong data-m="toastReminder">Нагадування надіслано</strong><small data-m="toastReminderDetail">Ігор · завтра о 10:00</small></span>
           </div>
         </div>
-        <p class="board-note" data-m="boardNote">Демонстрація сценарію · вигадані дані</p>
       </div>
     </div>
   </section>
@@ -156,22 +155,14 @@
   <section id="launch" class="wrap section launch">
     <header class="section-head">
       <h2 data-h="launchTitle">Перший онлайн-запис <em>за три кроки.</em></h2>
-      <p class="section-intro" data-t="launchIntro">Без дзвінків менеджера й без встановлення. Більшість власників приймають перший запис у день реєстрації.</p>
+      <p class="section-intro" data-t="launchIntro">Після реєстрації — три кроки до першого запису. Без дзвінків менеджера й без встановлення.</p>
     </header>
-    <div class="launch-grid">
-      <ol class="launch-steps">
-        <li class="launch-step" data-step="1"><span class="launch-num">1</span><h3 data-t="stepOneTitle">Відкрийте LOMVIKO</h3><p data-t="stepOne">Натисніть «Спробувати безкоштовно» — LOMVIKO відкриється в браузері, нічого не треба встановлювати.</p></li>
-        <li class="launch-step" data-step="2"><span class="launch-num">2</span><h3 data-t="stepTwoTitle">Створіть компанію</h3><p data-t="stepTwo">Вкажіть назву бізнесу, email і пароль, підтвердьте email кодом із листа.</p></li>
-        <li class="launch-step" data-step="3"><span class="launch-num">3</span><h3 data-t="stepThreeTitle">Поділіться посиланням</h3><p data-t="stepThree">Додайте послуги й команду, поділіться посиланням на запис — клієнти записуються самі.</p></li>
-      </ol>
-      <div class="launch-stage" aria-hidden="true">
-        <div class="launch-phone" id="launch-phone" data-active="1">
-          <div class="ls ls-1"><span class="ls-logo">L</span><strong data-m="scrWelcome">Вітаємо в LOMVIKO</strong><span class="ls-note" data-m="scrBrowser">Працює в браузері на комп’ютері й телефоні</span><span class="ls-btn" data-m="scrStart">Спробувати безкоштовно</span></div>
-          <div class="ls ls-2"><strong data-m="scrCompany">Нова компанія</strong><span class="ls-field">Studio Nova</span><span class="ls-field" data-m="scrEmail">olena@studio.ua</span><span class="ls-note" data-m="scrCode">Код із листа</span><span class="ls-code"><i>4</i><i>8</i><i>1</i><i>5</i></span></div>
-          <div class="ls ls-3"><strong data-m="scrShare">Ваше посилання</strong><span class="ls-link">lomviko.com/b/studio</span><span class="ls-qr"></span><span class="ls-toast" data-m="toastBooking">Новий запис через Telegram</span></div>
-        </div>
-      </div>
-    </div>
+    <ol class="launch-steps">
+      <li class="launch-step reveal"><div class="launch-copy"><span class="launch-num">1</span><h3 data-t="stepOneTitle">Створіть послуги</h3><p data-t="stepOne">Додайте назву, вартість і тривалість послуг. Позначте, хто з команди їх виконує.</p></div><figure class="launch-shot"><img src="/assets/launch-services.png" width="600" height="530" loading="lazy" decoding="async" alt="Форма нової послуги в LOMVIKO: назва, тривалість, ціна, тип послуги й спеціалісти" data-t-alt="stepOneAlt"></figure></li>
+      <li class="launch-step reveal"><div class="launch-copy"><span class="launch-num">2</span><h3 data-t="stepTwoTitle">Налаштуйте команду</h3><p data-t="stepTwo">Додайте спеціалістів, визначте їхні послуги та встановіть робочий графік: дні, години й перерви.</p></div><figure class="launch-shot"><img src="/assets/launch-team.png" width="600" height="568" loading="lazy" decoding="async" alt="Графік спеціаліста в LOMVIKO: робочі дні, години й перерва" data-t-alt="stepTwoAlt"></figure></li>
+      <li class="launch-step reveal"><div class="launch-copy"><span class="launch-num">3</span><h3 data-t="stepThreeTitle">Приймайте онлайн-записи</h3><p data-t="stepThree">Поділіться посиланням — клієнти самі обирають послугу, спеціаліста й вільний час. Запис одразу з’являється у вашому розкладі.</p></div><figure class="launch-shot launch-shot-phone"><img src="/assets/launch-booking.png" width="390" height="675" loading="lazy" decoding="async" alt="Сторінка онлайн-запису: вибір послуги, спеціаліста, дати й часу" data-t-alt="stepThreeAlt"></figure></li>
+    </ol>
+    <p class="launch-note" data-t="launchNote">Справжні екрани LOMVIKO з демонстраційною компанією.</p>
   </section>
 
   <section id="page" class="wrap section">
@@ -183,8 +174,10 @@
         <p class="style-label" data-t="pageStylesLabel"></p>
         <div class="style-switch" role="group" id="page-styles"></div>
       </div>
-      <div class="phone-stage reveal">
-        <div class="phone bp style-warm" id="bp" aria-hidden="true"></div>
+      <div class="phone-stage bp-stage reveal">
+        <div class="phone bp style-warm" id="bp"></div>
+        <div class="bp-dots" id="bp-dots" role="group"></div>
+        <p class="bp-swipe" id="bp-swipe"></p>
       </div>
     </div>
   </section>

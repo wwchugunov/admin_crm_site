@@ -70,8 +70,8 @@
       input.click();
     });
   }
-  async function download(format, password) {
-    const response = await post("/web/export", { format, password });
+  async function download(format, password, path = "/web/export", body = { format, password }) {
+    const response = await post(path, body);
     if (!response.ok) {
       const result = await response.json().catch(() => ({}));
       if (response.status === 401 && result.signedOut) {
@@ -121,7 +121,8 @@
       open(
         `${info.api}/public/documents/app-privacy/${language === "en" ? "en" : "uk"}`,
       ),
-    "legal:offer": () => open(`${info.api}/public/documents/${info.contract === "site-terms" ? "site-terms" : "site-offer"}/${OrbitI18n.language === "en" ? "en" : "uk"}`),
+    // The button names the document it opens; without one, the contract in force decides.
+    "legal:offer": (kind) => open(`${info.api}/public/documents/${["site-offer", "site-terms"].includes(kind) ? kind : info.contract === "site-terms" ? "site-terms" : "site-offer"}/${OrbitI18n.language === "en" ? "en" : "uk"}`),
     "notify:link": async () => {
       // Opened before the request so the browser does not treat it as a pop-up.
       const tab = window.open("about:blank", "_blank");
@@ -136,6 +137,7 @@
       }
     },
     export: (format, password) => download(format, password),
+    report: (from, to) => download("xlsx", undefined, "/web/report", { from, to }),
   };
   window.orbit = {
     web: true,

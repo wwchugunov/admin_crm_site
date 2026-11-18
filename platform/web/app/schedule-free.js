@@ -11,15 +11,18 @@ function freeWindows(rows) {
   if (selectedDate < today || data.role === "staff" && !data.resources.length) return [];
   const weekday = ((new Date(`${selectedDate}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
   if (Array.isArray(data.work_days) && data.work_days.length && !data.work_days.map(Number).includes(weekday)) return [];
-  const from = timestamp(`${selectedDate}T${data.work_start || "09:00"}`),
-    to = timestamp(`${selectedDate}T${data.work_end || "20:00"}`),
-    now = Date.now(),
+  const now = Date.now(),
     out = [];
   for (const r of data.resources) {
-    if (!OrbitStaff.works(r, selectedDate, data.absences || [])) continue;
-    const busy = rows
+    if (r.kind === "room" || !OrbitStaff.works(r, selectedDate, data.absences || [])) continue;
+    // Own hours and break, else the company's opening hours.
+    const own = OrbitStaff.dayHours(r, { start: data.work_start || "09:00", end: data.work_end || "20:00" }),
+      from = timestamp(`${selectedDate}T${own.start}`),
+      to = timestamp(`${selectedDate}T${own.end}`),
+      breaks = own.breaks.map(([x, y]) => [timestamp(`${selectedDate}T${x}`), timestamp(`${selectedDate}T${y}`)]);
+    const busy = [...breaks, ...rows
       .filter((a) => !["cancelled", "no_show"].includes(a.status) && (a.resources?.length ? a.resources.some((x) => x.id === r.id) : a.resource_id === r.id))
-      .map((a) => [a.start, a.end])
+      .map((a) => [a.start, a.end])]
       .sort((x, y) => x[0] - y[0]);
     let cursor = Math.max(from, selectedDate === today ? Math.ceil(now / 900000) * 900000 : from);
     for (const [s, e] of [...busy, [to, to]]) {

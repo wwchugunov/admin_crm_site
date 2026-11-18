@@ -5,6 +5,7 @@ const {Businesses}=require('./businesses.cjs');
 const {WebsiteBooking}=require('./website-booking.cjs');
 const Permissions=require('../shared/permissions.js');
 const Plans=require('../shared/plans.js');
+const {companyReport}=require('../core/report.cjs');
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
 function passwordHash(password){if(typeof password!=='string'||password.length<12||password.length>128)throw Object.assign(Error(OrbitI18n.t('m639')),{status:400});const salt=crypto.randomBytes(16);return `${salt.toString('base64url')}.${crypto.scryptSync(password,salt,32).toString('base64url')}`;}
 function passwordValid(password,stored){if(typeof password!=='string'||password.length>128||!stored)return false;try{const[salt,value]=stored.split('.');const expected=Buffer.from(value,'base64url'),actual=crypto.scryptSync(password,Buffer.from(salt,'base64url'),32);return expected.length===actual.length&&crypto.timingSafeEqual(actual,expected);}catch{return false;}}
@@ -15,6 +16,8 @@ const FINANCE={
  '/v1/crm/pass':(store,d)=>store.sellPass(d),'/v1/crm/pass/void':(store,d)=>store.voidPass(d),
  '/v1/crm/client/import':(store,d)=>store.importClients(d.rows),
  '/v1/crm/reviews/save':(store,d)=>store.setReviews(d),
+ // The company report for Excel: totals, each specialist and every visit of a period.
+ '/v1/crm/report':(store,d)=>companyReport(store,d.from,d.to),
  '/v1/crm/payroll':(store,d)=>d.month?store.payroll(...store.monthRange(d.month)):store.payroll(d.from,d.to),
 };
 class Accounts {

@@ -31,13 +31,13 @@ class WebsiteBooking {
     const date = query.get('date');
     if ((serviceId || date) && (!services.some(s => s.id === serviceId) || !/^\d{4}-\d{2}-\d{2}$/.test(date || '')))
       a.fail(400, 'Оберіть послугу і дату / Provide a public service_id and date in YYYY-MM-DD format');
-    if (resourceId !== 'any' && !snapshot.resources.some(r => r.id === resourceId))
+    if (resourceId !== 'any' && !store.specialists().some(r => r.id === resourceId))
       a.fail(400, 'Такого спеціаліста немає / Unknown resource_id');
     const slots = serviceId && date ? store.slots(serviceId, resourceId, date) : null;
     return {
       business: store.get('business'), currency: store.get('currency'), timezone: store.get('timezone'),
       services: services.map(({id, name, duration, price, capacity, required_resources}) => ({id, name, duration, price, capacity, required_resources})),
-      resources: snapshot.resources.filter(r => !serviceId || store.canDo(serviceId, r.id)).map(({id, name}) => ({id, name})),
+      resources: store.specialists(serviceId).map(({id, name}) => ({id, name})),
       // A full day also shows the next free times, so the client does not have to search day by day.
       ...(slots ? { slots, ...(slots.length ? {} : { nearest: store.nearestSlots(serviceId, resourceId, date) }) } : {})
     };

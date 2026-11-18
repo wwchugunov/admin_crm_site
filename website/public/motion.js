@@ -15,7 +15,7 @@
   // negative depth runs ahead (close to the viewer). Only `translate` is touched, so reveal transforms keep working.
   const DEPTHS = [
     ['.hero-copy', 0.1], ['.board-stage', -0.06], ['.float-booking', -0.12], ['.float-reminder', 0.1],
-    ['.launch-phone', 0], ['.peek-frame img', -0.05], ['.deck-slide-3', 0.08], ['.deck-slide-2', 0.04],
+    ['.peek-frame img', -0.05], ['.deck-slide-3', 0.08], ['.deck-slide-2', 0.04],
     ['.plan', -0.04], ['.calc-save', -0.05], ['.final h2', 0.06],
   ];
   let layers = [];
@@ -97,14 +97,4 @@
     }
   }
 
-  // Launch story: the pinned phone shows the screen of whichever step is in the middle of the viewport.
-  const phone = document.getElementById('launch-phone'), steps = [...document.querySelectorAll('.launch-step')];
-  if (phone && steps.length) {
-    const activate = (step) => { phone.dataset.active = step.dataset.step; steps.forEach((s) => s.classList.toggle('is-active', s === step)); };
-    activate(steps[0]);
-    if ('IntersectionObserver' in window) {
-      const picker = new IntersectionObserver((entries) => { for (const entry of entries) if (entry.isIntersecting) activate(entry.target); }, { rootMargin: '-45% 0px -45% 0px' });
-      steps.forEach((s) => picker.observe(s));
-    }
-  }
 })();

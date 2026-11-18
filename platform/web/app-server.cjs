@@ -29,6 +29,7 @@ const keyFrom=seed=>crypto.createPrivateKey({key:Buffer.concat([PKCS8,seed]),for
 const userTag=email=>crypto.createHash('sha256').update(String(email||'').trim().toLowerCase()).digest('hex').slice(0,16);
 const userKey=(seed,emailOrTag)=>keyFrom(crypto.createHmac('sha256',seed).update(/^[a-f0-9]{16}$/.test(emailOrTag||'')?emailOrTag:userTag(emailOrTag)).digest());
 const publicPem=key=>crypto.createPublicKey(key).export({type:'spki',format:'pem'});
+const {reportWorkbook}=require('../core/xlsx.cjs');
 function csv(exported){
  // Every table in one CSV with an entity column; spreadsheet formulas are neutralised.
  const cell=v=>{let s=typeof v==='object'?JSON.stringify(v):String(v??'');if(/^[\s]*[=+\-@]/.test(s))s=`'${s}`;return `"${s.replaceAll('"','""')}"`;};
@@ -143,6 +144,12 @@ function createAppServer({apiUrl,origin,publicApi,registrationConversion=process
     // Whether the public offer is published decides what registration asks people to accept.
     if(url.pathname==='/web/info'){let offer=true,contract='site-offer',registration=true;try{const r=await fetch(api.origin+'/v1/legal/current',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok){const j=await r.json();offer=j?.offer?.version!=='off';contract=j?.offer?.kind||contract;}}catch{}try{const r=await fetch(api.origin+'/v1/product',{redirect:'error',signal:AbortSignal.timeout(5000)});if(r.ok)registration=(await r.json())?.registration!==false;}catch{}return reply(200,{version:VERSION,api:apiPublic,offer,contract,registration,ads});}
     if(url.pathname==='/web/call'){const {channel,args=[]}=await json(req,4*1024*1024);return reply(200,{value:(await call(req,res,channel,args))??null});}
+    // The company report as a real Excel workbook; figures come from the API, the file is built here.
+    if(url.pathname==='/web/report'){
+     const {from,to}=await json(req,4096),s=session(req),result=await crm(req,s,'report',{from:Number(from),to:Number(to)}),report=result.value??result;
+     const body=reportWorkbook(report),name=`LOMVIKO-zvit-${report.first}_${report.last}.xlsx`;
+     res.writeHead(200,{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Length':body.length,'Content-Disposition':`attachment; filename="${name}"`,'Cache-Control':'no-store'});return res.end(body);
+    }
     if(url.pathname==='/web/export'){
      const {format,password}=await json(req,4096),s=session(req);if(!['json','csv','orbit'].includes(format))problem(400,'Unknown format');
      const exported=await upstream(req,`/v1/crm/export?business_id=${encodeURIComponent(s.business)}`,undefined,s);

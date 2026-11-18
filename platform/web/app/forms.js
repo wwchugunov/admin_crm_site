@@ -176,8 +176,12 @@ function bookingSlots() {
     data.services[0];
   const date = $("#field-date")?.value || selectedDate,
     ids = checkedResources();
-  const workFrom = clockMinutes(data.work_start, 540),
-    workTo = clockMinutes(data.work_end, 1080);
+  // The chosen specialist's own hours and break when set, else the company's opening hours.
+  const person = data.resources.find((r) => ids.includes(r.id) && r.kind !== "room"),
+    own = OrbitStaff.dayHours(person, { start: data.work_start || "09:00", end: data.work_end || "18:00" }),
+    workFrom = clockMinutes(own.start, 540),
+    workTo = clockMinutes(own.end, 1080),
+    pauses = own.breaks.map(([x, y]) => [clockMinutes(x, 0), clockMinutes(y, 0)]);
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
   const workDay = (data.work_days || [1, 2, 3, 4, 5, 6, 7]).includes(weekday);
   const today = businessDate(Date.now()),
@@ -204,7 +208,7 @@ function bookingSlots() {
       busy: busy.some(
         (a) => dayMinutes(a.start) < end && (dayMinutes(a.end) || 1440) > m,
       ),
-      outside: !workDay || m < workFrom || end > workTo,
+      outside: !workDay || m < workFrom || end > workTo || pauses.some(([x, y]) => x < end && y > m),
       past: m <= now,
     });
   }
@@ -796,29 +800,72 @@ function serviceFields(s = {}) {
       `required min="0" step="0.01" value="${(s.price || 0) / 100}"`,
     ) +
     "</div>" +
-    "<div>" +
-    field(
-      OrbitI18n.t("m288"),
-      "capacity",
-      "number",
-      `required min="1" max="100" value="${s.capacity || 1}"`,
-    ) +
     "</div>" +
-    "<div>" +
-    field(
-      OrbitI18n.t("m289"),
-      "required_resources",
-      "number",
-      `required min="1" max="8" value="${s.required_resources || 1}"`,
-    ) +
-    "</div>" +
-    "</div>" +
-    (data.resources.length
-      ? `<fieldset class="chip-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")}</legend>${data.resources.map((r) => `<label class="chip"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${(s.resource_ids || []).includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</fieldset><p class="hint">${OrbitI18n.t("staffWhoHint")}</p>`
-      : "") +
+    serviceKindFields(s) +
+    servicePeopleFields(s) +
+    serviceMoreFields(s) +
     serviceExtraFields(s) +
     `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.id ? (s.web_visible ? "checked" : "") : "checked"}>${OrbitI18n.t("m291")}</label>`
   );
+}
+// Individual: one client per specialist, so free times follow free specialists and need no setting.
+// Group: one class with seats, set here.
+function serviceKindFields(s = {}) {
+  const group = (s.capacity || 1) > 1;
+  return (
+    `<fieldset class="segmented-choice" id="service-kind"><legend>${OrbitI18n.t("serviceKind")}</legend>` +
+    `<label><input type="radio" name="kind" value="individual" ${group ? "" : "checked"}><span><strong>${OrbitI18n.t("serviceKindIndividual")}</strong><small>${OrbitI18n.t("serviceKindIndividualHint")}</small></span></label>` +
+    `<label><input type="radio" name="kind" value="group" ${group ? "checked" : ""}><span><strong>${OrbitI18n.t("serviceKindGroup")}</strong><small>${OrbitI18n.t("serviceKindGroupHint")}</small></span></label>` +
+    `</fieldset>` +
+    `<div id="service-seats" ${group ? "" : "hidden"}>${field(OrbitI18n.t("serviceSeats"), "capacity", "number", `min="2" max="100" value="${group ? s.capacity : 10}" ${group ? "required" : "disabled"}`)}<p class="hint">${OrbitI18n.t("serviceSeatsHint")}</p></div>`
+  );
+}
+// "Who performs" and, when the company has them, rooms or equipment the service needs.
+function servicePeopleFields(s = {}) {
+  const chosen = s.resource_ids || [],
+    staff = data.resources.filter((r) => r.kind !== "room"),
+    rooms = data.resources.filter((r) => r.kind === "room"),
+    list = (items) =>
+      `<div class="pick-list">${items.map((r) => `<label class="pick"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${chosen.includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</div>`;
+  return (
+    (staff.length
+      ? `<fieldset class="pick-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")} <small class="pick-count" id="staff-count"></small></legend>${list(staff)}<p class="hint">${OrbitI18n.t("staffWhoHint")}</p></fieldset>`
+      : `<p class="hint">${OrbitI18n.t("serviceNoStaff")}</p>`) +
+    (rooms.length
+      ? `<fieldset class="pick-group" id="field-rooms"><legend>${OrbitI18n.t("serviceRooms")}</legend>${list(rooms)}<p class="hint">${OrbitI18n.t("serviceRoomsHint")}</p></fieldset>`
+      : "")
+  );
+}
+// Rarely changed: the pause after each visit and how many specialists one visit takes at once.
+function serviceMoreFields(s = {}) {
+  const open = (s.buffer || 0) > 0 || (s.required_resources || 1) > 1;
+  return (
+    `<details class="form-more" ${open ? "open" : ""}><summary>${OrbitI18n.t("serviceMore")}</summary>` +
+    `<div class="form-grid"><div>${field(OrbitI18n.t("serviceBuffer"), "buffer", "number", `min="0" max="120" step="5" value="${s.buffer || 0}"`)}<p class="hint">${OrbitI18n.t("serviceBufferHint")}</p></div>` +
+    `<div>${field(OrbitI18n.t("serviceTogether"), "required_resources", "number", `required min="1" max="8" value="${s.required_resources || 1}"`)}<p class="hint">${OrbitI18n.t("serviceTogetherHint")}</p></div></div>` +
+    `</details>`
+  );
+}
+// Live parts of the service form: seats only for a group, and how many people are ticked.
+function wireServiceForm() {
+  const form = $("#modal-fields");
+  if (!form?.querySelector("#service-kind")) return;
+  const sync = () => {
+    // The dialog is reused by other forms; this only runs while the service form is shown.
+    if (!form.querySelector("#service-seats")) return;
+    const group = form.querySelector('[name="kind"]:checked')?.value === "group",
+      seats = form.querySelector("#field-capacity");
+    form.querySelector("#service-seats").hidden = !group;
+    seats.disabled = !group;
+    seats.required = group;
+    const count = form.querySelectorAll('#field-resources input:checked').length,
+      label = form.querySelector("#staff-count");
+    if (label) label.textContent = count ? `· ${OrbitI18n.t("serviceChosen")} ${count}` : `· ${OrbitI18n.t("staffAnyone")}`;
+    const price = form.querySelector('label[for="field-price"]');
+    if (price) price.textContent = OrbitI18n.t(group ? "servicePriceSeat" : "servicePrice");
+  };
+  form.addEventListener("change", sync);
+  sync();
 }
 function loginModal({ afterLogout = false } = {}) {
   closeModal();
@@ -1207,7 +1254,12 @@ function scheduleLabel(resource) {
   } catch {
     s = null;
   }
-  if (!s) return OrbitI18n.t("staffEveryDay");
+  const hours = s?.start ? ` · ${s.start}–${s.end}` : "",
+    pause = s?.break_start ? ` · ${OrbitI18n.t("staffBreakShort")} ${s.break_start}–${s.break_end}` : "";
+  return scheduleDays(s) + hours + pause;
+}
+function scheduleDays(s) {
+  if (!s || (!s.days && s.on == null)) return OrbitI18n.t("staffEveryDay");
   if (s.days) {
     const names = [
       OrbitI18n.t("m046"),
@@ -1231,7 +1283,7 @@ function staffModal(id) {
   } catch {
     s = null;
   }
-  const kind = !s ? "all" : s.days ? "days" : "cycle";
+  const kind = !s || (!s.days && s.on == null) ? "all" : s.days ? "days" : "cycle";
   const names = [
     OrbitI18n.t("m046"),
     OrbitI18n.t("m047"),
@@ -1256,10 +1308,22 @@ function staffModal(id) {
       `<div id="staff-days" ${kind === "days" ? "" : "hidden"}><div class="work-days">${names.map((n, i) => `<label class="chip"><input type="checkbox" name="staff_days" value="${i + 1}" ${s?.days?.includes(i + 1) ? "checked" : ""}><span>${n}</span></label>`).join("")}</div></div>` +
       `<div id="staff-cycle" class="form-grid three" ${kind === "cycle" ? "" : "hidden"}><div>${field(OrbitI18n.t("staffOn"), "on", "number", `min="1" max="14" value="${s?.on || 2}"`)}</div><div>${field(OrbitI18n.t("staffOff"), "off", "number", `min="1" max="14" value="${s?.off || 2}"`)}</div><div>${field(OrbitI18n.t("staffCycleStart"), "from", "date", `value="${s?.from || businessDate(Date.now())}"`)}</div></div>` +
       `<p class="hint">${OrbitI18n.t("staffScheduleHint")}</p>` +
+      `<div class="form-grid"><div>${field(OrbitI18n.t("staffHoursFrom"), "hours_start", "time", `value="${s?.start || ""}" placeholder="${escape(data.work_start || "09:00")}"`)}</div><div>${field(OrbitI18n.t("staffHoursTo"), "hours_end", "time", `value="${s?.end || ""}" placeholder="${escape(data.work_end || "18:00")}"`)}</div>` +
+      `<div>${field(OrbitI18n.t("staffBreakFrom"), "break_start", "time", `value="${s?.break_start || ""}"`)}</div><div>${field(OrbitI18n.t("staffBreakTo"), "break_end", "time", `value="${s?.break_end || ""}"`)}</div></div>` +
+      `<p class="hint">${OrbitI18n.t("staffHoursHint").replace("{from}", escape(data.work_start || "09:00")).replace("{to}", escape(data.work_end || "18:00"))}</p>` +
+      `<fieldset class="segmented-choice"><legend>${OrbitI18n.t("resourceKind")}</legend><label><input type="radio" name="resource_kind" value="staff" ${r.kind === "room" ? "" : "checked"}><span><strong>${OrbitI18n.t("resourceStaff")}</strong><small>${OrbitI18n.t("resourceStaffHint")}</small></span></label><label><input type="radio" name="resource_kind" value="room" ${r.kind === "room" ? "checked" : ""}><span><strong>${OrbitI18n.t("resourceRoom")}</strong><small>${OrbitI18n.t("resourceRoomHint")}</small></span></label></fieldset>` +
       `<h3 class="form-section">${OrbitI18n.t("staffAbsences")}</h3>${absences.length ? `<ul class="absence-list">${absences.map((a) => `<li><span>${a.start_date.split("-").reverse().join(".")} – ${a.end_date.split("-").reverse().join(".")}${a.reason ? ` · ${escape(a.reason)}` : ""}</span><button type="button" class="link-button" data-action="absence-delete" data-id="${escape(a.id)}" data-resource="${escape(id)}">${OrbitI18n.t("catalogDelete")}</button></li>`).join("")}</ul>` : `<p class="hint">${OrbitI18n.t("staffNoAbsences")}</p>`}<button type="button" class="secondary" data-action="absence-add" data-id="${escape(id)}">${OrbitI18n.t("staffAbsenceAdd")}</button>` +
       staffPayFields(r),
     async (v) => {
-      const schedule =
+      // Own hours and the break are optional: empty fields keep the company's opening hours.
+      const own = {
+        ...(v.hours_start || v.hours_end ? { start: v.hours_start, end: v.hours_end } : {}),
+        ...(v.break_start || v.break_end ? { break_start: v.break_start, break_end: v.break_end } : {}),
+      };
+      if ((own.start && !own.end) || (!own.start && own.end)) throw Error(OrbitI18n.t("staffHoursInvalid"));
+      if (own.start && own.end <= own.start) throw Error(OrbitI18n.t("staffHoursInvalid"));
+      if ((own.break_start && !own.break_end) || (!own.break_start && own.break_end) || (own.break_start && own.break_end <= own.break_start)) throw Error(OrbitI18n.t("staffBreakInvalid"));
+      const days =
         v.kind === "days"
           ? {
               days: Array.from(
@@ -1269,10 +1333,12 @@ function staffModal(id) {
             }
           : v.kind === "cycle"
             ? { on: Number(v.on), off: Number(v.off), from: v.from }
-            : null;
+            : {};
+      const schedule = Object.keys({ ...days, ...own }).length ? { ...days, ...own } : null;
       await window.orbit.call("resource:update", {
         id,
         name: v.name,
+        kind: v.resource_kind,
         schedule,
         ...(v.pay_percent === undefined
           ? {}

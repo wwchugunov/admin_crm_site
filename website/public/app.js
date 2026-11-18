@@ -24,6 +24,19 @@ document.addEventListener('click', (e) => {
   bookingPhone();
 });
 
+/* Booking page on phones: swipe between the four steps; the dots follow and can be tapped. */
+document.addEventListener('click', (e) => {
+  const dot = e.target.closest('[data-bp-slide]');
+  if (!dot) return;
+  const track = $('#bp-slides'), i = Number(dot.dataset.bpSlide);
+  track?.scrollTo({ left: track.clientWidth * i, behavior: reduceMotion ? 'auto' : 'smooth' });
+});
+document.addEventListener('scroll', (e) => {
+  if (e.target?.id !== 'bp-slides') return;
+  const i = Math.round(e.target.scrollLeft / e.target.clientWidth);
+  $$('#bp-dots [data-bp-slide]').forEach((d) => d.setAttribute('aria-current', String(Number(d.dataset.bpSlide) === i)));
+}, true);
+
 /* Stories */
 
 function selectStory(i, focus) {

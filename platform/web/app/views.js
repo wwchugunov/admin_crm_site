@@ -346,7 +346,7 @@ function subscriptionBanner() {
 }
 function legalBanner() {
   if (!legalState?.required || data?.mode !== "server") return "";
-  return `<section class="setup-banner legal-banner"><div><strong>${OrbitI18n.t(legalState.updated ? "legalBannerTitle" : "legalBannerTitleFirst")}</strong><p>${OrbitI18n.t(legalState.offer?.version === "off" ? "legalBannerPrivacyOnly" : (legalState.updated ? "legalBannerUpdated" : "legalBannerFirst") + (legalState.offer?.kind === "site-terms" ? "Terms" : ""))}</p><p class="legal-links">${legalState.offer?.version === "off" ? "" : `<button type="button" class="link-button" data-action="offer">${OrbitI18n.t(legalState.offer?.kind === "site-terms" ? "legalTermsTitle" : "legalOfferTitle")}</button> · `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button></p></div><div class="setup-actions"><button class="primary" data-action="legal-accept">${OrbitI18n.t("legalAccept")}</button></div></section>`;
+  return `<section class="setup-banner legal-banner"><div><strong>${OrbitI18n.t(legalState.updated ? "legalBannerTitle" : "legalBannerTitleFirst")}</strong><p>${OrbitI18n.t(legalState.offer?.version === "off" ? "legalBannerPrivacyOnly" : (legalState.updated ? "legalBannerUpdated" : "legalBannerFirst") + (legalState.offer?.kind === "site-terms" ? "Terms" : ""))}</p><p class="legal-links">${legalState.offer?.version === "off" ? "" : `<button type="button" class="link-button" data-action="offer" data-kind="${legalState.offer?.kind === "site-terms" ? "site-terms" : "site-offer"}">${OrbitI18n.t(legalState.offer?.kind === "site-terms" ? "legalTermsTitle" : "legalOfferTitle")}</button> · `}<button type="button" class="link-button" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button></p></div><div class="setup-actions"><button class="primary" data-action="legal-accept">${OrbitI18n.t("legalAccept")}</button></div></section>`;
 }
 function dayGrid(rows) {
   // Columns only for people on shift that day (plus anyone who already has a visit).
@@ -559,21 +559,33 @@ function clientsView() {
         )
   }</section>`;
 }
+// "60 хв · Індивідуальна · пауза 15 хв" or "60 хв · Групова, 8 місць".
+function serviceSummary(s) {
+  const parts = [`${s.duration} ${OrbitI18n.t("m200").split(" ")[0]}`];
+  parts.push(s.capacity > 1 ? `${OrbitI18n.t("serviceKindGroup")}, ${s.capacity} ${OrbitI18n.t("serviceSeatsShort")}` : OrbitI18n.t("serviceKindIndividual"));
+  if (s.required_resources > 1) parts.push(`${s.required_resources} ${OrbitI18n.t("serviceTogetherShort")}`);
+  if (s.buffer > 0) parts.push(`${OrbitI18n.t("serviceBufferShort")} ${s.buffer} ${OrbitI18n.t("m200").split(" ")[0]}`);
+  return parts.map(escape).join(" · ");
+}
 function catalogView() {
   return `<div class="grid-2"><section class="card"><div class="panel-head"><h2>${OrbitI18n.t("m213")}</h2><button class="secondary" data-action="service">${OrbitI18n.t("m214")}</button></div>${
     data.services.length
       ? data.services
           .map(
             (s) =>
-              `<div class="catalog-row" data-layout-key="service:${escape(s.id)}"><div><strong>${escape(s.name)}</strong><small>${s.duration} ${OrbitI18n.t("m200")} ${s.capacity} ${OrbitI18n.t("m201")} ${s.required_resources} ${OrbitI18n.t("m202")}</small><small>${OrbitI18n.t("m203")} ${s.bot_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")} ${OrbitI18n.t("m204")} ${s.web_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")}</small><small>${OrbitI18n.t("staffWho")}: ${
-                (s.resource_ids || []).length
+              `<div class="catalog-row" data-layout-key="service:${escape(s.id)}"><div><strong>${escape(s.name)}</strong><small>${serviceSummary(s)}</small><small>${OrbitI18n.t("m203")} ${s.bot_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")} ${OrbitI18n.t("m204")} ${s.web_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")}</small><small>${OrbitI18n.t("staffWho")}: ${
+                data.resources.some((r) => r.kind !== "room" && (s.resource_ids || []).includes(r.id))
                   ? escape(
                       data.resources
-                        .filter((r) => s.resource_ids.includes(r.id))
+                        .filter((r) => r.kind !== "room" && s.resource_ids.includes(r.id))
                         .map((r) => r.name)
                         .join(", "),
                     )
                   : OrbitI18n.t("staffAnyone")
+              }${
+                data.resources.some((r) => r.kind === "room" && (s.resource_ids || []).includes(r.id))
+                  ? ` · ${escape(data.resources.filter((r) => r.kind === "room" && s.resource_ids.includes(r.id)).map((r) => r.name).join(", "))}`
+                  : ""
               }</small></div><div><span class="mini-price">${money(s.price)} ${escape(data.currency)} ${OrbitI18n.t("m205")}</span><div class="mt"><button class="secondary" data-action="service-edit" data-id="${s.id}">${OrbitI18n.t("m206")}</button>${can("catalog") ? `<button class="danger" data-action="service-delete" data-id="${s.id}">${OrbitI18n.t("catalogDelete")}</button>` : ""}</div></div></div>`,
           )
           .join("")
@@ -587,7 +599,7 @@ function catalogView() {
                 x.resource_id === r.id &&
                 x.end_date >= businessDate(Date.now()),
             );
-            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong><small>${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${can("catalog") ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
+            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong><small>${r.kind === "room" ? `${OrbitI18n.t("resourceRoom")} · ` : ""}${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${can("catalog") ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
           })
           .join("")
       : empty(OrbitI18n.t("m211"), OrbitI18n.t("m212"))
@@ -793,7 +805,7 @@ function settingsData() {
       owner
         ? settingRow(
             OrbitI18n.t("settingsExport"),
-            `<button type="button" class="secondary" data-action="export-json">${OrbitI18n.t("m248")}</button><button type="button" class="secondary" data-action="export-csv">${OrbitI18n.t("m249")}</button>`,
+            `<button type="button" class="secondary" data-action="export-json">${OrbitI18n.t("m248")}</button>${can("finance") ? `<button type="button" class="secondary" data-action="report-xlsx">${OrbitI18n.t("reportButton")} (.xlsx)</button>` : ""}`,
             OrbitI18n.t("m262"),
           ) +
             settingRow(
@@ -813,12 +825,18 @@ function settingsData() {
     )
   );
 }
+// Offer and terms of use are separate documents: each shows only while the LOMVIKO owner has it switched on.
+function legalButtons() {
+  const docs = legalState?.documents || { offer: legalState?.offer?.kind !== "site-terms", terms: legalState?.offer?.kind === "site-terms" };
+  const button = (kind, label) => `<button type="button" class="secondary" data-action="offer" data-kind="${kind}">${OrbitI18n.t(label)}</button> `;
+  return (docs.offer ? button("site-offer", "legalOfferTitle") : "") + (docs.terms ? button("site-terms", "legalTermsTitle") : "") + `<button type="button" class="secondary" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button>`;
+}
 function settingsAbout() {
   return `<div class="about-head"><span class="wordmark">LOMVIKO</span><strong>${OrbitI18n.t("settingsVersion")} ${escape(appVersion || "—")}</strong></div>${settingsGroup(
     "",
       settingRow(
         OrbitI18n.t("legalDocuments"),
-        `<button type="button" class="secondary" data-action="offer">${OrbitI18n.t("legalOfferTitle")}</button> <button type="button" class="secondary" data-action="privacy">${OrbitI18n.t("privacyPolicy")}</button>`,
+        legalButtons(),
         OrbitI18n.t("legalDocumentsHint"),
       ),
   )}`;

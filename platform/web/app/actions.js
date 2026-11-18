@@ -6,7 +6,7 @@ const actions = {
   },
   login: loginModal,
   privacy: () => window.orbit.call("legal:privacy", OrbitI18n.language),
-  offer: () => window.orbit.call("legal:offer"),
+  offer: (b) => window.orbit.call("legal:offer", b?.dataset?.kind || legalState?.offer?.kind),
   "legal-accept": async () => {
     legalState = await window.orbit.call("legal:accept", {
       offer_version: legalState?.offer?.version,
@@ -59,6 +59,7 @@ const actions = {
         resource_ids: v.resource_ids || [],
       }),
     );
+    wireServiceForm();
   },
   "staff-edit": (b) => staffModal(b.dataset.id),
   "absence-add": (b) => {
@@ -332,17 +333,21 @@ const actions = {
     modal(OrbitI18n.t("m321"), clientFields(), (values) =>
       window.orbit.call("client:add", values),
     ),
-  service: () =>
+  service: () => {
     modal(OrbitI18n.t("m324"), serviceFields(), (values) =>
       window.orbit.call("service:add", {
         ...values,
         resource_ids: values.resource_ids || [],
       }),
-    ),
+    );
+    wireServiceForm();
+  },
+  // A specialist does services; a room or piece of equipment is only booked together with one.
   resource: () =>
     modal(
       OrbitI18n.t("m325"),
-      field(OrbitI18n.t("m326"), "name", "text", 'required maxlength="120"'),
+      field(OrbitI18n.t("m326"), "name", "text", 'required maxlength="120"') +
+        `<fieldset class="segmented-choice"><legend>${OrbitI18n.t("resourceKind")}</legend><label><input type="radio" name="kind" value="staff" checked><span><strong>${OrbitI18n.t("resourceStaff")}</strong><small>${OrbitI18n.t("resourceStaffHint")}</small></span></label><label><input type="radio" name="kind" value="room"><span><strong>${OrbitI18n.t("resourceRoom")}</strong><small>${OrbitI18n.t("resourceRoomHint")}</small></span></label></fieldset>`,
       (values) => window.orbit.call("resource:add", values),
     ),
   telegram: () =>

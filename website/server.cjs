@@ -17,6 +17,10 @@ const STATIC = new Map([
   ['/assets/crm.png', ['assets/crm.png', 'image/png', DAY]],
   ['/assets/icon.png', ['assets/icon.png', 'image/png', DAY]],
   ['/assets/app.png', ['assets/app.png', 'image/png', DAY]],
+  // Real screens for "First online booking in three steps".
+  ['/assets/launch-services.png', ['assets/launch-services.png', 'image/png', DAY]],
+  ['/assets/launch-team.png', ['assets/launch-team.png', 'image/png', DAY]],
+  ['/assets/launch-booking.png', ['assets/launch-booking.png', 'image/png', DAY]],
   ['/assets/og.png', ['assets/og.png', 'image/png', DAY]],
   ['/assets/og-en.png', ['assets/og-en.png', 'image/png', DAY]],
   ['/assets/icon-192.png', ['assets/icon-192.png', 'image/png', DAY]],

@@ -207,6 +207,10 @@ class Store {
         "INTEGER NOT NULL DEFAULT 1 CHECK(required_resources BETWEEN 1 AND 8)",
       ],
       ["services", "bot_visible", "INTEGER NOT NULL DEFAULT 1"],
+      // Minutes kept free after each visit (cleaning, notes, getting ready for the next client).
+      ["services", "buffer", "INTEGER NOT NULL DEFAULT 0 CHECK(buffer BETWEEN 0 AND 120)"],
+      // A specialist does services; a room or equipment is only needed for some of them.
+      ["resources", "kind", "TEXT NOT NULL DEFAULT 'staff' CHECK(kind IN ('staff','room'))"],
       ["services", "web_visible", "INTEGER NOT NULL DEFAULT 0"],
       ["appointments", "total", "INTEGER NOT NULL DEFAULT 0 CHECK(total>=0)"],
       ["appointments", "cost", "INTEGER NOT NULL DEFAULT 0 CHECK(cost>=0)"],
@@ -473,7 +477,7 @@ class Store {
       id = randomUUID();
     this.db
       .prepare(
-        "INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible) VALUES(?,?,?,?,?,?,?,?)",
+        "INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible,buffer) VALUES(?,?,?,?,?,?,?,?,?)",
       )
       .run(id, ...values);
     if (Array.isArray(data.resource_ids))
@@ -487,8 +491,10 @@ class Store {
   serviceValues(data) {
     const duration = Number(data.duration),
       price = cents(data.price),
-      capacity = Number(data.capacity || 1),
-      required = Number(data.required_resources || 1);
+      // An individual service takes one client per specialist; only a group has seats to set.
+      capacity = data.kind === "individual" ? 1 : Number(data.capacity || 1),
+      required = Number(data.required_resources || 1),
+      buffer = Number(data.buffer || 0);
     if (
       !Number.isInteger(duration) ||
       duration < 5 ||
@@ -498,7 +504,10 @@ class Store {
       capacity > 100 ||
       !Number.isInteger(required) ||
       required < 1 ||
-      required > 8
+      required > 8 ||
+      !Number.isInteger(buffer) ||
+      buffer < 0 ||
+      buffer > 120
     )
       throw Error(OrbitI18n.t("m537"));
     return [
@@ -509,13 +518,14 @@ class Store {
       required,
       data.bot_visible === false || data.bot_visible === "0" ? 0 : 1,
       data.web_visible === true || data.web_visible === "1" ? 1 : 0,
+      buffer,
     ];
   }
   updateService(data) {
     if (
       !this.db
         .prepare(
-          "UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=? WHERE id=? AND archived=0",
+          "UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=?,buffer=? WHERE id=? AND archived=0",
         )
         .run(...this.serviceValues(data), text(data.id)).changes
     )
@@ -530,8 +540,8 @@ class Store {
   addResource(data) {
     const id = randomUUID();
     this.db
-      .prepare("INSERT INTO resources(id,name) VALUES(?,?)")
-      .run(id, text(data.name, 120));
+      .prepare("INSERT INTO resources(id,name,kind) VALUES(?,?,?)")
+      .run(id, text(data.name, 120), data.kind === "room" ? "room" : "staff");
     this.setPay("resources", id, data);
     this.audit("resource.created", id);
     return id;
@@ -633,6 +643,15 @@ class Store {
       for (const resource of resources)
         if (!this.canDo(service.id, resource))
           throw Error(OrbitI18n.t("staffCannotDo"));
+      // A group class already set for this time with this leader: the client takes a seat in it.
+      if (service.capacity > 1) {
+        const session = this.db
+          .prepare(
+            "SELECT a.* FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE a.service_id=? AND a.start=? AND a.status='confirmed' AND r.resource_id=?",
+          )
+          .get(service.id, start, resources[0]);
+        if (session) return this.joinGroup(session, service, clients, people);
+      }
       for (const resource of resources)
         if (!this.resourceFree(resource, start, end))
           throw Error(OrbitI18n.t("m541"));
@@ -700,6 +719,39 @@ class Store {
       this.audit("appointment.created", id);
       return id;
     });
+  }
+  // Seats in a group class: more clients join the same visit until it is full.
+  joinGroup(session, service, clients, people) {
+    if (session.people_count + people > service.capacity)
+      throw Error(OrbitI18n.t("groupFull"));
+    const inside = this.db.prepare(
+      "SELECT 1 FROM appointment_clients WHERE appointment_id=? AND client_id=?",
+    );
+    for (const client of clients)
+      if (inside.get(session.id, client)) throw Error(OrbitI18n.t("m542"));
+    for (const client of clients)
+      if (
+        this.db
+          .prepare(
+            "SELECT a.id FROM appointments a JOIN appointment_clients c ON c.appointment_id=a.id WHERE c.client_id=? AND a.status='confirmed' AND a.start<? AND a.end>?",
+          )
+          .get(client, session.end, session.start)
+      )
+        throw Error(OrbitI18n.t("m542"));
+    for (const client of clients) {
+      this.db.prepare("INSERT INTO appointment_clients VALUES(?,?)").run(session.id, client);
+      for (const kind of ["24h", "2h"])
+        this.db
+          .prepare(
+            "INSERT OR IGNORE INTO reminder_deliveries(appointment_id,kind,client_id,status) VALUES(?,?,?,'pending')",
+          )
+          .run(session.id, kind, client);
+    }
+    this.db
+      .prepare("UPDATE appointments SET people_count=people_count+?,total=total+? WHERE id=?")
+      .run(people, this.discounted(service.price * people, clients[0]), session.id);
+    this.audit("appointment.joined", session.id);
+    return session.id;
   }
   // Moves a confirmed visit to another time and/or specialists. The duration and price stay as booked;
   // reminders are re-armed for the new time.
@@ -813,11 +865,35 @@ class Store {
       .all(serviceId)
       .map((r) => r.resource_id);
   }
+  // Specialists: the ones chosen in "Who performs" (nobody chosen = anyone). Rooms and equipment:
+  // the ones the service needs; a service that needs none may still be given one by hand.
+  serviceLinks(serviceId) {
+    const links = this.db
+      .prepare(
+        "SELECT s.resource_id id,r.kind FROM service_resources s JOIN resources r ON r.id=s.resource_id WHERE s.service_id=? AND r.archived=0",
+      )
+      .all(serviceId);
+    return {
+      staff: links.filter((l) => l.kind !== "room").map((l) => l.id),
+      rooms: links.filter((l) => l.kind === "room").map((l) => l.id),
+    };
+  }
   canDo(serviceId, resourceId) {
+    const kind = this.db
+        .prepare("SELECT kind FROM resources WHERE id=?")
+        .get(resourceId)?.kind,
+      links = this.serviceLinks(serviceId);
     return OrbitStaff.capable(
-      { resource_ids: this.serviceStaff(serviceId) },
+      { resource_ids: kind === "room" ? links.rooms : links.staff },
       resourceId,
     );
+  }
+  // Specialists a client may pick for a service (never rooms or equipment).
+  specialists(serviceId) {
+    return this.db
+      .prepare("SELECT id,name FROM resources WHERE archived=0 AND kind<>'room' ORDER BY name,id")
+      .all()
+      .filter((r) => !serviceId || this.canDo(serviceId, r.id));
   }
   worksOn(resourceId, date) {
     const resource = this.db
@@ -856,11 +932,12 @@ class Store {
     if (
       !this.db
         .prepare(
-          "UPDATE resources SET name=?,schedule=? WHERE id=? AND archived=0",
+          "UPDATE resources SET name=?,schedule=?,kind=COALESCE(?,kind) WHERE id=? AND archived=0",
         )
         .run(
           text(data.name, 120),
           schedule ? JSON.stringify(schedule) : null,
+          ["staff", "room"].includes(data.kind) ? data.kind : null,
           id,
         ).changes
     )
@@ -1182,54 +1259,138 @@ class Store {
       this.audit("backup.restored", this.get("installation"));
     });
   }
-  slots(serviceId, resourceId, date) {
+  // Everything needed to answer "who can take this service at what time" for one day: each person's
+  // own hours and break (or the company's), shifts and absences, visits with the pause after them,
+  // and the rooms or equipment the service needs. Built once per day, then asked per time.
+  dayPlan(serviceId, date) {
     const service = this.db
       .prepare("SELECT * FROM services WHERE id=? AND archived=0")
       .get(serviceId);
-    if (!service) return [];
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-      !this.get("work_days").includes(
-        new Date(`${date}T12:00:00Z`).getUTCDay() || 7,
-      )
-    )
-      return [];
-    const day = zonedTime(date, this.get("work_start"), this.get("timezone")),
-      close = zonedTime(date, this.get("work_end"), this.get("timezone")),
-      result = [];
-    // The same rule as availableResources(), but people and their busy times are read once per day
-    // instead of once per half hour.
-    const automatic =
-      resourceId == null || resourceId === "" || resourceId === "any";
-    const staff = this.db
-      .prepare("SELECT id FROM resources WHERE archived=0 ORDER BY name,id")
+    if (!service || !/^\d{4}-\d{2}-\d{2}$/.test(String(date))) return null;
+    const zone = this.get("timezone") || "Europe/Kyiv",
+      company = { start: this.get("work_start") || "09:00", end: this.get("work_end") || "18:00" };
+    if (!this.get("work_days").includes(OrbitStaff.weekday(date))) return { service, staff: [], rooms: [], needRoom: false, busy: new Map() };
+    const absences = this.db
+        .prepare("SELECT * FROM resource_absences WHERE start_date<=? AND end_date>=?")
+        .all(date, date),
+      links = this.serviceLinks(serviceId),
+      at = (clock) => zonedTime(date, clock, zone);
+    const people = this.db
+      .prepare("SELECT id,kind,schedule FROM resources WHERE archived=0 ORDER BY name,id")
       .all()
-      .map((r) => r.id)
-      .filter((id) => this.canDo(serviceId, id) && this.worksOn(id, date));
-    if (!automatic && !staff.includes(resourceId)) return [];
-    const busy = new Map(staff.map((id) => [id, []]));
+      .filter((r) => OrbitStaff.works(r, date, absences))
+      .map((r) => {
+        const h = OrbitStaff.dayHours(r, company);
+        return { id: r.id, kind: r.kind, open: at(h.start), close: at(h.end), breaks: h.breaks.map(([x, y]) => [at(x), at(y)]) };
+      });
+    const staff = people.filter((r) => r.kind !== "room" && OrbitStaff.capable({ resource_ids: links.staff }, r.id)),
+      rooms = people.filter((r) => r.kind === "room" && links.rooms.includes(r.id));
+    const from = Math.min(...people.map((r) => r.open), at(company.start)),
+      to = Math.max(...people.map((r) => r.close), at(company.end)),
+      busy = new Map();
     for (const row of this.db
       .prepare(
-        "SELECT r.resource_id,a.start,a.end FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id WHERE a.status='confirmed' AND a.start<? AND a.end>?",
+        "SELECT r.resource_id,a.id,a.service_id,a.start,a.end,a.people_count,COALESCE(s.buffer,0) buffer FROM appointments a JOIN appointment_resources r ON r.appointment_id=a.id JOIN services s ON s.id=a.service_id WHERE a.status='confirmed' AND a.start<? AND a.end+COALESCE(s.buffer,0)*60000>?",
       )
-      .all(close, day))
-      busy.get(row.resource_id)?.push([row.start, row.end]);
-    const order = automatic
-      ? staff
-      : [resourceId, ...staff.filter((id) => id !== resourceId)];
-    for (
-      let start = day;
-      start + service.duration * 60000 <= close;
-      start += 1800000
-    ) {
-      if (start <= Date.now()) continue;
-      const end = start + service.duration * 60000,
-        free = (id) => !busy.get(id).some(([s, e]) => s < end && e > start);
-      if (!automatic && !free(resourceId)) continue;
-      if (order.filter(free).length >= service.required_resources)
-        result.push(start);
+      .all(to + 86400000, from - 86400000)) {
+      if (!busy.has(row.resource_id)) busy.set(row.resource_id, []);
+      busy.get(row.resource_id).push(row);
+    }
+    return { service, staff, rooms, needRoom: links.rooms.length > 0, busy, from, to };
+  }
+  // Who is free for [start, start + duration + pause): inside own hours, outside the break, and no
+  // visit (with its own pause) overlaps. Individual visits of one person never overlap, whatever the service.
+  freeIn(plan, list, start) {
+    const end = start + plan.service.duration * 60000,
+      until = end + (plan.service.buffer || 0) * 60000;
+    return list.filter(
+      (r) =>
+        start >= r.open &&
+        end <= r.close &&
+        !r.breaks.some(([x, y]) => x < end && y > start) &&
+        !(plan.busy.get(r.id) || []).some((v) => v.start < until && v.end + v.buffer * 60000 > start),
+    );
+  }
+  // A group class already set for this time that still has seats (and is led by the chosen person).
+  groupSession(plan, start, primary, people = 1) {
+    if (plan.service.capacity <= 1) return null;
+    const automatic = primary == null || primary === "" || primary === "any";
+    for (const r of plan.staff)
+      for (const v of plan.busy.get(r.id) || [])
+        if (
+          v.service_id === plan.service.id &&
+          v.start === start &&
+          (automatic || r.id === primary) &&
+          v.people_count + people <= plan.service.capacity
+        )
+          return v.id;
+    return null;
+  }
+  // How many more bookings fit at this time: free specialists (or seats left in a group).
+  freeCount(serviceId, start) {
+    const plan = this.dayPlan(serviceId, this.businessDay(start));
+    if (!plan) return 0;
+    const people = this.freeIn(plan, plan.staff, start).length,
+      rooms = plan.needRoom ? this.freeIn(plan, plan.rooms, start).length : Infinity,
+      sessions = Math.min(Math.floor(people / plan.service.required_resources), rooms);
+    if (plan.service.capacity <= 1) return sessions;
+    let seats = sessions * plan.service.capacity;
+    const seen = new Set();
+    for (const r of plan.staff)
+      for (const v of plan.busy.get(r.id) || [])
+        if (v.service_id === plan.service.id && v.start === start && !seen.has(v.id)) {
+          seen.add(v.id);
+          seats += Math.max(0, plan.service.capacity - v.people_count);
+        }
+    return seats;
+  }
+  slots(serviceId, resourceId, date) {
+    const plan = this.dayPlan(serviceId, date);
+    if (!plan || !plan.staff.length) return [];
+    const automatic = resourceId == null || resourceId === "" || resourceId === "any";
+    if (!automatic && !plan.staff.some((r) => r.id === resourceId)) return [];
+    const result = [],
+      now = Date.now(),
+      step = 1800000,
+      first = Math.min(...plan.staff.map((r) => r.open));
+    for (let start = first; start + plan.service.duration * 60000 <= plan.to; start += step) {
+      if (start <= now) continue;
+      if (this.placeIn(plan, resourceId, start)) result.push(start);
     }
     return result;
+  }
+  // Who gets a visit at this time: the seats of a group already set, or free specialists (the least
+  // busy that day first, so work spreads evenly) plus a free room when the service needs one.
+  placeIn(plan, primary, start, people = 1) {
+    const session = this.groupSession(plan, start, primary, people);
+    if (session)
+      return this.db
+        .prepare("SELECT resource_id FROM appointment_resources WHERE appointment_id=?")
+        .all(session)
+        .map((r) => r.resource_id);
+    const automatic = primary == null || primary === "" || primary === "any",
+      free = this.freeIn(plan, plan.staff, start).map((r) => r.id);
+    if (!automatic && !free.includes(primary)) return null;
+    let rooms = [];
+    if (plan.needRoom) {
+      rooms = this.freeIn(plan, plan.rooms, start).map((r) => r.id);
+      if (!rooms.length) return null;
+    }
+    const day = this.businessDay(start),
+      zone = this.get("timezone") || "Europe/Kyiv",
+      next = new Date(Date.parse(day + "T00:00:00Z") + 86400000).toISOString().slice(0, 10),
+      load = new Map(
+        this.db
+          .prepare(
+            "SELECT ar.resource_id id,SUM(a.end-a.start) busy FROM appointments a JOIN appointment_resources ar ON ar.appointment_id=a.id WHERE a.status IN ('confirmed','completed') AND a.start>=? AND a.start<? GROUP BY ar.resource_id",
+          )
+          .all(zonedTime(day, "00:00", zone), zonedTime(next, "00:00", zone))
+          .map((r) => [r.id, r.busy]),
+      ),
+      others = free.filter((id) => id !== primary).sort((x, y) => (load.get(x) || 0) - (load.get(y) || 0)),
+      chosen = (automatic ? others : [primary, ...others]).slice(0, plan.service.required_resources);
+    if (chosen.length < plan.service.required_resources) return null;
+    return plan.needRoom ? [...chosen, rooms[0]] : chosen;
   }
   resourceFree(resource, start, end) {
     return (
@@ -1245,42 +1406,11 @@ class Store {
         .get(resource, start, end)
     );
   }
-  availableResources(serviceId, primary, start) {
-    const service = this.db
-      .prepare("SELECT * FROM services WHERE id=? AND archived=0")
-      .get(serviceId);
-    if (!service || !Number.isSafeInteger(start)) return [];
-    const automatic = primary == null || primary === "" || primary === "any";
-    const end = start + service.duration * 60000,
-      day = this.businessDay(start);
-    // Only people who do this service and work that day are offered (bot, website, grid).
-    const fits = (id) =>
-      this.canDo(serviceId, id) &&
-      this.worksOn(id, day) &&
-      this.resourceFree(id, start, end);
-    if (!automatic && !fits(primary)) return [];
-    // "Any specialist": the least busy person that day gets the visit, so work spreads evenly.
-    const zone = this.get("timezone") || "Europe/Kyiv",
-      next = new Date(Date.parse(day + "T00:00:00Z") + 86400000).toISOString().slice(0, 10),
-      busy = new Map(
-        this.db
-          .prepare(
-            "SELECT ar.resource_id id,SUM(a.end-a.start) busy FROM appointments a JOIN appointment_resources ar ON ar.appointment_id=a.id WHERE a.status IN ('confirmed','completed') AND a.start>=? AND a.start<? GROUP BY ar.resource_id",
-          )
-          .all(zonedTime(day, "00:00", zone), zonedTime(next, "00:00", zone))
-          .map((r) => [r.id, r.busy]),
-      );
-    const free = this.db
-      .prepare("SELECT id FROM resources WHERE archived=0 ORDER BY name,id")
-      .all()
-      .filter((r) => r.id !== primary && fits(r.id))
-      .map((r) => r.id)
-      .sort((x, y) => (busy.get(x) || 0) - (busy.get(y) || 0));
-    const selected = (automatic ? free : [primary, ...free]).slice(
-      0,
-      service.required_resources,
-    );
-    return selected.length === service.required_resources ? selected : [];
+  availableResources(serviceId, primary, start, people = 1) {
+    if (!Number.isSafeInteger(start)) return [];
+    const plan = this.dayPlan(serviceId, this.businessDay(start));
+    if (!plan) return [];
+    return this.placeIn(plan, primary, start, people) || [];
   }
   payment(data) {
     const amount = Number(data.amount),
