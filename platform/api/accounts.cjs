@@ -35,10 +35,12 @@ class Accounts {
   }
   account(user){if(!user)return null;return user.account_id?this.db.prepare('SELECT * FROM users WHERE id=?').get(user.account_id):user;}
   // After access ends the owner can still sign in, view and export data for 30 days (offer, p. 5.2).
-  readable(user){const a=this.account(user);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires+30*86400000<=Date.now())this.fail(403,OrbitI18n.t('m682'));return a;}
+  // Paused by the LOMVIKO owner is not the same as an ended subscription: say which one it is.
+  paused(user,a){if(user?.stage==='blocked'||a?.stage==='blocked')this.fail(403,OrbitI18n.t('accessPaused'));}
+  readable(user){const a=this.account(user);this.paused(user,a);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires+30*86400000<=Date.now())this.fail(403,OrbitI18n.t('m682'));return a;}
   // A phone typed by staff must look like a phone, and one number belongs to one client card.
   clientPhone(store,data){const phone=String(data?.phone||'').trim();if(!phone)return data;const digits=phone.replace(/\D/g,'');if(!/^\+?[\d\s()-]+$/.test(phone)||digits.length<7||digits.length>15)this.fail(400,'Перевірте номер телефону, наприклад +380 67 123 45 67 / Check the phone number');const same=store.db.prepare('SELECT id,name,phone FROM clients WHERE id<>?').all(String(data.id||'')).find(c=>c.phone&&c.phone.replace(/\D/g,'').slice(-9)===digits.slice(-9));if(same)this.fail(409,`Цей телефон уже є в картці «${same.name}» / This phone already belongs to ${same.name}`);return data;}
-  allowed(user){const a=this.account(user);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires<=Date.now())this.fail(403,OrbitI18n.t('m640'));return a;}
+  allowed(user){const a=this.account(user);this.paused(user,a);if(!a||!['trial','active'].includes(a.stage)||user?.stage==='blocked'||a.expires<=Date.now())this.fail(403,OrbitI18n.t('m640'));return a;}
   setPassword(userId,password){const encoded=passwordHash(password);if(!this.db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(encoded,userId).changes)this.fail(404,OrbitI18n.t('m641'));this.db.prepare('DELETE FROM sessions WHERE user_id=?').run(userId);this.store.event('password.changed',userId);}
   addBusiness(userId,name){const user=this.db.prepare('SELECT * FROM users WHERE id=?').get(userId);if(!user)this.fail(404,OrbitI18n.t('m641'));const account=this.account(user),id=crypto.randomUUID();this.db.prepare('INSERT INTO businesses VALUES(?,?,?)').run(id,this.string(name,120),account.id);this.db.prepare("INSERT INTO memberships(user_id,business_id,role) VALUES(?,?,'owner')").run(userId,id);this.store.event('business.created',userId,null,'',name);return id;}
   // The plan that applies to a member's company: everything while sales are off or during a trial.

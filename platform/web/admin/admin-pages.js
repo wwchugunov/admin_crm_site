@@ -2,9 +2,10 @@
 // Product admin pages written for people, not logs: companies as a list, readable email history,
 // a security page that says what happened and what to do, and a plain backup page.
 Object.assign(OrbitI18n.messages, {
-  backupTitle: { uk: 'Резервна копія', en: 'Backup' },
+  backupTitle: { uk: 'Резервні копії', en: 'Backups' },
+  backupJsonTitle: { uk: 'Вивантаження бази продукту (JSON)', en: 'Product database export (JSON)' },
   mailStatusHint: { uk: '«Відправлено» означає, що поштовий сервер прийняв лист; далі доставку в скриньку виконує він. Листи зі станом «Невідомо» не повторюються самі, щоб адресат не отримав дубль.', en: '“Sent” means the mail server accepted the email; it then delivers it to the mailbox. Emails marked “Unknown” are not retried automatically, so the recipient does not get a duplicate.' },
-  backupSubtitle: { uk: 'Вивантаження всієї бази продукту одним файлом.', en: 'The whole product database in one file.' },
+  backupSubtitle: { uk: 'Повні копії сервера: щодня автоматично, завантаження й видалення.', en: 'Full server copies: made daily, download and delete.' },
   backupWhat: { uk: 'Що потрапляє у файл', en: 'What the file contains' },
   backupList: { uk: 'Користувачі, компанії, підписки, адміністратори, звернення, листи, документи й налаштування сайту. Бази самих компаній (клієнти, записи, оплати) кожна компанія вивантажує у своєму застосунку: «Налаштування та дані → Дані».', en: 'Users, companies, subscriptions, administrators, support requests, emails, documents and website settings. Each company exports its own base (clients, visits, payments) in its app: Settings and data → Data.' },
   backupWhen: { uk: 'Перед кожним оновленням сервера повна копія даних робиться автоматично. Цей файл — додаткова копія для вас: зберігайте його в надійному місці, у ньому персональні дані.', en: 'A full copy of the data is made automatically before every server update. This file is an extra copy for you: keep it somewhere safe, it contains personal data.' },
@@ -156,10 +157,78 @@ businessesView = function () {
   }`;
 };
 
+// Backups: full server copies made every day and by hand; download (encrypted with a password) or delete.
+let backupList = null, backupLoading = false;
+function loadBackups() {
+  if (backupLoading) return;
+  backupLoading = true;
+  window.owner.call('owner:backups')
+    .then((r) => { backupList = r.backups || []; })
+    .catch((e) => { backupList = []; toast(e.message, true); })
+    .finally(() => { backupLoading = false; if (page === 'connection') render(); });
+}
+const sizeText = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
 connectionView = function () {
-  return `<section class="card backup-card"><h2>${at('backupTitle')}</h2><p>${at('backupSubtitle')}</p><h3>${at('backupWhat')}</h3><p>${at('backupList')}</p><p>${at('backupWhen')}</p><div class="card-buttons"><button class="primary" data-action="export">${at('backupDownload')}</button></div><p class="hint">${at('backupServer')}: <span class="mono-inline">${esc(data.endpoint || '')}</span></p></section>`;
+  if (backupList === null) loadBackups();
+  const rows = backupList || [];
+  const table = backupList === null
+    ? `<p class="hint">${at('backupLoading')}</p>`
+    : rows.length
+      ? `<div class="table-wrap"><table class="table"><thead><tr><th>${at('backupWhenCol')}</th><th>${at('backupKindCol')}</th><th>${at('backupSizeCol')}</th><th></th></tr></thead><tbody>${rows.map((b) => `<tr><td>${date(b.created_at)}</td><td>${at(b.kind === 'auto' ? 'backupAuto' : 'backupManual')}</td><td>${sizeText(b.size)} · ${b.databases} ${at('backupDbs')}</td><td class="row-actions"><button class="secondary" data-action="backup-download" data-id="${esc(b.id)}">${at('backupDownloadOne')}</button><button class="danger" data-action="backup-delete" data-id="${esc(b.id)}">${at('backupDelete')}</button></td></tr>`).join('')}</tbody></table></div>`
+      : noRows(at('backupNone'));
+  return `<section class="card backup-card"><h2>${at('backupServerTitle')}</h2><p>${at('backupServerText')}</p><div class="card-buttons"><button class="primary" data-action="backup-create">${at('backupCreate')}</button></div>${table}<p class="hint">${at('backupRestoreHint')}</p></section>` +
+    `<section class="card backup-card"><h2>${at('backupJsonTitle')}</h2><p>${at('backupList')}</p><div class="card-buttons"><button class="secondary" data-action="export">${at('backupDownload')}</button></div></section>`;
 };
-
+Object.assign(actions, {
+  'backup-create': async () => {
+    toast(at('backupCreating'));
+    await window.owner.call('owner:backups:create');
+    backupList = null;
+    toast(at('backupCreated'));
+    render();
+  },
+  'backup-delete': (b) => modal(at('backupDeleteTitle'), `<p>${at('backupDeleteText')}</p>`, async () => {
+    await window.owner.call('owner:backups:delete', { id: b.dataset.id });
+    backupList = null;
+    toast(at('backupDeleted'));
+    render();
+  }, at('backupDelete')),
+  'backup-download': (b) => modal(at('backupDownloadOne'), `<p>${at('backupPasswordText')}</p>` + field(at('backupPassword'), 'password', 'password', 'required minlength="12" maxlength="256" autocomplete="new-password"') + field(at('backupPasswordAgain'), 'again', 'password', 'required minlength="12" maxlength="256" autocomplete="new-password"'), async (v) => {
+    if (v.password !== v.again) throw Error(at('backupPasswordMismatch'));
+    const r = await fetch('/web/backup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.dataset.id, password: v.password }) });
+    if (!r.ok) throw Error((await r.json().catch(() => ({}))).error || 'Backup unavailable');
+    const url = URL.createObjectURL(await r.blob()), a = document.createElement('a');
+    a.href = url; a.download = b.dataset.id + '.lomviko-backup'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(at('backupDownloaded'));
+  }, at('backupDownloadOne')),
+});
+Object.assign(OrbitI18n.messages, {
+  backupServerTitle: { uk: 'Резервні копії сервера', en: 'Server backups' },
+  backupServerText: { uk: 'Повна копія всього LOMVIKO: бази всіх компаній (клієнти, записи, оплати), користувачі, документи й ключі сервера. Сервер робить копію сам щодня й зберігає останні 14; копії, створені вручну, лишаються, доки ви їх не видалите. Завантажте копію й збережіть поза сервером — на комп’ютері чи в хмарі: якщо сервер зламається, з неї все відновиться.', en: 'A full copy of LOMVIKO: every company database (clients, visits, payments), users, documents and the server keys. The server makes one every day and keeps the last 14; copies made by hand stay until you delete them. Download a copy and keep it off the server, on a computer or in the cloud: if the server fails, everything is restored from it.' },
+  backupCreate: { uk: 'Створити копію зараз', en: 'Make a copy now' },
+  backupCreating: { uk: 'Створюємо копію…', en: 'Making a copy…' },
+  backupCreated: { uk: 'Копію створено й перевірено', en: 'Copy made and checked' },
+  backupLoading: { uk: 'Завантажуємо список…', en: 'Loading…' },
+  backupWhenCol: { uk: 'Коли', en: 'When' },
+  backupKindCol: { uk: 'Як', en: 'How' },
+  backupSizeCol: { uk: 'Розмір', en: 'Size' },
+  backupAuto: { uk: 'Автоматично', en: 'Automatic' },
+  backupManual: { uk: 'Вручну', en: 'By hand' },
+  backupDbs: { uk: 'баз', en: 'databases' },
+  backupNone: { uk: 'Копій ще немає — перша з’явиться протягом години.', en: 'No copies yet — the first one appears within an hour.' },
+  backupDownloadOne: { uk: 'Завантажити', en: 'Download' },
+  backupDelete: { uk: 'Видалити', en: 'Delete' },
+  backupDeleteTitle: { uk: 'Видалити копію?', en: 'Delete this copy?' },
+  backupDeleteText: { uk: 'Копію буде видалено із сервера назавжди. Дані в LOMVIKO це не змінить.', en: 'The copy is removed from the server for good. Data in LOMVIKO stays as it is.' },
+  backupDeleted: { uk: 'Копію видалено', en: 'Copy deleted' },
+  backupPasswordText: { uk: 'У файлі персональні дані клієнтів і ключі сервера, тому він шифрується паролем. Запишіть пароль: без нього файл не відкрити, відновити пароль неможливо.', en: 'The file holds personal data and the server keys, so it is encrypted with a password. Write the password down: without it the file cannot be opened, and it cannot be recovered.' },
+  backupPassword: { uk: 'Пароль для файлу (щонайменше 12 символів)', en: 'File password (at least 12 characters)' },
+  backupPasswordAgain: { uk: 'Повторіть пароль', en: 'Repeat the password' },
+  backupPasswordMismatch: { uk: 'Паролі не збігаються', en: 'Passwords do not match' },
+  backupDownloaded: { uk: 'Файл завантажено', en: 'File downloaded' },
+  backupRestoreHint: { uk: 'Відновлення на новому сервері: node tools/restore-server-backup.cjs файл папка — програма попросить пароль і розкладе дані, які стають томом даних сервера.', en: 'Restoring on a new server: node tools/restore-server-backup.cjs file folder — it asks for the password and unpacks the data folder for the server.' },
+});
 // Security: every kind of refusal explained, a calm or alert summary, active sign-ins and admin actions.
 securityView = function () {
   const s = data.security || { rejections: [] },

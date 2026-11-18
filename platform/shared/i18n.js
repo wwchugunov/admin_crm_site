@@ -141,6 +141,7 @@
     "m679": {"uk":"Перевірте термін і пристрої","en":"Check the term and devices"},
     "m680": {"uk":"Пристрій не знайдено","en":"Device not found"},
     "m681": {"uk":"Забагато спроб поспіль. Зачекайте хвилину і спробуйте ще раз.","en":"Too many attempts in a row. Wait a minute and try again."},
+    "accessPaused": {"uk":"Доступ тимчасово призупинено. Ваші дані збережені. Щоб відновити доступ, напишіть нам: info@lomviko.com","en":"Access is paused for now. Your data is safe. To restore access, write to us: info@lomviko.com"},
     "m682": {"uk":"Підписка закінчилась. Ваші дані збережені — продовжте підписку, і все запрацює як раніше.","en":"The subscription has ended. Your data is safe — renew and everything works as before."},
     "m689": {"uk":"Не вдалося виконати дію. Спробуйте ще раз — якщо повториться, натисніть «Написати нам».","en":"The action could not be completed. Try again — if it repeats, press “Write to us”."},
     "m689input": {"uk":"Перевірте дані у формі: якесь поле порожнє або заповнене неправильно.","en":"Check the form: a field is empty or filled in incorrectly."},

@@ -13,6 +13,7 @@ const {PasswordReset}=require('./password-reset.cjs');
 const {BotWorkers}=require('./bot-workers.cjs');
 const { Accounts, passwordHash } = require('./accounts.cjs');
 const {Documents,MAX_SIZE:DOCUMENT_MAX,unavailable}=require('./documents.cjs');
+const {ServerBackups}=require('../core/server-backup.cjs');
 const {legalPage}=require('./docx-page.cjs');
 const {accountExpiry,PERPETUAL_EXPIRY}=require('./entitlements.cjs');
 const {AccountDeletion}=require('./account-deletion.cjs');
@@ -100,6 +101,8 @@ function createProductServer({ rateLimit=120, store, adminToken, privateKey, pub
   const members=new AdminMembers({db:store.db,mail:null,adminUrl:process.env.CH_PRODUCT_ADMIN_URL||(process.env.CH_APP_ADMIN_DOMAIN?'https://'+process.env.CH_APP_ADMIN_DOMAIN:''),totp,base32});administrator.members=members;
   const website=new PublicSite(store);
   const documents=new Documents(store,documentDirectory);website.documents=documents;
+  // Full server copies: one a day by itself, more by hand from the admin; only the owner sees and downloads them.
+  const backups=new ServerBackups({directory:store.directory});
   // What the site and the app may show about selling: switches, plans and the free period.
   const productPublic=()=>({...store.product(),owner:store.product().owner||store.product().sales,free_until:store.freeUntil(),plans:Plans.PLANS.map(p=>({...p,features:p.features.map(f=>({id:f,...Plans.FEATURES[f]}))})),base:Plans.BASE});website.product=productPublic;
   const mail=new Mailer(store,{transportFactory:mailTransportFactory,allowLocalOrigins:allowLocalMail});website.mail=mail;members.mail=mail;
@@ -150,6 +153,10 @@ function createProductServer({ rateLimit=120, store, adminToken, privateKey, pub
         // Sales and registration switches. Sales on publishes the offer and turns plan limits on; off hides both.
         if(req.method==='GET'&&route==='/admin/product')return reply(200,{...store.product(),plans:Plans.PLANS,counts:Object.fromEntries(store.db.prepare("SELECT plan,count(*) n FROM users WHERE account_id IS NULL AND stage='active' GROUP BY plan").all().map(r=>[r.plan,r.n]))});
         if(req.method==='POST'&&route==='/admin/product'){const d=req.parsedBody||{};administrator.owner(session);return reply(200,sales.apply(d));}
+        if(req.method==='GET'&&route==='/admin/backups'){administrator.owner(session);return reply(200,{backups:backups.list()});}
+        if(req.method==='POST'&&route==='/admin/backups/create'){administrator.owner(session);return reply(201,backups.create('manual'));}
+        if(req.method==='POST'&&route==='/admin/backups/delete'){administrator.owner(session);return reply(200,backups.remove(string(req.parsedBody?.id,80)));}
+        if(req.method==='POST'&&route==='/admin/backups/download'){administrator.owner(session);const id=string(req.parsedBody?.id,80),file=backups.encrypted(id,req.parsedBody?.password);res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Length':file.length,'Content-Disposition':`attachment; filename="${id}.lomviko-backup"`,'Cache-Control':'no-store'});return res.end(file);}
         if(req.method==='POST'&&route==='/admin/sales/date'){administrator.owner(session);return reply(200,sales.setDate((req.parsedBody||{}).date));}
         if(req.method==='POST'&&route==='/admin/sales/confirm'){administrator.owner(session);return reply(200,sales.confirm(req.parsedBody||{}));}
         if(req.method==='POST'&&route==='/admin/sales/notice'){administrator.owner(session);return reply(200,sales.notice());}
@@ -272,7 +279,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
   server.once('listening', tickBots);
   let resolveDisposed; server.disposed = new Promise(resolve => { resolveDisposed = resolve; });
   server.on('close', () => {
-    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);clearInterval(payTimer);clearInterval(fiscalTimer);clearInterval(lapsedTimer);
+    stopping = true; clearInterval(maintenance); clearInterval(bots);clearInterval(mailTimer);backups.stop();clearInterval(payTimer);clearInterval(fiscalTimer);clearInterval(lapsedTimer);
     Promise.all([botWork,mail.close()]).finally(() => { accounts.close(); resolveDisposed(); });
   });
   server.shutdown = async () => {
@@ -280,7 +287,7 @@ const expires=Math.max(Date.now(),['active','trial'].includes(u.stage)?u.expires
     await new Promise((resolve, reject) => server.close(error => error && error.code!=='ERR_SERVER_NOT_RUNNING' ? reject(error) : resolve()));
     await server.disposed;
   };
-  server.mail=mail;server.retention=retention;server.sales=sales;server.documents=documents;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
+  server.mail=mail;server.retention=retention;server.sales=sales;server.documents=documents;server.backups=backups;server.website=website;server.tickBots = tickBots; server.accounts = accounts;
   server.requestTimeout = 15*60000; server.headersTimeout = 10000;
   return server;
 }
@@ -293,5 +300,6 @@ if (require.main === module) {
   let stopping = false;
   const stop = async () => { if (stopping) return; stopping = true; const deadline = setTimeout(() => process.exit(1), 55000); try { await server.shutdown(); store.db.close(); clearTimeout(deadline); } catch { console.error('LOMVIKO shutdown failed'); process.exitCode = 1; clearTimeout(deadline); } };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
+  server.backups.schedule();
   server.listen(port, host, () => console.log(`LOMVIKO product server: ${host}:${server.address().port}. Credentials remain in protected files under ${directory}.`));
 }

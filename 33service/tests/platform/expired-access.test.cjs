@@ -21,3 +21,20 @@ test('For 30 days after access ends the owner can view and export, but not chang
  expire(31);
  assert.equal((await call('/v1/crm/export'+b,undefined,s,pair.privateKey)).status,403);
 });
+
+test('Access paused by the LOMVIKO owner says so, instead of "the subscription ended"',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'biz-paused-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const first=await provisionOwner(dir,'owner@example.test');
+ const keys=setup(dir),store=new ProductStore(path.join(dir,'owner.sqlite')),server=createProductServer({store,...keys,allowLocalAdmin:true});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(async()=>{await server.shutdown();store.db.close();});
+ const pair=crypto.generateKeyPairSync('ed25519'),url='http://127.0.0.1:'+server.address().port;
+ async function call(route,body,token=keys.adminToken,key){const raw=body===undefined?'':JSON.stringify(body),method=body===undefined?'GET':'POST';const response=await fetch(url+route,{method,headers:{...(raw?{'Content-Type':'application/json'}:{}),Authorization:'Bearer '+token,...(key?signRequest(method,route,raw,token,key):{})},body:raw||undefined});return {status:response.status,value:await response.json()};}
+ await call('/admin/password',{user_id:first.user_id,password:'owner-test-password'});
+ const challenge=await call('/v1/auth/challenge',{login:'owner@example.test',password:'owner-test-password',public_key:pair.publicKey.export({type:'spki',format:'pem'})});
+ const login=await call('/v1/auth/login',{challenge_id:challenge.value.challenge_id,signature:crypto.sign(null,Buffer.from(JSON.stringify(challenge.value)),pair.privateKey).toString('base64url'),platform:'darwin',arch:'x64',version:'1.5.0'});
+ const s=login.value.session,b='?business_id='+first.business_id;
+ store.db.prepare("UPDATE users SET stage='blocked' WHERE id=?").run(first.user_id);
+ const paused=await call('/v1/crm/snapshot'+b,undefined,s,pair.privateKey);
+ assert.equal(paused.status,403);
+ assert.match(paused.value.error,/призупинено/);
+ assert.doesNotMatch(paused.value.error,/Підписка закінчилась/);
+});
