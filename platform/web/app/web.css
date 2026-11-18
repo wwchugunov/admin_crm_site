@@ -299,3 +299,5 @@ html.auth-embedded #auth-gate { visibility: hidden; }
 html.auth-embedded[data-theme] dialog#modal { width: 100%; max-width: 100%; max-height: 100dvh; margin: 0; padding: 24px; box-sizing: border-box; border-radius: 0; box-shadow: none; }
 html.auth-embedded[data-theme] dialog#modal::backdrop { background: #fff; backdrop-filter: none; }
 html.auth-embedded #close-modal { visibility: hidden; }
+
+html.auth-embedded body > aside, html.auth-embedded body > main, html.auth-embedded body > .connection-corner { display: none; }

@@ -842,6 +842,7 @@ function loginModal({ afterLogout = false } = {}) {
       team = [];
       selectedLogo = undefined;
       toast(OrbitI18n.t("m298"));
+      window.OrbitWeb.authenticated();
     },
     OrbitI18n.t("m036"),
   );
@@ -873,6 +874,7 @@ function forgotPasswordModal() {
               team = [];
               selectedLogo = undefined;
               toast(OrbitI18n.t("forgotPasswordDone"));
+              window.OrbitWeb.authenticated();
             },
             OrbitI18n.t("forgotPasswordSave"),
           ),
@@ -1061,6 +1063,7 @@ function registrationModal() {
                 if (window.OrbitWeb?.embedded) sessionStorage.setItem("biz.welcome.pending", "1");
                 else setTimeout(() => OrbitWelcome.start(), 100);
               }
+              window.OrbitWeb.authenticated();
             },
           ),
         0,

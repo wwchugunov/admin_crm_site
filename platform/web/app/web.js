@@ -4,8 +4,10 @@
 // browser itself: picking a logo, opening links, downloading an export.
 (function () {
   let info = { version: "", api: "" };
+  let authScreenStarted = false;
   const embedded = window.parent !== window && new URLSearchParams(location.search).get("embed") === "1";
   if (embedded) document.documentElement.classList.add("auth-embedded");
+  else document.documentElement?.classList.remove?.("auth-embedded");
   const notifyParent = (type) => { if (embedded) window.parent.postMessage({ type }, "https://lomviko.com"); };
   const post = (path, body) =>
     fetch(path, {
@@ -157,6 +159,14 @@
     get terms() {
       return info.contract === "site-terms";
     },
+    // Embedded pages are auth forms only; an existing session never boots the workspace.
+    async authScreen() {
+      if (authScreenStarted) return;
+      authScreenStarted = true;
+      await ready;
+      window.OrbitWeb.signedOut();
+    },
+    authenticated() { notifyParent("lomviko:authenticated"); },
     dismissed() { notifyParent("lomviko:auth-close"); },
     signedOut({ afterLogout = false } = {}) {
       if (document.body.classList.contains("signed-out")) return;
@@ -176,8 +186,7 @@
       );
     },
     signedIn() {
-      document.body.classList.remove("signed-out");
-      notifyParent("lomviko:authenticated");
+      if (!embedded) document.body.classList.remove("signed-out");
     },
   };
   if (embedded) new ResizeObserver(() => {

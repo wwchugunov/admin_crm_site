@@ -24,5 +24,19 @@ test('Embedded auth closes by a scoped parent message; logout always opens sign-
  const bodyClasses=new Set(),context={ResizeObserver:class { observe(){} },window,location,URL,URLSearchParams,fetch:async()=>({json:async()=>({registration:true})}),history:{replaceState(){}},document:{documentElement:{classList:{add(){}}},body:{classList:{contains:k=>bodyClasses.has(k),add:k=>bodyClasses.add(k),remove:k=>bodyClasses.delete(k)}},querySelector:()=>({open:false}),querySelectorAll:()=>[]},setTimeout:fn=>fn(),registrationModal:()=>opened='register',loginModal:opts=>opened=opts.afterLogout?'login-after-logout':'login'};
  vm.runInNewContext(source,context);window.OrbitWeb.signedOut({afterLogout:true});assert.equal(opened,'login-after-logout');
  window.OrbitWeb.dismissed();assert.equal(messages[0][0].type,'lomviko:auth-close');assert.equal(messages[0][1],'https://lomviko.com');assert.equal(location.href,'https://app.lomviko.com/?start=register&embed=1');
- window.OrbitWeb.signedIn();assert.equal(messages[1][0].type,'lomviko:authenticated');assert.deepEqual(Object.keys(messages[1][0]),['type']);
+ window.OrbitWeb.signedIn();assert.equal(messages.length,1,'a saved session cannot navigate the parent');window.OrbitWeb.authenticated();assert.equal(messages[1][0].type,'lomviko:authenticated');assert.deepEqual(Object.keys(messages[1][0]),['type']);
+});
+
+test('An embedded refresh opens the requested auth form and never reads a saved CRM session',async()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/web.js'),'utf8');
+ const app=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/app.js'),'utf8');
+ for(const start of ['register','login']){
+  const requests=[],messages=[],bodyClasses=new Set();let opened,opens=0;
+  const window={parent:{postMessage:(...args)=>messages.push(args)}},location=new URL('https://app.lomviko.com/?embed=1&start='+start);
+  const context={window,location,URL,URLSearchParams,ResizeObserver:class {observe(){}},history:{replaceState(){}},setTimeout:fn=>fn(),fetch:async(url)=>{requests.push(url);assert.equal(url,'/web/info');return{json:async()=>({registration:true})}},document:{documentElement:{classList:{add(){}}},body:{classList:{contains:k=>bodyClasses.has(k),add:k=>bodyClasses.add(k),remove:k=>bodyClasses.delete(k)}},querySelector:()=>({open:false}),querySelectorAll:()=>[]},registrationModal:()=>{opened='register';opens++},loginModal:()=>{opened='login';opens++}};
+  vm.createContext(context);vm.runInContext(source,context);
+  const refreshCode=app.slice(app.indexOf('async function refresh('),app.indexOf('\nconst onlineActions'));
+  vm.runInContext(refreshCode,context);await vm.runInContext('refresh()',context);await vm.runInContext('refresh()',context);
+  assert.equal(opened,start);assert.equal(opens,1,'polling cannot replace or reopen the form');assert.deepEqual(requests,['/web/info']);assert.equal(messages.length,0,'opening a form cannot trigger a workspace transition');
+ }
 });

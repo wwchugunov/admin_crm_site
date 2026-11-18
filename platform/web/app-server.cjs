@@ -153,8 +153,9 @@ function createAppServer({apiUrl,origin,publicApi,registrationConversion=process
    }
    if(req.method!=='GET'&&req.method!=='HEAD')problem(405,'Method not allowed');
    if(url.pathname==='/'&&url.searchParams.get('embed')==='1'){res.removeHeader('X-Frame-Options');res.setHeader('Content-Security-Policy',res.getHeader('Content-Security-Policy').replace("frame-ancestors 'none'",'frame-ancestors https://lomviko.com'));}
-   const name=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1)),file=files.get(name);
+   const name=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1));let file=files.get(name);
    if(!file||!/^[a-zA-Z0-9_./-]+$/.test(name)||name.includes('..'))problem(404,'Not found');
+   if(name==='index.html'&&url.searchParams.get('embed')==='1'){const body=Buffer.from(file.body.toString().replace('<html lang="uk">','<html lang="uk" class="auth-embedded">'));file={...file,body,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'};}
    if(req.headers['if-none-match']===file.etag){res.writeHead(304,{ETag:file.etag});return res.end();}
    res.writeHead(200,{'Content-Type':file.type,'Content-Length':file.body.length,ETag:file.etag,'Cache-Control':name==='index.html'?'no-store':'no-cache'});res.end(req.method==='HEAD'?undefined:file.body);
   }catch(e){if(!res.headersSent)reply(e.status||500,{error:e.status?e.message:'Сервіс тимчасово недоступний / Service unavailable',...(e.signedOut?{signedOut:true}:{})});else res.destroy();}

@@ -603,8 +603,7 @@ run(async () => {
   if (document.readyState !== "complete")
     await new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
   await refresh();
-  loadSupport();
-  loadLegal();
+  if (!window.OrbitWeb.embedded) { loadSupport(); loadLegal(); }
 });
 setInterval(() => {
   run(() =>
@@ -620,8 +619,7 @@ setInterval(() => {
 }, 15000);
 // New replies from the LOMVIKO team.
 setInterval(() => {
-  loadSupport();
-  loadLegal();
+  if (!window.OrbitWeb.embedded) { loadSupport(); loadLegal(); }
 }, 120000);
 
 // Picking another role in the user dialog resets the switches to that role's starting set.

@@ -231,6 +231,7 @@ async function loadOlder() {
   }
 }
 async function refresh({ preserveView = false } = {}) {
+  if (window.OrbitWeb.embedded) return window.OrbitWeb.authScreen();
   const first = !data;
   const known =
     data?.revision && !data.offline && windowData
