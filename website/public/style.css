@@ -196,7 +196,6 @@ h2 em{font-style:normal;color:var(--ink-3)}
 .launch-shot{margin:0;display:flex;justify-content:center}
 .launch-shot img{display:block;width:100%;max-width:520px;height:auto;border-radius:22px;background:#fff;box-shadow:0 30px 60px -30px rgba(0,25,30,.35),0 0 0 1px rgba(0,25,30,.06)}
 .launch-shot-phone img{max-width:340px;border-radius:26px}
-.launch-note{margin:16px 0 0;font-size:13px;color:var(--ink-3);text-align:center}
 @media (max-width:860px){
   .launch-step{grid-template-columns:minmax(0,1fr);gap:18px}
   .launch-step:nth-child(even) .launch-copy{order:0}
@@ -746,3 +745,15 @@ body:has(.auth-dialog[open]) { overflow: hidden; }
   .phone.bp{aspect-ratio:9/16.5}
   .bp-slide .bp-next{margin-top:auto;width:100%;border:0;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
 }
+
+/* Sign-up / sign-in dialog: brand and spinner while the form loads, then the form fades in. */
+.auth-dialog{position:fixed}
+.auth-dialog .auth-loading{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#fff}
+.auth-dialog.is-loading{height:min(560px,calc(100dvh - 24px))}
+.auth-dialog.is-loading .auth-loading{display:flex}
+.auth-dialog iframe{transition:opacity .2s ease}
+.auth-dialog.is-loading iframe{opacity:0}
+.auth-loading-mark{font-weight:800;font-size:22px;letter-spacing:-.02em;color:var(--ink)}
+.auth-loading-spin{width:34px;height:34px;border-radius:50%;border:3px solid #e1e8e4;border-top-color:var(--brand);animation:auth-spin .8s linear infinite}
+@keyframes auth-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.auth-loading-spin{animation-duration:2.4s}.auth-dialog iframe{transition:none}}

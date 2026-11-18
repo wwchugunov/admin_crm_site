@@ -226,8 +226,30 @@ const authClose = document.createElement('button');
 authClose.type = 'button'; authClose.className = 'auth-dialog-close'; authClose.textContent = '×';
 const authFrame = document.createElement('iframe');
 authFrame.title = 'LOMVIKO';
-authDialog.append(authClose, authFrame); document.body.append(authDialog);
-function closeAuth() { authDialog.close(); authFrame.removeAttribute('src'); }
+// While the form inside loads, the dialog shows the brand and a spinner instead of a blank white sheet.
+const authLoading = document.createElement('div');
+authLoading.className = 'auth-loading';
+authLoading.setAttribute('role', 'status');
+authLoading.innerHTML = '<span class="auth-loading-mark">LOMVIKO</span><span class="auth-loading-spin" aria-hidden="true"></span>';
+authDialog.append(authClose, authLoading, authFrame); document.body.append(authDialog);
+let authReadyTimer = 0;
+function authReady() { clearTimeout(authReadyTimer); authDialog.classList.remove('is-loading'); }
+function closeAuth() { authDialog.close(); authFrame.removeAttribute('src'); authFrameReady = false; authReady(); }
+// The form reports its height once it is drawn; that is the moment to show it. A slow network still
+// gets the form after the frame has loaded, at the latest.
+authFrame.addEventListener('load', () => { if (authFrame.getAttribute('src')) authReadyTimer = setTimeout(authReady, 1500); });
+function authUrl(link) {
+  const url = new URL(link.href);
+  url.searchParams.set('embed', '1');
+  if (link.hasAttribute('data-login')) url.searchParams.set('start', 'login');
+  for (const key of ['gclid', 'gbraid', 'wbraid', '_gl']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
+  return url.href;
+}
+// Start loading the form as soon as the pointer reaches the button, so the click opens it sooner.
+const authLink = (e) => { const link = e.target.closest?.('a[data-cta], a[data-login]'); return link && link.href.startsWith(APP_URL + '/') ? link : null; };
+const warmAuth = (e) => { const link = authLink(e); if (link && !authDialog.open && !authFrame.getAttribute('src')) authFrame.src = authUrl(link); };
+document.addEventListener('pointerover', warmAuth, { passive: true });
+document.addEventListener('touchstart', warmAuth, { passive: true });
 authClose.addEventListener('click', closeAuth);
 authDialog.addEventListener('cancel', (e) => { e.preventDefault(); closeAuth(); });
 authDialog.addEventListener('click', (e) => { if (e.target === authDialog) { const r = authDialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeAuth(); } });
@@ -235,16 +257,26 @@ document.addEventListener('click', (e) => {
   const link = e.target.closest('a[data-cta], a[data-login]');
   if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !link.href.startsWith(APP_URL + '/')) return;
   e.preventDefault();
-  const url = new URL(link.href);
-  url.searchParams.set('embed', '1');
-  if (link.hasAttribute('data-login')) url.searchParams.set('start', 'login');
-  for (const key of ['gclid', 'gbraid', 'wbraid', '_gl']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
+  const url = authUrl(link);
   authClose.setAttribute('aria-label', language === 'en' ? 'Close' : 'Закрити');
-  authFrame.src = url.href; authDialog.showModal();
+  authLoading.setAttribute('aria-label', language === 'en' ? 'Loading' : 'Завантаження');
+  // A form already loaded by hovering this button opens at once; otherwise it loads behind the spinner.
+  if (authFrame.getAttribute('src') !== url || !authFrameReady) {
+    if (authFrame.getAttribute('src') !== url) { authFrameReady = false; authFrame.src = url; }
+    authDialog.style.removeProperty('height');
+    authDialog.classList.add('is-loading');
+  }
+  authDialog.showModal();
 });
+let authFrameReady = false;
 window.addEventListener('message', (e) => {
-  if (e.origin !== APP_URL || e.source !== authFrame.contentWindow || !authDialog.open) return;
-  if (e.data?.type === 'lomviko:auth-size' && Number.isFinite(e.data.height)) authDialog.style.height = Math.min(Math.max(e.data.height, 300), innerHeight - 24) + 'px';
+  if (e.origin !== APP_URL || e.source !== authFrame.contentWindow) return;
+  if (e.data?.type === 'lomviko:auth-size' && Number.isFinite(e.data.height)) {
+    authFrameReady = true;
+    authReady();
+    authDialog.style.height = Math.min(Math.max(e.data.height, 300), innerHeight - 24) + 'px';
+  }
+  if (!authDialog.open) return;
   if (e.data?.type === 'lomviko:auth-close') closeAuth();
   if (e.data?.type === 'lomviko:authenticated') location.assign(APP_URL + '/');
 });
