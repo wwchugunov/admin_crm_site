@@ -204,7 +204,8 @@ document.documentElement.lang = lang;
 const t = (key) => TEXT[key]?.[lang] ?? key;
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const root = document.getElementById("auth");
-let info = { offer: true, contract: "site-offer", registration: true, api: "" };
+// Until the settings arrive, assume what production uses now (terms of use while sales are off).
+let info = { offer: true, contract: "site-terms", registration: true, api: "" };
 
 const tell = (type, extra = {}) => { if (embedded) window.parent.postMessage({ type, ...extra }, "https://lomviko.com"); };
 async function post(path, body) {
@@ -245,6 +246,7 @@ function openDocument(kind) {
 }
 
 function login() {
+  view = "login";
   screen(
     t("m293"),
     field(t("m294"), "login", "email", 'required autocomplete="username"') +
@@ -257,6 +259,7 @@ function login() {
 }
 
 function forgot() {
+  view = "forgot";
   const known = root.querySelector("#f-login")?.value || "";
   screen(
     t("forgotPasswordTitle"),
@@ -282,15 +285,18 @@ function forgot() {
   );
 }
 
+// Which documents the person accepts: the offer while it is published, otherwise the terms of use,
+// or only the privacy policy when the owner switched the contract off.
+const legalKey = (base) => base + (info.offer === false ? "Privacy" : info.contract === "site-terms" ? "Terms" : "");
+const legalText = () => `${esc(t("legalAcceptLabel"))} ${info.offer === false ? "" : `<button type="button" class="link" data-act="contract">${esc(t(info.contract === "site-terms" ? "legalTerms" : "legalOffer"))}</button> ${esc(t("legalAnd"))} `}<button type="button" class="link" data-act="privacy">${esc(t("legalPrivacyAccusative"))}</button>`;
+let view = "";
 function register() {
   if (info.registration === false) {
     root.innerHTML = `<h1>${esc(t("registrationClosedTitle"))}</h1><p>${esc(t("registrationClosedText"))}</p><div class="footer"><button type="button" class="btn" data-act="cancel">${esc(t("close"))}</button><a class="btn primary" href="https://lomviko.com/#request" target="_top">${esc(t("registrationClosedButton"))}</a></div>`;
     size();
     return;
   }
-  const terms = info.contract === "site-terms",
-    accept = info.offer === false ? "legalAcceptRequiredPrivacy" : terms ? "legalAcceptRequiredTerms" : "legalAcceptRequired",
-    signs = info.offer === false ? "legalCodeSignsPrivacy" : terms ? "legalCodeSignsTerms" : "legalCodeSigns";
+  view = "register";
   screen(
     t("registerFreeTrial"),
     `<p class="hint">${esc(t("registrationHint"))}</p>` +
@@ -300,15 +306,15 @@ function register() {
       field(t("m295"), "password", "password", 'required minlength="12" maxlength="128" autocomplete="new-password"') +
       field(t("registerPasswordAgain"), "password_again", "password", 'required minlength="12" maxlength="128" autocomplete="new-password"') +
       `<p class="hint">${esc(t("registerPasswordHint"))}</p>` +
-      `<label class="check"><input name="accept" type="checkbox"><span>${esc(t("legalAcceptLabel"))} ${info.offer === false ? "" : `<button type="button" class="link" data-act="contract">${esc(t(terms ? "legalTerms" : "legalOffer"))}</button> ${esc(t("legalAnd"))} `}<button type="button" class="link" data-act="privacy">${esc(t("legalPrivacyAccusative"))}</button></span></label>`,
+      `<label class="check"><input name="accept" type="checkbox"><span id="legal">${legalText()}</span></label>`,
     async (values) => {
       if (values.password !== values.password_again) throw Error(t("registerPasswordMismatch"));
-      if (values.accept !== "on") throw Error(t(accept));
+      if (values.accept !== "on") throw Error(t(legalKey("legalAcceptRequired")));
       const { password_again, accept: ticked, ...fields } = values;
       await call("account:register:start", { ...fields, accept: true, language: lang });
       screen(
         t("verifyEmail"),
-        `<p class="hint">${esc(t("verifyEmailHint"))}</p><p class="hint">${esc(t(signs))}</p>` +
+        `<p class="hint">${esc(t("verifyEmailHint"))}</p><p class="hint">${esc(t(legalKey("legalCodeSigns")))}</p>` +
           field(t("verificationCode"), "code", "text", 'required pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" maxlength="6"'),
         async (v) => {
           await call("account:register:confirm", v.code);
@@ -340,11 +346,17 @@ root.addEventListener("click", (e) => {
 function size() { tell("lomviko:auth-size", { height: document.documentElement.scrollHeight }); }
 new ResizeObserver(size).observe(root);
 
-// One small request decides what the form needs (registration open, which contract), then it is drawn.
-const start = params.get("start") === "login" ? login : register;
-root.innerHTML = `<p class="hint">${esc(t("loading"))}</p>`;
+// The form is drawn at once. The settings arrive a moment later: closed registration replaces the form,
+// and the consent line names the documents actually in force.
+(params.get("start") === "login" ? login : register)();
 post("/web/info")
-  .then((value) => { info = { ...info, ...value }; window.OrbitAds?.configure(value.ads); })
-  .catch(() => {})
-  .finally(start);
+  .then((value) => {
+    info = { ...info, ...value };
+    window.OrbitAds?.configure(value.ads);
+    if (view === "register" && document.getElementById("f-business")) {
+      if (info.registration === false) register();
+      else document.getElementById("legal").innerHTML = legalText();
+    }
+  })
+  .catch(() => {});
 })();
