@@ -24,6 +24,7 @@ function select(label, name, items) {
 }
 function modal(title, html, submit, button = OrbitI18n.t("m271")) {
   modalNeedsConnection = true;
+  $("#modal").classList.remove("client-modal");
   $("#modal-title").textContent = title;
   $("#modal-fields").innerHTML = html;
   $("#modal-submit").textContent = button;
@@ -31,6 +32,10 @@ function modal(title, html, submit, button = OrbitI18n.t("m271")) {
   $("#modal").classList.toggle("readonly", button === OrbitI18n.t("close"));
   onSubmit = submit;
   $("#modal").showModal();
+}
+function dismissModal() {
+  closeModal();
+  window.OrbitWeb?.dismissed();
 }
 function closeModal() {
   // A message shown inside the window moves to the page, so "Saved" stays visible after the window closes.
@@ -815,7 +820,7 @@ function serviceFields(s = {}) {
     `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.id ? (s.web_visible ? "checked" : "") : "checked"}>${OrbitI18n.t("m291")}</label>`
   );
 }
-function loginModal() {
+function loginModal({ afterLogout = false } = {}) {
   closeModal();
   modal(
     OrbitI18n.t("m293"),
@@ -831,7 +836,7 @@ function loginModal() {
         "password",
         'required autocomplete="current-password"',
       ) +
-      `<p class="hint">${OrbitI18n.t("m296")} <button type="button" class="link-button" data-action="forgot-password">${OrbitI18n.t("forgotPassword")}</button></p><button type="button" class="secondary" data-action="register">${OrbitI18n.t("registerFreeTrial")}</button>`,
+      `<p class="hint">${OrbitI18n.t("m296")} <button type="button" class="link-button" data-action="forgot-password">${OrbitI18n.t("forgotPassword")}</button></p>${afterLogout ? "" : `<button type="button" class="secondary" data-action="register">${OrbitI18n.t("registerFreeTrial")}</button>`}`,
     async (v) => {
       await window.orbit.call("account:login", "", v.login, v.password);
       team = [];
@@ -1052,8 +1057,10 @@ function registrationModal() {
               try { window.OrbitAds?.registrationComplete(); } catch {}
               team = [];
               selectedLogo = undefined;
-              if (!localStorage.getItem("biz.welcome.seen"))
-                setTimeout(() => OrbitWelcome.start(), 100);
+              if (!localStorage.getItem("biz.welcome.seen")) {
+                if (window.OrbitWeb?.embedded) sessionStorage.setItem("biz.welcome.pending", "1");
+                else setTimeout(() => OrbitWelcome.start(), 100);
+              }
             },
           ),
         0,
@@ -1110,6 +1117,7 @@ function clientDetails(c) {
       OrbitI18n.t("clientBirthday"),
       `${formatDay(c.birthday)}${born ? ` · ${born.days === 0 ? OrbitI18n.t("birthdayToday") : OrbitI18n.t("birthdayIn").replace("{days}", born.days)}, ${born.age}` : ""}`,
     ],
+    c.name_day && [OrbitI18n.t("clientNameDay"), c.name_day],
     c.email && [OrbitI18n.t("clientEmail"), c.email],
     c.source && [
       OrbitI18n.t("clientSource"),
@@ -1181,10 +1189,11 @@ function clientModal(id) {
       .catch(() => {});
   modal(
     c.name,
-    `<div class="client-card"><p class="hint">${escape(c.phone || "—")}${c.chat_id ? ` · Telegram ✓` : ""}${c.notes ? ` · ${escape(c.notes)}` : ""}</p>${clientDetails(c)}<div class="client-figures">${figures.map(([k, v, cls]) => `<div class="${cls || ""}"><span>${k}</span><strong>${v}</strong></div>`).join("")}</div><p class="client-next">${st.next ? `${OrbitI18n.t("clientNext")}: <strong>${businessDate(st.next.start).split("-").reverse().join(".")} · ${time(st.next.start)}</strong> · ${escape(st.next.service_name)}` : st.last ? `${OrbitI18n.t("clientLast")}: ${businessDate(st.last).split("-").reverse().join(".")}` : OrbitI18n.t("clientNoVisits")}</p>${history ? `<ul class="client-history">${history}</ul>` : '<div class="client-history-slot"></div>'}<div class="card-buttons"><button type="button" class="primary" data-action="client-book" data-id="${escape(c.id)}">${OrbitI18n.t("m273")}</button>${!c.chat_id ? `<button type="button" class="secondary" data-action="link" data-id="${escape(c.id)}">${OrbitI18n.t("m190")}</button>` : ""}${staff ? "" : `<button type="button" class="secondary" data-action="client-edit" data-id="${escape(c.id)}">${OrbitI18n.t("clientEdit")}</button><button type="button" class="link-button danger-link" data-action="client-delete" data-id="${escape(c.id)}">${OrbitI18n.t("clientDelete")}</button>`}</div></div>`,
+    `<div class="client-card"><div class="client-contact"><strong>${escape(c.phone || "—")}</strong><span class="badge">${c.chat_id ? "Telegram ✓" : OrbitI18n.t("clientNoTelegram")}</span></div>${c.notes ? `<section class="client-notes"><strong>${OrbitI18n.t("clientNotesTitle")}</strong><p>${escape(c.notes)}</p></section>` : ""}${clientDetails(c)}<div class="client-figures">${figures.map(([k, v, cls]) => `<div class="${cls || ""}"><span>${k}</span><strong>${v}</strong></div>`).join("")}</div><p class="client-next">${st.next ? `${OrbitI18n.t("clientNext")}: <strong>${businessDate(st.next.start).split("-").reverse().join(".")} · ${time(st.next.start)}</strong> · ${escape(st.next.service_name)}` : st.last ? `${OrbitI18n.t("clientLast")}: ${businessDate(st.last).split("-").reverse().join(".")}` : OrbitI18n.t("clientNoVisits")}</p>${history ? `<ul class="client-history">${history}</ul>` : '<div class="client-history-slot"></div>'}<div class="card-buttons"><button type="button" class="primary" data-action="client-book" data-id="${escape(c.id)}">${OrbitI18n.t("m273")}</button>${!c.chat_id ? `<button type="button" class="secondary" data-action="link" data-id="${escape(c.id)}">${OrbitI18n.t("m190")}</button>` : ""}${staff ? "" : `<button type="button" class="secondary" data-action="client-edit" data-id="${escape(c.id)}">${OrbitI18n.t("clientEdit")}</button><button type="button" class="link-button danger-link" data-action="client-delete" data-id="${escape(c.id)}">${OrbitI18n.t("clientDelete")}</button>`}</div></div>`,
     async () => {},
     OrbitI18n.t("close"),
   );
+  $("#modal").classList.add("client-modal");
 }
 
 // Human-readable shift pattern for lists and the grid.
@@ -1451,6 +1460,8 @@ function clientFields(c = {}) {
         `max="${businessDate(Date.now())}" ${v("birthday")}`,
       ),
     ) +
+    field(OrbitI18n.t("clientNameDay"), "name_day", "text", `maxlength="5" pattern="[0-9]{2}\\.[0-9]{2}" placeholder="25.01" ${v("name_day")}`) +
+    `<p class="hint">${OrbitI18n.t("clientNameDayHint")}</p>` +
     (OrbitIndustries.fields(data.industry).includes("pet")
       ? field(
           OrbitI18n.t("clientPet"),
@@ -1530,6 +1541,7 @@ function clientEditModal(id) {
     await window.orbit.call("client:update", { ...v, id });
     toast(OrbitI18n.t("m361"));
   });
+  $("#modal").classList.add("client-modal");
 }
 function clientDeleteModal(id) {
   const c = data.clients.find((x) => x.id === id);

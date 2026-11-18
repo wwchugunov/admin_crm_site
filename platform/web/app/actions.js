@@ -560,16 +560,16 @@ $("#account-entry").onclick = () => {
       await window.orbit.call("account:logout");
       team = [];
       data = null;
-      await refresh();
+      window.OrbitWeb.signedOut({ afterLogout: true });
     });
   else loginModal();
 };
 $("#new-booking").addEventListener("click", bookingModal);
-$("#close-modal").addEventListener("click", closeModal);
-$("#cancel-modal").addEventListener("click", closeModal);
+$("#close-modal").addEventListener("click", dismissModal);
+$("#cancel-modal").addEventListener("click", dismissModal);
 $("#modal").addEventListener("cancel", (event) => {
   event.preventDefault();
-  if (!$("#modal-submit").disabled) closeModal();
+  if (!$("#modal-submit").disabled) dismissModal();
 });
 $("#modal-form").addEventListener("submit", async (event) => {
   event.preventDefault();

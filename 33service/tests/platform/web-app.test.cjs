@@ -90,3 +90,10 @@ test('Registration Ads target is explicit and controls CSP without an overriding
  assert.throws(()=>createAppServer({registrationConversion:'https://evil.test'}),/CH_GOOGLE_ADS_REGISTRATION_SEND_TO/);
  const plain=await f.browser().send('/');assert.doesNotMatch(plain.headers.get('content-security-policy'),/googletagmanager/);
 });
+
+test('Auth may be embedded by the landing only; regular workspace keeps clickjacking protection',async t=>{
+ const f=await fixture(t),b=f.browser();
+ const regular=await b.send('/');assert.equal(regular.headers.get('x-frame-options'),'DENY');assert.match(regular.headers.get('content-security-policy'),/frame-ancestors 'none'/);
+ const embed=await b.send('/?embed=1&start=register');assert.equal(embed.status,200);assert.equal(embed.headers.get('x-frame-options'),null);assert.match(embed.headers.get('content-security-policy'),/frame-ancestors https:\/\/lomviko\.com(?:;|$)/);
+ const other=await b.send('/?embed=evil');assert.equal(other.headers.get('x-frame-options'),'DENY');
+});

@@ -63,7 +63,7 @@ function sendFile(req, res, file) {
 }
 // Google Ads tag hosts are the only third parties: the tag script, its conversion pings and their pixels.
 const ADS = 'https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://www.google.com.ua';
-const cspFor = (editor) => `default-src 'self'; script-src 'self' ${ADS}; style-src 'self'; img-src 'self' data: ${ADS}; connect-src 'self' ${ADS}; frame-src https://td.doubleclick.net https://bid.g.doubleclick.net; object-src 'none'; base-uri 'none'; frame-ancestors ${editor || "'none'"}; form-action 'self'`;
+const cspFor = (editor) => `default-src 'self'; script-src 'self' ${ADS}; style-src 'self'; img-src 'self' data: ${ADS}; connect-src 'self' ${ADS}; frame-src https://app.lomviko.com https://td.doubleclick.net https://bid.g.doubleclick.net; object-src 'none'; base-uri 'none'; frame-ancestors ${editor || "'none'"}; form-action 'self'`;
 function upstream(raw) {
   const u = new URL(raw);
   if (u.username || u.password || u.search || u.hash || u.pathname !== '/' || !['http:', 'https:'].includes(u.protocol)) throw Error('CH_API_URL must be an origin without credentials or path');

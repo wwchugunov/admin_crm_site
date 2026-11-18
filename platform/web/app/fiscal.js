@@ -2,6 +2,7 @@
 // Fiscal receipts (ПРРО) in Integrations: connect Checkbox, choose what gets a receipt, see and retry receipts.
 // LOMVIKO only passes sales to the licensed provider; whether a business needs receipts is for its accountant to say.
 Object.assign(OrbitI18n.messages, {
+  fiscalFlow: { uk: "Оплата і чек — різні дії. 1. Ви записуєте оплату в LOMVIKO або клієнт платить через monobank / LiqPay. 2. Підключений ПРРО отримує дані оплати й створює фіскальний чек. 3. Статус і посилання на чек з’являються нижче. Без підключеного ПРРО LOMVIKO веде облік оплат, але не видає фіскальних чеків. ПРРО не приймає гроші замість банку. Для онлайн-оплат оберіть лише один спосіб видачі чеків: тут або в банку, щоб не дублювати їх.", en: "Payment and receipt are separate steps. 1. Record a payment in LOMVIKO or let the client pay through monobank / LiqPay. 2. The connected PRRO receives payment data and creates a fiscal receipt. 3. The status and receipt link appear below. Without a connected PRRO, LOMVIKO records payments but does not issue fiscal receipts. PRRO does not collect money instead of the bank. For online payments, issue receipts here or through your bank, to avoid duplicates." },
   fiscalGroup: { uk: "Фіскальні чеки (ПРРО)", en: "Fiscal receipts (PRRO)" },
   fiscalNote: { uk: "LOMVIKO передає продаж ліцензованому ПРРО, а він реєструє чек у податковій. LOMVIKO не є ПРРО й не консультує з податків: чи потрібні вам чеки — уточніть у бухгалтера.", en: "LOMVIKO passes each sale to a licensed PRRO provider, which registers the receipt with the tax service. LOMVIKO is not a PRRO and gives no tax advice: ask your accountant whether you need receipts." },
   fiscalCheckbox: { uk: "Checkbox", en: "Checkbox" },
@@ -90,7 +91,7 @@ function fiscalGroup() {
       more: `<p>${ft(provider === "vchasno" ? "fiscalVchasnoPrice" : "fiscalCheckboxPrice")}</p><p>${ft("fiscalNote")}</p>`,
     });
   };
-  const why = `<div class="fiscal-why"><strong>${ft("fiscalWhyTitle")}</strong><ul><li>${ft("fiscalWhy1")}</li><li>${ft("fiscalWhy2")}</li><li>${ft("fiscalWhy3")}</li></ul></div>`;
+  const why = `<div class="fiscal-why"><strong>${ft("fiscalWhyTitle")}</strong><p>${ft("fiscalFlow")}</p><ul><li>${ft("fiscalWhy1")}</li><li>${ft("fiscalWhy2")}</li><li>${ft("fiscalWhy3")}</li></ul></div>`;
   const checkbox = row("checkbox", "₴"),
     vchasno = row("vchasno", "◷");
   const list =

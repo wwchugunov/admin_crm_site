@@ -13,7 +13,7 @@
     { key: "catalog", uk: "Послуги, спеціалісти й матеріали", en: "Services, specialists and materials" },
     { key: "finance", uk: "Фінансовий звіт, витрати й зарплати", en: "Finance report, expenses and pay" },
     { key: "integrations", uk: "Інтеграції: бот, оплати, каса, сторінка запису", en: "Integrations: bot, payments, receipts, booking page" },
-    { key: "settings", uk: "Налаштування компанії та експорт", en: "Company settings and export" },
+    { key: "settings", uk: "Налаштування компанії", en: "Company settings" },
   ];
   const KEYS = ITEMS.map((i) => i.key);
   const PRESETS = {

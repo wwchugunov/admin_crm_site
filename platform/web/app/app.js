@@ -273,6 +273,10 @@ async function refresh({ preserveView = false } = {}) {
   }
   if (preserveView) connectionView();
   else render();
+  if (first && !window.OrbitWeb.embedded && sessionStorage.getItem("biz.welcome.pending")) {
+    sessionStorage.removeItem("biz.welcome.pending");
+    setTimeout(() => OrbitWelcome.start(), 100);
+  }
   if (data.connecting)
     setTimeout(
       () =>

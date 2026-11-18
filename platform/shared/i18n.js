@@ -1,6 +1,7 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.OrbitI18n=factory();})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const messages={
+    "clientNameDayInvalid": {"uk": "Перевірте іменини: потрібна справжня дата у форматі ДД.ММ", "en": "Check the name day: enter a valid date in DD.MM format"},
     "botReviewAsk": {"uk": "Як вам візит? Оцініть, будь ласка:", "en": "How was your visit? Please rate it:"},
     "botReviewGoogle": {"uk": "Дякуємо! Нам дуже допоможе ваш відгук у Google — це хвилина:", "en": "Thank you! A review on Google would help us a lot — it takes a minute:"},
     "botReviewGoogleButton": {"uk": "Залишити відгук у Google", "en": "Leave a Google review"},

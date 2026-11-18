@@ -786,7 +786,7 @@ function settingsAccount() {
   );
 }
 function settingsData() {
-  const owner = can("settings");
+  const owner = data.mode !== "server" || data.role === "owner";
   return (
     settingsGroup(
       OrbitI18n.t("m261"),
@@ -800,7 +800,7 @@ function settingsData() {
               OrbitI18n.t("m250"),
               `<button type="button" class="secondary" data-action="backup">${OrbitI18n.t("settingsCreate")}</button>`,
             )
-        : settingRow(OrbitI18n.t("m252"), ""),
+        : settingRow(OrbitI18n.t("exportOwnerOnly"), ""),
       OrbitI18n.t("m263"),
     ) +
     settingsGroup(

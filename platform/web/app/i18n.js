@@ -4,6 +4,12 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   const messages = {
+    clientNameDay: { uk: "Іменини · день і місяць", en: "Name day · day and month" },
+    clientNameDayHint: { uk: "Необов’язково, у форматі ДД.ММ. Дату уточніть у клієнта — вона не визначається за ім’ям. Автоматичних привітань на іменини немає.", en: "Optional, in DD.MM format. Ask the client for the date; it is not inferred from their name. Name-day greetings are not sent automatically." },
+    clientNameDayInvalid: { uk: "Перевірте іменини: потрібна справжня дата у форматі ДД.ММ", en: "Check the name day: enter a valid date in DD.MM format" },
+    clientNoTelegram: { uk: "Telegram не підключено", en: "Telegram not connected" },
+    clientNotesTitle: { uk: "Нотатки про клієнта", en: "Client notes" },
+    exportOwnerOnly: { uk: "Повне вивантаження та резервна копія доступні лише власнику компанії.", en: "Full exports and backups are available to the company owner only." },
     staffCannotDo: { uk: "Цей спеціаліст не виконує обрану послугу", en: "This specialist does not provide the selected service" },
     staffScheduleInvalid: { uk: "Перевірте графік: потрібен хоча б один робочий день", en: "Check the schedule: at least one working day is needed" },
     staffAbsenceInvalid: { uk: "Перевірте дати відсутності", en: "Check the absence dates" },
@@ -384,7 +390,7 @@
     welcomeNext: { uk: "Далі", en: "Next" },
     welcomeDone: { uk: "Почати роботу", en: "Get started" },
     offlineMode: { uk: "Без мережі · перегляд", en: "Offline · view only" },
-    sharedBase: { uk: "Спільна база · онлайн", en: "Shared database · online" },
+    sharedBase: { uk: "Дані вашої компанії · онлайн", en: "Your company data · online" },
     localBase: { uk: "Локальна база", en: "Local database" },
     botHosting: { uk: "Де працюватиме бот", en: "Bot hosting" },
     botHosted: { uk: "На сервері LOMVIKO", en: "On the LOMVIKO server" },
@@ -553,16 +559,16 @@
       en: ". Creating and editing appointments will resume after reconnection. The bot continues taking bookings on a running server.",
     },
     m032: {
-      uk: "Спільна база компанії",
-      en: "Shared company database",
+      uk: "Дані вашої компанії",
+      en: "Your company data",
     },
     m033: {
       uk: "База на вашому пристрої",
       en: "Database on your device",
     },
     m034: {
-      uk: "Зміни видно на всіх підключених пристроях.",
-      en: "Changes are visible on all connected devices.",
+      uk: "Зміни синхронізуються на пристроях вашої команди з урахуванням прав доступу.",
+      en: "Changes sync across your team’s devices according to access permissions.",
     },
     m035: {
       uk: "Вийти",
@@ -1470,8 +1476,8 @@
       en: "Local database",
     },
     m257: {
-      uk: "Компанія, команда і бот працюють з однією базою на сервері. Відкривайте LOMVIKO з будь-якого комп’ютера чи телефона.",
-      en: "Your company, team and bot share one server database. Open LOMVIKO from any computer or phone.",
+      uk: "Ваші пристрої, співробітники й бот синхронізують дані цієї компанії. Інші компанії не мають до них доступу; співробітники бачать дані відповідно до наданих прав.",
+      en: "Your devices, team and bot synchronise this company’s data. Other companies cannot access them; staff see data according to their permissions.",
     },
     m258: {
       uk: "Локальний режим працює на одному комп’ютері. Для співробітників і кількох пристроїв увійдіть у серверну компанію.",
@@ -1490,12 +1496,12 @@
       en: "Export and backups",
     },
     m262: {
-      uk: "Повна база вибраної компанії: клієнти, учасники візитів, ресурси, ціни, платежі та журнал дій.",
-      en: "The full company database: clients, participants, resources, prices, payments and activity log.",
+      uk: "Власник може завантажити дані лише вибраної компанії. JSON містить таблиці, CSV — дані для Excel; .orbit — копія під вашим паролем. Секретні ключі інтеграцій не експортуються.",
+      en: "The owner can download the selected company’s data only. JSON contains tables, CSV is for spreadsheets, and .orbit is a password-protected copy. Integration secrets are not exported.",
     },
     m263: {
-      uk: "JSON і CSV містять персональні дані відкритим текстом. Копія .orbit захищена паролем. Відновлення з копії робить служба підтримки LOMVIKO.",
-      en: "JSON and CSV contain personal data in plain text. The .orbit backup is password protected. LOMVIKO support restores data from a backup.",
+      uk: "Це ваші дані для зберігання й аналізу. Експорт не продовжує доступ і не переносить підписку в інший акаунт. Завантаження повної бази в новий вебакаунт тут немає. JSON і CSV не зашифровані: зберігайте їх безпечно. Відновлення компанії з копії виконує підтримка; ці файли не замінюють серверні резервні копії.",
+      en: "These are your data for safekeeping and analysis. Exporting does not extend access or transfer a subscription to another account. This screen cannot import a full database into a new web account. JSON and CSV are unencrypted: store them safely. Support restores companies from backups; these files do not replace server backups.",
     },
     m265: {
       uk: "Зареєструйтеся й користуйтеся всім безкоштовно або увійдіть. Якщо отримали одноразовий ключ, активуйте його нижче.",
@@ -1602,8 +1608,8 @@
       en: "Company server",
     },
     m293: {
-      uk: "Увійти до своєї компанії",
-      en: "Sign in to your company",
+      uk: "Вхід до LOMVIKO",
+      en: "Sign in to LOMVIKO",
     },
     m294: {
       uk: "Логін · email",

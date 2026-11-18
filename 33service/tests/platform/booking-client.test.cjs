@@ -4,3 +4,13 @@ test('Booking saves new clients atomically and reuses a matching formatted phone
 test('A conflict rolls back a newly created client and its audit entries',t=>{const{store,booking}=fixture(t);store.book({...booking,new_clients:[{name:'Anna'}]});const before=store.db.prepare('SELECT count(*) n FROM audit').get().n;assert.throws(()=>store.book({...booking,new_clients:[{name:'Uncommitted'}]}));assert.equal(store.snapshot().clients.length,1);assert.equal(store.db.prepare('SELECT count(*) n FROM audit').get().n,before);});
 test('Same names do not merge; ambiguous phones require an explicit existing client',t=>{const{store,booking}=fixture(t);const id=store.addClient({name:'Anna',phone:'0501234567'});assert.throws(()=>store.book({...booking,new_clients:[{name:'Someone else',phone:'050 123 45 67'}]}));assert.equal(store.snapshot().clients.length,1);store.book({...booking,new_clients:[{name:'Anna'}],client_ids:[id],people_count:2});assert.equal(store.snapshot().clients.length,2);assert.equal(store.snapshot().appointments[0].clients.length,2);assert.throws(()=>store.book({...booking,start:booking.start+3600000,client_ids:['unknown'],new_clients:[{name:'No orphan'}]}));assert.equal(store.snapshot().clients.length,2);});
 test('Blank contacts and excessive groups do not create clients',t=>{const{store,booking}=fixture(t);assert.throws(()=>store.book({...booking,new_clients:[{name:' ' }]}));assert.throws(()=>store.book({...booking,new_clients:Array.from({length:101},()=>({name:'Guest'}))}));assert.equal(store.snapshot().clients.length,0);});
+
+test('Optional name day validates a calendar date, survives old-client edits and backups, and is erased on anonymisation',t=>{
+ const{store,booking}=fixture(t),id=store.addClient({name:'Anna',name_day:'29.02'});
+ assert.equal(store.snapshot().clients.find(c=>c.id===id).name_day,'29.02');
+ store.updateClient({id,name:'Anna updated'});assert.equal(store.snapshot().clients.find(c=>c.id===id).name_day,'29.02');
+ for(const name_day of ['31.04','00.01','25.13','1.2','bad'])assert.throws(()=>store.addClient({name:'Bad date',name_day}));
+ const backup=store.export();store.restore(backup);assert.equal(store.snapshot().clients.find(c=>c.id===id).name_day,'29.02');
+ const old=store.export();delete old.tables.clients[0].name_day;store.restore(old);assert.equal(store.snapshot().clients[0].name_day,'');
+ store.updateClient({id,name:'Anna',name_day:'25.01'});store.book({...booking,client_ids:[id]});store.deleteClient({id});assert.equal(store.db.prepare('SELECT name_day FROM clients WHERE id=?').get(id).name_day,'');
+});

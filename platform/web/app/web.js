@@ -4,6 +4,9 @@
 // browser itself: picking a logo, opening links, downloading an export.
 (function () {
   let info = { version: "", api: "" };
+  const embedded = window.parent !== window && new URLSearchParams(location.search).get("embed") === "1";
+  if (embedded) document.documentElement.classList.add("auth-embedded");
+  const notifyParent = (type) => { if (embedded) window.parent.postMessage({ type }, "https://lomviko.com"); };
   const post = (path, body) =>
     fetch(path, {
       method: "POST",
@@ -143,6 +146,7 @@
   window.OrbitWeb = {
     // False while the public offer is switched off: registration then asks for the privacy policy only.
     // False when the LOMVIKO owner closed registration: the app offers a request instead.
+    get embedded() { return embedded; },
     get registration() {
       return info.registration !== false;
     },
@@ -153,7 +157,8 @@
     get terms() {
       return info.contract === "site-terms";
     },
-    signedOut() {
+    dismissed() { notifyParent("lomviko:auth-close"); },
+    signedOut({ afterLogout = false } = {}) {
       if (document.body.classList.contains("signed-out")) return;
       document.body.classList.add("signed-out");
       if (typeof data !== "undefined") data = null;
@@ -166,12 +171,17 @@
         history.replaceState(null, "", landing.pathname + landing.search + landing.hash);
       }
       setTimeout(
-        () => (start === "register" ? registrationModal() : loginModal()),
+        () => (!afterLogout && start === "register" ? registrationModal() : loginModal({ afterLogout })),
         0,
       );
     },
     signedIn() {
       document.body.classList.remove("signed-out");
+      notifyParent("lomviko:authenticated");
     },
   };
+  if (embedded) new ResizeObserver(() => {
+    const modal = document.querySelector("#modal");
+    if (modal.open) window.parent.postMessage({ type: "lomviko:auth-size", height: modal.scrollHeight + 2 }, "https://lomviko.com");
+  }).observe(document.querySelector("#modal"));
 })();

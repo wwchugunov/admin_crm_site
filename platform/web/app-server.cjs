@@ -152,6 +152,7 @@ function createAppServer({apiUrl,origin,publicApi,registrationConversion=process
     problem(404,'Unknown operation');
    }
    if(req.method!=='GET'&&req.method!=='HEAD')problem(405,'Method not allowed');
+   if(url.pathname==='/'&&url.searchParams.get('embed')==='1'){res.removeHeader('X-Frame-Options');res.setHeader('Content-Security-Policy',res.getHeader('Content-Security-Policy').replace("frame-ancestors 'none'",'frame-ancestors https://lomviko.com'));}
    const name=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1)),file=files.get(name);
    if(!file||!/^[a-zA-Z0-9_./-]+$/.test(name)||name.includes('..'))problem(404,'Not found');
    if(req.headers['if-none-match']===file.etag){res.writeHead(304,{ETag:file.etag});return res.end();}

@@ -125,3 +125,15 @@ test('Restricted snapshots omit private clients and prices, including after live
  const restored=(await f.get(route+'&revision='+encodeURIComponent(after.revision)+'&from='+after.loaded_from,member)).value;
  assert.ok(!restored.unchanged);assert.equal(restored.services[0].price,50000);
 });
+
+test('Full export stays owner-only even when a team member has every permission',async t=>{
+ const f=await fixture(t);
+ for(const role of ['admin','staff']){
+  const email=role+'-export@example.test';
+  await f.O('/v1/crm/users/add',{name:role,email,password:'export-password-123',role,perms:Permissions.PRESETS.admin});
+  const member=await f.login(email,'export-password-123');
+  assert.equal((await f.get('/v1/crm/export'+f.q,member)).status,403);
+  assert.equal((await f.get('/v1/crm/snapshot'+f.q,member)).value.perms.settings,true,'settings permission does not imply export');
+ }
+ assert.equal((await f.get('/v1/crm/export'+f.q,f.owner)).status,200);
+});

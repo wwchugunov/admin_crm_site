@@ -1,6 +1,6 @@
 'use strict';
 
-// LOMVIKO itself runs in the browser here; the landing only leads to it.
+// Authentication opens over the landing; the workspace opens only after success.
 const APP_URL = 'https://app.lomviko.com';
 const { translations, renderPublic, publicSnapshot } = window.LomvikoPublic;
 const $ = (s) => document.querySelector(s);
@@ -204,3 +204,34 @@ readAccessLink();
   document.addEventListener('lomviko:render', () => setTimeout(show, 300), { once: true });
   setTimeout(show, 1200);
 })();
+
+// A real modal: closing it never navigates away from the landing page.
+const authDialog = document.createElement('dialog');
+authDialog.className = 'auth-dialog';
+authDialog.setAttribute('aria-label', 'LOMVIKO');
+const authClose = document.createElement('button');
+authClose.type = 'button'; authClose.className = 'auth-dialog-close'; authClose.textContent = '×';
+const authFrame = document.createElement('iframe');
+authFrame.title = 'LOMVIKO';
+authDialog.append(authClose, authFrame); document.body.append(authDialog);
+function closeAuth() { authDialog.close(); authFrame.removeAttribute('src'); }
+authClose.addEventListener('click', closeAuth);
+authDialog.addEventListener('cancel', (e) => { e.preventDefault(); closeAuth(); });
+authDialog.addEventListener('click', (e) => { if (e.target === authDialog) { const r = authDialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeAuth(); } });
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[data-cta], a[data-login]');
+  if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !link.href.startsWith(APP_URL + '/')) return;
+  e.preventDefault();
+  const url = new URL(link.href);
+  url.searchParams.set('embed', '1');
+  if (link.hasAttribute('data-login')) url.searchParams.set('start', 'login');
+  for (const key of ['gclid', 'gbraid', 'wbraid', '_gl']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
+  authClose.setAttribute('aria-label', language === 'en' ? 'Close' : 'Закрити');
+  authFrame.src = url.href; authDialog.showModal();
+});
+window.addEventListener('message', (e) => {
+  if (e.origin !== APP_URL || e.source !== authFrame.contentWindow || !authDialog.open) return;
+  if (e.data?.type === 'lomviko:auth-size' && Number.isFinite(e.data.height)) authDialog.style.height = Math.min(Math.max(e.data.height, 300), innerHeight - 24) + 'px';
+  if (e.data?.type === 'lomviko:auth-close') closeAuth();
+  if (e.data?.type === 'lomviko:authenticated') location.assign(APP_URL + '/');
+});

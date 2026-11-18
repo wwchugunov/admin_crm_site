@@ -70,6 +70,7 @@ const SOURCES = [
 ];
 const EXTRAS = [
   "birthday",
+  "name_day",
   "email",
   "source",
   "alert",
@@ -98,6 +99,12 @@ function clientExtras(data, old = {}) {
   for (const key of EXTRAS) {
     const raw = data[key] === undefined ? old[key] : data[key];
     out[key] = String(raw ?? "").trim();
+  }
+  if (out.name_day) {
+    const match = /^(\d{2})\.(\d{2})$/.exec(out.name_day);
+    const date = match && new Date(Date.UTC(2000, Number(match[2]) - 1, Number(match[1])));
+    if (!match || date.getUTCDate() !== Number(match[1]) || date.getUTCMonth() !== Number(match[2]) - 1)
+      throw Error(OrbitI18n.t("clientNameDayInvalid"));
   }
   if (out.birthday && !/^\d{4}-\d{2}-\d{2}$/.test(out.birthday))
     throw Error(OrbitI18n.t("clientBirthdayInvalid"));
@@ -214,6 +221,7 @@ class Store {
       ["clients", "invited_at", "INTEGER"],
       // More about the client: all optional.
       ["clients", "birthday", "TEXT NOT NULL DEFAULT ''"],
+      ["clients", "name_day", "TEXT NOT NULL DEFAULT ''"],
       ["clients", "email", "TEXT NOT NULL DEFAULT ''"],
       ["clients", "source", "TEXT NOT NULL DEFAULT ''"],
       ["clients", "alert", "TEXT NOT NULL DEFAULT ''"],
@@ -922,7 +930,7 @@ class Store {
       if (used)
         this.db
           .prepare(
-            "UPDATE clients SET name=?,phone='',notes='',chat_id=NULL,link_code=?,birthday='',email='',source='',alert='',tags='',vehicle='',plate='' WHERE id=?",
+            "UPDATE clients SET name=?,phone='',notes='',chat_id=NULL,link_code=?,birthday='',name_day='',email='',source='',alert='',tags='',vehicle='',plate='' WHERE id=?",
           )
           .run(
             OrbitI18n.t("clientDeletedName"),
@@ -1013,7 +1021,7 @@ class Store {
       loaded_from: from,
       clients: this.db
         .prepare(
-          "SELECT id,name,phone,notes,chat_id,invited_at,birthday,email,source,alert,tags,vehicle,plate,discount FROM clients ORDER BY name",
+          "SELECT id,name,phone,notes,chat_id,invited_at,birthday,name_day,email,source,alert,tags,vehicle,plate,discount FROM clients ORDER BY name",
         )
         .all()
         .map((c) => {

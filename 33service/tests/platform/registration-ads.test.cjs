@@ -17,3 +17,12 @@ test('Opening registration preserves Google attribution parameters while consumi
  vm.runInNewContext(code,context);window.OrbitWeb.signedOut();
  const remaining=new URL(replacement,location.origin);assert.equal(remaining.searchParams.has('start'),false);assert.equal(remaining.searchParams.get('_gl'),'linker-value');assert.equal(remaining.searchParams.get('gclid'),'click-value');assert.equal(remaining.hash,'#section');assert.equal(opened,'register');
 });
+
+test('Embedded auth closes by a scoped parent message; logout always opens sign-in',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../../../platform/web/app/web.js'),'utf8'),messages=[];
+ const window={parent:{postMessage:(...args)=>messages.push(args)}},location=new URL('https://app.lomviko.com/?start=register&embed=1');let opened;
+ const bodyClasses=new Set(),context={ResizeObserver:class { observe(){} },window,location,URL,URLSearchParams,fetch:async()=>({json:async()=>({registration:true})}),history:{replaceState(){}},document:{documentElement:{classList:{add(){}}},body:{classList:{contains:k=>bodyClasses.has(k),add:k=>bodyClasses.add(k),remove:k=>bodyClasses.delete(k)}},querySelector:()=>({open:false}),querySelectorAll:()=>[]},setTimeout:fn=>fn(),registrationModal:()=>opened='register',loginModal:opts=>opened=opts.afterLogout?'login-after-logout':'login'};
+ vm.runInNewContext(source,context);window.OrbitWeb.signedOut({afterLogout:true});assert.equal(opened,'login-after-logout');
+ window.OrbitWeb.dismissed();assert.equal(messages[0][0].type,'lomviko:auth-close');assert.equal(messages[0][1],'https://lomviko.com');assert.equal(location.href,'https://app.lomviko.com/?start=register&embed=1');
+ window.OrbitWeb.signedIn();assert.equal(messages[1][0].type,'lomviko:authenticated');assert.deepEqual(Object.keys(messages[1][0]),['type']);
+});
