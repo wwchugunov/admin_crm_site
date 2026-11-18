@@ -89,6 +89,8 @@ class Accounts {
       else if(route==='/v1/crm/service/update')value=store.updateService(data);
       else if(route==='/v1/crm/resource')value=store.addResource(data);
       else if(route==='/v1/crm/resource/update')value=store.updateResource(data);
+      // A client's own specialist (null: nobody), set from the specialist's card.
+      else if(route==='/v1/crm/regular')value=store.setRegular(data);
       else if(route==='/v1/crm/absence')value=store.addAbsence(data);
       else if(route==='/v1/crm/absence/delete')value=store.deleteAbsence(data);
       else if(route==='/v1/crm/client/update')value=store.updateClient(this.clientPhone(store,data));

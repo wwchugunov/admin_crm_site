@@ -124,6 +124,12 @@ function bookingModal(options = {}) {
   setupBookingClients();
   syncBookingStaff(!options.resourceId);
   setupBookingTime(options.time);
+  // Picking a regular client picks their specialist (the times follow).
+  $("#field-client_ids")?.addEventListener("change", () => {
+    if (!$("#field-client_ids").selectedOptions.length) return;
+    syncBookingStaff(true);
+    document.querySelector('#field-resources input[name="resource_ids"]')?.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 // Booking form: hide people who do not do the service, mark those off that day, and
 // pick working people automatically when the service changes.
@@ -138,7 +144,7 @@ function syncBookingStaff(autoPick) {
   );
   for (const box of boxes) {
     const person = data.resources.find((r) => r.id === box.value),
-      can = OrbitStaff.capable(service, box.value),
+      can = serviceCan(service, box.value),
       on = OrbitStaff.works(person, date, data.absences);
     const chip = box.closest(".chip");
     chip.hidden = !can;
@@ -153,8 +159,19 @@ function syncBookingStaff(autoPick) {
       !b.closest(".chip").hidden &&
       !b.closest(".chip").classList.contains("off"),
   );
-  for (const box of usable.slice(0, service.required_resources))
+  // A regular client gets their own specialist first, when that person does the service and works that day.
+  const client = $("#field-client_ids")?.selectedOptions?.[0]?.value,
+    regular = (data.regulars || []).find((g) => g.client_id === client)?.resource_id,
+    own = usable.find((b) => b.value === regular);
+  const ordered = own ? [own, ...usable.filter((b) => b !== own)] : usable;
+  for (const box of ordered.slice(0, service.required_resources))
     box.checked = true;
+}
+// Who may take a service: specialists chosen for it (nobody chosen = anyone); rooms the service needs.
+function serviceCan(service, id) {
+  const room = (rid) => data.resources.find((r) => r.id === rid)?.kind === "room",
+    links = (service.resource_ids || []).filter((rid) => room(rid) === room(id));
+  return OrbitStaff.capable({ resource_ids: links }, id);
 }
 function resourceChips(chosen) {
   return `<fieldset class="chip-group" id="field-resources"><legend>${OrbitI18n.t("m276")}</legend>${data.resources.map((r) => `<label class="chip"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${chosen.includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</fieldset>`;
@@ -775,38 +792,36 @@ function timestamp(value) {
   // take the later moment, i.e. the same minutes one hour later.
   return Math.max(...seen);
 }
+// A service: price, length, rest after it and a note. Who does it is ticked on each specialist's card.
+// Rare settings (group seats, room, prepayment, pay, materials, where it is shown) wait under "More".
 function serviceFields(s = {}) {
+  const who = data.resources.filter((r) => r.kind !== "room" && OrbitStaff.capable({ resource_ids: (s.resource_ids || []).filter((id) => data.resources.some((x) => x.id === id && x.kind !== "room")) }, r.id));
+  const extra = (s.capacity || 1) > 1 || (s.required_resources || 1) > 1 || (s.deposit || 0) > 0 || s.pay_percent != null || s.bot_visible === 0 || (s.id && !s.web_visible) || data.resources.some((r) => r.kind === "room" && (s.resource_ids || []).includes(r.id));
   return (
-    field(
-      OrbitI18n.t("m260"),
-      "name",
-      "text",
-      `required maxlength="120" value="${escape(s.name || "")}"`,
-    ) +
+    field(OrbitI18n.t("m260"), "name", "text", `required maxlength="120" value="${escape(s.name || "")}"`) +
     '<div class="form-grid">' +
-    "<div>" +
-    field(
-      OrbitI18n.t("m286"),
-      "duration",
-      "number",
-      `required min="5" max="480" value="${s.duration || 60}"`,
-    ) +
+    `<div>${field(OrbitI18n.t("servicePrice"), "price", "number", `required min="0" step="0.01" value="${(s.price || 0) / 100}"`)}</div>` +
+    `<div>${field(OrbitI18n.t("m286"), "duration", "number", `required min="5" max="480" value="${s.duration || 60}"`)}</div>` +
     "</div>" +
-    "<div>" +
-    field(
-      OrbitI18n.t("m287"),
-      "price",
-      "number",
-      `required min="0" step="0.01" value="${(s.price || 0) / 100}"`,
-    ) +
-    "</div>" +
-    "</div>" +
+    field(OrbitI18n.t("serviceRest"), "buffer", "number", `min="0" max="120" step="5" value="${s.buffer || 0}"`) +
+    `<p class="hint">${OrbitI18n.t("serviceRestHint")}</p>` +
+    `<label for="field-comment">${OrbitI18n.t("serviceComment")}</label><textarea id="field-comment" name="comment" rows="3" maxlength="1000">${escape(s.comment || "")}</textarea>` +
+    `<p class="hint">${OrbitI18n.t("serviceWhoHint")}${s.id ? ` ${OrbitI18n.t("serviceWhoNow")} ${escape(who.length === data.resources.filter((r) => r.kind !== "room").length ? OrbitI18n.t("staffAnyone") : who.map((r) => r.name).join(", ") || "—")}.` : ""}</p>` +
+    `<details class="form-more" ${extra ? "open" : ""}><summary>${OrbitI18n.t("serviceMore")}</summary>` +
     serviceKindFields(s) +
-    servicePeopleFields(s) +
-    serviceMoreFields(s) +
+    serviceRoomFields(s) +
+    field(OrbitI18n.t("serviceTogether"), "required_resources", "number", `required min="1" max="8" value="${s.required_resources || 1}"`) +
+    `<p class="hint">${OrbitI18n.t("serviceTogetherHint")}</p>` +
     serviceExtraFields(s) +
-    `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.id ? (s.web_visible ? "checked" : "") : "checked"}>${OrbitI18n.t("m291")}</label>`
+    `<label class="checkbox-line"><input name="bot_visible" type="checkbox" ${s.bot_visible === 0 ? "" : "checked"}>${OrbitI18n.t("m290")}</label><label class="checkbox-line"><input name="web_visible" type="checkbox" ${s.id ? (s.web_visible ? "checked" : "") : "checked"}>${OrbitI18n.t("m291")}</label>` +
+    `</details>`
   );
+}
+// Rooms or equipment the service needs (only when the company has any).
+function serviceRoomFields(s = {}) {
+  const rooms = data.resources.filter((r) => r.kind === "room");
+  if (!rooms.length) return "";
+  return `<fieldset class="pick-group" id="field-rooms"><legend>${OrbitI18n.t("serviceRooms")}</legend><div class="pick-list">${rooms.map((r) => `<label class="pick"><input type="checkbox" name="room_ids" value="${escape(r.id)}" ${(s.resource_ids || []).includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</div><p class="hint">${OrbitI18n.t("serviceRoomsHint")}</p></fieldset>`;
 }
 // Individual: one client per specialist, so free times follow free specialists and need no setting.
 // Group: one class with seats, set here.
@@ -818,32 +833,6 @@ function serviceKindFields(s = {}) {
     `<label><input type="radio" name="kind" value="group" ${group ? "checked" : ""}><span><strong>${OrbitI18n.t("serviceKindGroup")}</strong><small>${OrbitI18n.t("serviceKindGroupHint")}</small></span></label>` +
     `</fieldset>` +
     `<div id="service-seats" ${group ? "" : "hidden"}>${field(OrbitI18n.t("serviceSeats"), "capacity", "number", `min="2" max="100" value="${group ? s.capacity : 10}" ${group ? "required" : "disabled"}`)}<p class="hint">${OrbitI18n.t("serviceSeatsHint")}</p></div>`
-  );
-}
-// "Who performs" and, when the company has them, rooms or equipment the service needs.
-function servicePeopleFields(s = {}) {
-  const chosen = s.resource_ids || [],
-    staff = data.resources.filter((r) => r.kind !== "room"),
-    rooms = data.resources.filter((r) => r.kind === "room"),
-    list = (items) =>
-      `<div class="pick-list">${items.map((r) => `<label class="pick"><input type="checkbox" name="resource_ids" value="${escape(r.id)}" ${chosen.includes(r.id) ? "checked" : ""}><span>${escape(r.name)}</span></label>`).join("")}</div>`;
-  return (
-    (staff.length
-      ? `<fieldset class="pick-group" id="field-resources"><legend>${OrbitI18n.t("staffWho")} <small class="pick-count" id="staff-count"></small></legend>${list(staff)}<p class="hint">${OrbitI18n.t("staffWhoHint")}</p></fieldset>`
-      : `<p class="hint">${OrbitI18n.t("serviceNoStaff")}</p>`) +
-    (rooms.length
-      ? `<fieldset class="pick-group" id="field-rooms"><legend>${OrbitI18n.t("serviceRooms")}</legend>${list(rooms)}<p class="hint">${OrbitI18n.t("serviceRoomsHint")}</p></fieldset>`
-      : "")
-  );
-}
-// Rarely changed: the pause after each visit and how many specialists one visit takes at once.
-function serviceMoreFields(s = {}) {
-  const open = (s.buffer || 0) > 0 || (s.required_resources || 1) > 1;
-  return (
-    `<details class="form-more" ${open ? "open" : ""}><summary>${OrbitI18n.t("serviceMore")}</summary>` +
-    `<div class="form-grid"><div>${field(OrbitI18n.t("serviceBuffer"), "buffer", "number", `min="0" max="120" step="5" value="${s.buffer || 0}"`)}<p class="hint">${OrbitI18n.t("serviceBufferHint")}</p></div>` +
-    `<div>${field(OrbitI18n.t("serviceTogether"), "required_resources", "number", `required min="1" max="8" value="${s.required_resources || 1}"`)}<p class="hint">${OrbitI18n.t("serviceTogetherHint")}</p></div></div>` +
-    `</details>`
   );
 }
 // Live parts of the service form: seats only for a group, and how many people are ticked.
@@ -953,6 +942,8 @@ function setupBookingClients() {
         Array.from(selected.options).find((o) => o.value === found[0].id);
       if (option && !option.selected) {
         option.selected = true;
+        // A found regular client brings their specialist along.
+        setTimeout(() => selected.dispatchEvent(new Event("change")), 0);
         query.value = "";
         phone.value = "";
         const c = found[0];
@@ -1274,6 +1265,30 @@ function scheduleDays(s) {
   }
   return `${s.on}/${s.off} · ${OrbitI18n.t("staffFrom")} ${s.from.split("-").reverse().join(".")}`;
 }
+// The services this specialist does: a service nobody was chosen for counts as done by everyone.
+function staffServicesFields(r) {
+  if (!data.services.length) return "";
+  const does = (svc) => {
+    const people = (svc.resource_ids || []).filter((id) => data.resources.some((x) => x.id === id && x.kind !== "room"));
+    return !people.length || people.includes(r.id);
+  };
+  return `<fieldset class="pick-group" id="field-services"><legend>${OrbitI18n.t("staffServices")}</legend><div class="pick-list">${data.services.map((svc) => `<label class="pick"><input type="checkbox" name="service_ids" value="${escape(svc.id)}" ${does(svc) ? "checked" : ""}><span>${escape(svc.name)}</span></label>`).join("")}</div></fieldset>`;
+}
+// Regular clients of a specialist: by two visits or added by hand; the next booking picks this specialist.
+function staffRegularsHtml(resourceId) {
+  const mine = (data.regulars || []).filter((g) => g.resource_id === resourceId),
+    byId = new Map((data.clients || []).map((c) => [c.id, c])),
+    others = (data.clients || []).filter((c) => !mine.some((g) => g.client_id === c.id) && !c.name?.startsWith(OrbitI18n.t("clientDeletedName")));
+  return (
+    `<p class="hint">${OrbitI18n.t("staffRegularsHint")}</p>` +
+    (mine.length
+      ? `<ul class="regular-list">${mine.map((g) => `<li><span>${escape(byId.get(g.client_id)?.name || "—")}<small>${g.manual ? OrbitI18n.t("staffRegularManual") : `${g.visits} ${OrbitI18n.t("staffRegularVisits")}`}</small></span><button type="button" class="link-button" data-action="regular-remove" data-client="${escape(g.client_id)}" data-resource="${escape(resourceId)}">${OrbitI18n.t("staffRegularRemove")}</button></li>`).join("")}</ul>`
+      : `<p class="hint">${OrbitI18n.t("staffRegularsNone")}</p>`) +
+    (others.length
+      ? `<div class="regular-add"><input id="regular-client" list="regular-clients" placeholder="${escape(OrbitI18n.t("staffRegularFind"))}" aria-label="${escape(OrbitI18n.t("staffRegularFind"))}"><datalist id="regular-clients">${others.slice(0, 2000).map((c) => `<option value="${escape(c.name)}${c.phone ? ` · ${escape(c.phone)}` : ""}"></option>`).join("")}</datalist><button type="button" class="secondary" data-action="regular-add" data-resource="${escape(resourceId)}">${OrbitI18n.t("staffRegularAdd")}</button></div>`
+      : "")
+  );
+}
 function staffModal(id) {
   const r = data.resources.find((x) => x.id === id);
   if (!r) return;
@@ -1299,12 +1314,15 @@ function staffModal(id) {
   modal(
     r.name,
     field(
-      OrbitI18n.t("m326"),
+      OrbitI18n.t(r.kind === "room" ? "m326" : "staffFullName"),
       "name",
       "text",
       `required maxlength="120" value="${escape(r.name)}"`,
     ) +
-      `<label for="field-kind">${OrbitI18n.t("staffSchedule")}</label><select id="field-kind" name="kind"><option value="all" ${kind === "all" ? "selected" : ""}>${OrbitI18n.t("staffEveryDay")}</option><option value="days" ${kind === "days" ? "selected" : ""}>${OrbitI18n.t("staffWeekdays")}</option><option value="cycle" ${kind === "cycle" ? "selected" : ""}>${OrbitI18n.t("staffCycle")}</option></select>` +
+      `<label for="field-info">${OrbitI18n.t("staffInfo")}</label><textarea id="field-info" name="info" rows="2" maxlength="2000">${escape(r.info || "")}</textarea>` +
+      (r.kind === "room" ? "" : staffServicesFields(r) + `<h3 class="form-section">${OrbitI18n.t("staffRegulars")}</h3><div id="staff-regulars">${staffRegularsHtml(r.id)}</div>`) +
+      `<h3 class="form-section">${OrbitI18n.t("staffSchedule")}</h3>` +
+      `<label for="field-kind" class="visually-hidden">${OrbitI18n.t("staffSchedule")}</label><select id="field-kind" name="kind"><option value="all" ${kind === "all" ? "selected" : ""}>${OrbitI18n.t("staffEveryDay")}</option><option value="days" ${kind === "days" ? "selected" : ""}>${OrbitI18n.t("staffWeekdays")}</option><option value="cycle" ${kind === "cycle" ? "selected" : ""}>${OrbitI18n.t("staffCycle")}</option></select>` +
       `<div id="staff-days" ${kind === "days" ? "" : "hidden"}><div class="work-days">${names.map((n, i) => `<label class="chip"><input type="checkbox" name="staff_days" value="${i + 1}" ${s?.days?.includes(i + 1) ? "checked" : ""}><span>${n}</span></label>`).join("")}</div></div>` +
       `<div id="staff-cycle" class="form-grid three" ${kind === "cycle" ? "" : "hidden"}><div>${field(OrbitI18n.t("staffOn"), "on", "number", `min="1" max="14" value="${s?.on || 2}"`)}</div><div>${field(OrbitI18n.t("staffOff"), "off", "number", `min="1" max="14" value="${s?.off || 2}"`)}</div><div>${field(OrbitI18n.t("staffCycleStart"), "from", "date", `value="${s?.from || businessDate(Date.now())}"`)}</div></div>` +
       `<p class="hint">${OrbitI18n.t("staffScheduleHint")}</p>` +
@@ -1339,6 +1357,8 @@ function staffModal(id) {
         id,
         name: v.name,
         kind: v.resource_kind,
+        info: v.info ?? "",
+        ...($("#field-services") ? { service_ids: v.service_ids || [] } : {}),
         schedule,
         ...(v.pay_percent === undefined
           ? {}
@@ -1395,7 +1415,7 @@ async function moveVisits(visits, fromId, targetId) {
       targetId ? others.filter((o) => o.id === targetId) : others
     ).filter(
       (o) =>
-        OrbitStaff.capable(service, o.id) &&
+        serviceCan(service, o.id) &&
         OrbitStaff.works(o, day, data.absences),
     );
     const keep = (a.resources || [{ id: a.resource_id }])

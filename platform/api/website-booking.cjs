@@ -107,10 +107,11 @@ class WebsiteBooking {
     const date = new Intl.DateTimeFormat('en-CA', {timeZone:store.get('timezone'), year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date(start));
     if (!store.slots(service.id, resource, date).includes(start)) a.fail(409, 'Цей час щойно зайняли. Оберіть інший / This slot is no longer available.');
     const appointment = store.transaction(() => {
-      const free = store.availableResources(service.id, resource, start);
-      if (free.length < service.required_resources) a.fail(409, 'Цей час щойно зайняли. Оберіть інший / This slot is no longer available.');
       // A public request may reuse a client but may never rename it or expose its record.
       const client = store.db.prepare('SELECT id,phone FROM clients').all().find(c => digits(c.phone) === phone);
+      // "Any specialist" goes to the client's regular one when they are free.
+      const free = store.availableResources(service.id, resource, start, people, client?.id);
+      if (free.length < service.required_resources) a.fail(409, 'Цей час щойно зайняли. Оберіть інший / This slot is no longer available.');
       const clientId = client?.id || store.addClient({name, phone:data.phone.trim(), source:'page'});
       let id;
       try { id = store.book({client_id:clientId, service_id:service.id, resource_ids:free, start, people_count:people}); }

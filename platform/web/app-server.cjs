@@ -10,7 +10,7 @@ const PKCS8=Buffer.from('302e020100300506032b657004220420','hex');
 const DEVICE='lv_device',SESSION='lv_session',WEEK=7*86400000,YEAR=365*86400000;
 // Channel → company route on the API. "whole" answers are passed on as they come, the rest unwrap {value}.
 const CRM={'client:add':'client','client:update':'client/update','client:delete':'client/delete','client:history':'client/history','crm:range':'range',
- 'service:add':'service','service:update':'service/update','service:delete':'service/delete','resource:add':'resource','resource:update':'resource/update','resource:delete':'resource/delete',
+ 'service:add':'service','service:update':'service/update','service:delete':'service/delete','resource:add':'resource','resource:update':'resource/update','resource:delete':'resource/delete','regular:set':'regular',
  'absence:add':'absence','absence:delete':'absence/delete','booking:add':'book','booking:reschedule':'reschedule','visit:update':'visit/update','payment:add':'payment','settings:save':'profile',
  'waitlist:add':'waitlist','waitlist:remove':'waitlist/remove','telegram:disconnect':'telegram/disconnect','monobank:invoice':'monobank/invoice','monobank:cancel':'monobank/cancel',
  'liqpay:connect':'liqpay/connect','liqpay:invoice':'liqpay/invoice','liqpay:cancel':'liqpay/cancel','monobank:disconnect':'monobank/disconnect','liqpay:disconnect':'liqpay/disconnect',

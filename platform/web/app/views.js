@@ -573,7 +573,7 @@ function catalogView() {
       ? data.services
           .map(
             (s) =>
-              `<div class="catalog-row" data-layout-key="service:${escape(s.id)}"><div><strong>${escape(s.name)}</strong><small>${serviceSummary(s)}</small><small>${OrbitI18n.t("m203")} ${s.bot_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")} ${OrbitI18n.t("m204")} ${s.web_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")}</small><small>${OrbitI18n.t("staffWho")}: ${
+              `<div class="catalog-row" data-layout-key="service:${escape(s.id)}"><div><strong>${escape(s.name)}</strong><small>${serviceSummary(s)}</small>${s.comment ? `<small class="catalog-note">${escape(s.comment)}</small>` : ""}<small>${OrbitI18n.t("m203")} ${s.bot_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")} ${OrbitI18n.t("m204")} ${s.web_visible ? OrbitI18n.t("m198") : OrbitI18n.t("m199")}</small><small>${OrbitI18n.t("staffWho")}: ${
                 data.resources.some((r) => r.kind !== "room" && (s.resource_ids || []).includes(r.id))
                   ? escape(
                       data.resources
@@ -599,7 +599,7 @@ function catalogView() {
                 x.resource_id === r.id &&
                 x.end_date >= businessDate(Date.now()),
             );
-            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong><small>${r.kind === "room" ? `${OrbitI18n.t("resourceRoom")} · ` : ""}${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${can("catalog") ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
+            return `<div class="catalog-row" data-layout-key="resource:${escape(r.id)}"><div><strong>${escape(r.name)}</strong>${r.info ? `<small class="catalog-note">${escape(r.info)}</small>` : ""}<small>${r.kind === "room" ? `${OrbitI18n.t("resourceRoom")} · ` : ""}${escape(scheduleLabel(r))}${away ? ` · ${OrbitI18n.t("staffAway")} ${away.start_date.slice(5).split("-").reverse().join(".")}–${away.end_date.slice(5).split("-").reverse().join(".")}` : ""}</small></div>${can("catalog") ? `<div class="row-buttons"><button class="secondary" data-action="staff-edit" data-id="${r.id}">${OrbitI18n.t("staffSchedule")}</button><button class="danger" data-action="resource-delete" data-id="${r.id}">${OrbitI18n.t("catalogDelete")}</button></div>` : ""}</div>`;
           })
           .join("")
       : empty(OrbitI18n.t("m211"), OrbitI18n.t("m212"))

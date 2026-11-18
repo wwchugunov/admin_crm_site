@@ -133,3 +133,63 @@ test("Simultaneous requests for the last free time make one visit, never two", a
   assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
   assert.equal(store.snapshot().appointments.filter((a) => a.status === "confirmed").length, 1);
 });
+
+test("Two visits make a client regular with a specialist; by hand one can set or clear it; 'any' then goes to them", (t) => {
+  const { store, masters, cut, day, client } = barbershop(t);
+  const [andriy, bohdan] = masters, anna = client(1);
+  store.book({ client_id: anna, service_id: cut, resource_ids: [bohdan], start: at(day, "10:00") });
+  assert.equal(store.regularOf(anna), null, "one visit is not enough");
+  store.book({ client_id: anna, service_id: cut, resource_ids: [bohdan], start: at(day, "12:00") });
+  assert.equal(store.regularOf(anna), bohdan);
+  // Free at 15:00 are all three; "any" picks the least busy, but Anna goes to Bohdan.
+  assert.deepEqual(store.availableResources(cut, "any", at(day, "15:00"), 1, anna), [bohdan]);
+  assert.notDeepEqual(store.availableResources(cut, "any", at(day, "15:00")), [bohdan], "without the client the least busy person is chosen");
+  store.setRegular({ client_id: anna, resource_id: andriy });
+  assert.equal(store.regularOf(anna), andriy, "set by hand wins over visits");
+  assert.ok(store.snapshot().regulars.some((r) => r.client_id === anna && r.resource_id === andriy && r.manual));
+  store.setRegular({ client_id: anna, resource_id: null });
+  assert.equal(store.regularOf(anna), null, "cleared by hand stays cleared");
+  // A busy regular specialist does not block the booking: someone else free is chosen.
+  store.setRegular({ client_id: anna, resource_id: andriy });
+  store.book({ client_id: client(2), service_id: cut, resource_ids: [andriy], start: at(day, "16:00") });
+  assert.equal(store.availableResources(cut, "any", at(day, "16:00"), 1, anna).length, 1);
+  assert.notDeepEqual(store.availableResources(cut, "any", at(day, "16:00"), 1, anna), [andriy]);
+  store.deleteClient({ id: anna });
+  assert.equal(store.regularOf(anna), null, "a deleted client keeps no link");
+});
+
+test("Services are ticked on the specialist's card; a service done by anyone stays with everyone else when unticked", (t) => {
+  const { store, masters, day } = barbershop(t);
+  const [andriy, bohdan, viktor] = masters;
+  const beard = store.addService({ name: "Борода", duration: 30, price: 300, comment: "Тільки машинкою" });
+  assert.equal(store.snapshot().services.find((s) => s.id === beard).comment, "Тільки машинкою");
+  assert.ok(masters.every((m) => store.canDo(beard, m)), "nobody chosen: anyone");
+  store.updateResource({ id: andriy, name: "Андрій", info: "Старший майстер", service_ids: [] });
+  assert.ok(!store.canDo(beard, andriy) && store.canDo(beard, bohdan) && store.canDo(beard, viktor), "unticked by Andriy only");
+  assert.equal(store.snapshot().resources.find((r) => r.id === andriy).info, "Старший майстер");
+  store.updateResource({ id: andriy, name: "Андрій", service_ids: [beard] });
+  assert.ok(store.canDo(beard, andriy), "ticked again");
+  const room = store.addResource({ name: "Кабінет", kind: "room" });
+  store.updateService({ id: beard, name: "Борода", duration: 30, price: 300, room_ids: [room] });
+  assert.ok(store.canDo(beard, bohdan) && store.canDo(beard, room), "rooms change without touching specialists");
+  assert.ok(store.slots(beard, "any", day).length > 0);
+});
+
+test("A backup made before rooms, pauses and notes restores with their defaults", (t) => {
+  const { store, cut } = barbershop(t);
+  const backup = store.export();
+  for (const row of backup.tables.resources) { delete row.kind; delete row.info; }
+  for (const row of backup.tables.services) { delete row.buffer; delete row.comment; }
+  delete backup.tables.client_regulars;
+  store.restore(backup);
+  const snap = store.snapshot();
+  assert.ok(snap.resources.every((r) => r.kind === "staff" && r.info === ""));
+  assert.equal(snap.services.find((s) => s.id === cut).buffer, 0);
+});
+
+test("Setting a regular client counts as a change, so open apps refresh", (t) => {
+  const { store, masters, client } = barbershop(t);
+  const before = store.revision();
+  store.setRegular({ client_id: client(1), resource_id: masters[0] });
+  assert.notEqual(store.revision(), before);
+});

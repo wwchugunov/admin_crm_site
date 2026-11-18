@@ -1,4 +1,9 @@
 "use strict";
+// The service form sends its rooms (an empty list clears them); specialists are set on their cards.
+function serviceValuesOut(values) {
+  const { resource_ids, ...rest } = values;
+  return $("#field-rooms") ? { ...rest, room_ids: values.room_ids || [] } : rest;
+}
 const actions = {
   "dashboard-mode": (b) => {
     dashboardMode = b.dataset.mode;
@@ -53,11 +58,7 @@ const actions = {
   "service-edit": (b) => {
     const s = data.services.find((s) => s.id === b.dataset.id);
     modal(OrbitI18n.t("m299"), serviceFields(s), (v) =>
-      window.orbit.call("service:update", {
-        ...v,
-        id: s.id,
-        resource_ids: v.resource_ids || [],
-      }),
+      window.orbit.call("service:update", { ...serviceValuesOut(v), id: s.id }),
     );
     wireServiceForm();
   },
@@ -65,6 +66,20 @@ const actions = {
   "absence-add": (b) => {
     closeModal();
     absenceModal(b.dataset.id);
+  },
+  // Regular clients on the specialist's card: only that list is redrawn, unsaved edits stay.
+  "regular-remove": async (b) => {
+    await window.orbit.call("regular:set", { client_id: b.dataset.client, resource_id: null });
+    await refresh({ preserveView: true });
+    if ($("#staff-regulars")) $("#staff-regulars").innerHTML = staffRegularsHtml(b.dataset.resource);
+  },
+  "regular-add": async (b) => {
+    const typed = $("#regular-client")?.value.trim() || "";
+    const client = (data.clients || []).find((c) => `${c.name}${c.phone ? ` · ${c.phone}` : ""}` === typed) || (data.clients || []).find((c) => c.name === typed);
+    if (!client) throw Error(OrbitI18n.t("staffRegularPick"));
+    await window.orbit.call("regular:set", { client_id: client.id, resource_id: b.dataset.resource });
+    await refresh({ preserveView: true });
+    if ($("#staff-regulars")) $("#staff-regulars").innerHTML = staffRegularsHtml(b.dataset.resource);
   },
   "absence-delete": async (b) => {
     await window.orbit.call("absence:delete", { id: b.dataset.id });
@@ -335,10 +350,7 @@ const actions = {
     ),
   service: () => {
     modal(OrbitI18n.t("m324"), serviceFields(), (values) =>
-      window.orbit.call("service:add", {
-        ...values,
-        resource_ids: values.resource_ids || [],
-      }),
+      window.orbit.call("service:add", serviceValuesOut(values)),
     );
     wireServiceForm();
   },
@@ -582,7 +594,7 @@ $("#modal-form").addEventListener("submit", async (event) => {
   let values = $('#modal-fields [name="work_days"]')
     ? profileValues(form)
     : Object.fromEntries(form);
-  for (const name of ["client_ids", "resource_ids"])
+  for (const name of ["client_ids", "resource_ids", "room_ids", "service_ids"])
     if (form.has(name)) values[name] = form.getAll(name);
   for (const name of ["bot_visible", "web_visible"])
     if ($(`#modal-fields [name="${name}"]`)) values[name] = form.has(name);

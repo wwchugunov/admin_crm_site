@@ -32,6 +32,7 @@ const TABLES = [
   "certificates",
   "passes",
   "fiscal_receipts",
+  "client_regulars",
 ];
 // Company settings the app shows; changing one of them counts as a change of data.
 const PROFILE = [
@@ -211,6 +212,9 @@ class Store {
       ["services", "buffer", "INTEGER NOT NULL DEFAULT 0 CHECK(buffer BETWEEN 0 AND 120)"],
       // A specialist does services; a room or equipment is only needed for some of them.
       ["resources", "kind", "TEXT NOT NULL DEFAULT 'staff' CHECK(kind IN ('staff','room'))"],
+      // A note the team keeps about a service, and about a specialist.
+      ["services", "comment", "TEXT NOT NULL DEFAULT ''"],
+      ["resources", "info", "TEXT NOT NULL DEFAULT ''"],
       ["services", "web_visible", "INTEGER NOT NULL DEFAULT 0"],
       ["appointments", "total", "INTEGER NOT NULL DEFAULT 0 CHECK(total>=0)"],
       ["appointments", "cost", "INTEGER NOT NULL DEFAULT 0 CHECK(cost>=0)"],
@@ -273,6 +277,11 @@ class Store {
     if (!this.get("work_end")) this.set("work_end", "18:00");
     if (!this.get("work_days")) this.set("work_days", [1, 2, 3, 4, 5, 6, 7]);
     this.staffSchema();
+    // A client's own specialist, set by hand; resource_id NULL means "no regular specialist" even
+    // when the visits would suggest one. Without a row, two visits to one person make them regular.
+    this.db.exec(
+      "CREATE TABLE IF NOT EXISTS client_regulars(client_id TEXT PRIMARY KEY REFERENCES clients(id),resource_id TEXT REFERENCES resources(id))",
+    );
     this.financeSchema();
     this.reviewSchema();
     // Indexes for the snapshot and client history (added after all tables exist).
@@ -308,6 +317,7 @@ class Store {
       "certificates",
       "passes",
       "fiscal_receipts",
+      "client_regulars",
     ])
       for (const op of ["insert", "update", "delete"])
         this.db.exec(
@@ -477,11 +487,12 @@ class Store {
       id = randomUUID();
     this.db
       .prepare(
-        "INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible,buffer) VALUES(?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO services(id,name,duration,price,capacity,required_resources,bot_visible,web_visible,buffer,comment) VALUES(?,?,?,?,?,?,?,?,?,?)",
       )
       .run(id, ...values);
     if (Array.isArray(data.resource_ids))
       this.setServiceStaff(id, data.resource_ids);
+    if (Array.isArray(data.room_ids)) this.setServiceRooms(id, data.room_ids);
     this.setServiceMaterials(id, data.materials);
     this.setPay("services", id, data);
     this.setDeposit(id, data);
@@ -519,19 +530,21 @@ class Store {
       data.bot_visible === false || data.bot_visible === "0" ? 0 : 1,
       data.web_visible === true || data.web_visible === "1" ? 1 : 0,
       buffer,
+      String(data.comment ?? "").trim().slice(0, 1000),
     ];
   }
   updateService(data) {
     if (
       !this.db
         .prepare(
-          "UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=?,buffer=? WHERE id=? AND archived=0",
+          "UPDATE services SET name=?,duration=?,price=?,capacity=?,required_resources=?,bot_visible=?,web_visible=?,buffer=?,comment=? WHERE id=? AND archived=0",
         )
         .run(...this.serviceValues(data), text(data.id)).changes
     )
       throw Error(OrbitI18n.t("m538"));
     if (Array.isArray(data.resource_ids))
       this.setServiceStaff(text(data.id), data.resource_ids);
+    if (Array.isArray(data.room_ids)) this.setServiceRooms(text(data.id), data.room_ids);
     this.setServiceMaterials(text(data.id), data.materials);
     this.setPay("services", text(data.id), data);
     this.setDeposit(text(data.id), data);
@@ -540,8 +553,9 @@ class Store {
   addResource(data) {
     const id = randomUUID();
     this.db
-      .prepare("INSERT INTO resources(id,name,kind) VALUES(?,?,?)")
-      .run(id, text(data.name, 120), data.kind === "room" ? "room" : "staff");
+      .prepare("INSERT INTO resources(id,name,kind,info) VALUES(?,?,?,?)")
+      .run(id, text(data.name, 120), data.kind === "room" ? "room" : "staff", String(data.info ?? "").trim().slice(0, 2000));
+    if (Array.isArray(data.service_ids)) this.setResourceServices(id, data.service_ids);
     this.setPay("resources", id, data);
     this.audit("resource.created", id);
     return id;
@@ -921,6 +935,69 @@ class Store {
         .prepare("INSERT INTO service_resources VALUES(?,?)")
         .run(serviceId, id);
   }
+  // Rooms and equipment a service needs; the specialists who do it stay as they are.
+  setServiceRooms(serviceId, ids) {
+    const rooms = [...new Set(ids.map((v) => text(v)))];
+    for (const id of rooms)
+      if (!this.db.prepare("SELECT id FROM resources WHERE id=? AND archived=0 AND kind='room'").get(id))
+        throw Error(OrbitI18n.t("catalogResourceMissing"));
+    this.db
+      .prepare("DELETE FROM service_resources WHERE service_id=? AND resource_id IN (SELECT id FROM resources WHERE kind='room')")
+      .run(serviceId);
+    for (const id of rooms) this.db.prepare("INSERT INTO service_resources VALUES(?,?)").run(serviceId, id);
+  }
+  // The services a specialist does, ticked on their card. A service nobody was chosen for is done by
+  // anyone; unticking it there keeps it with everyone else instead of taking it from all.
+  setResourceServices(resourceId, ids) {
+    const wanted = new Set(ids.map((v) => text(v)));
+    const staff = this.db.prepare("SELECT id FROM resources WHERE archived=0 AND kind<>'room'").all().map((r) => r.id);
+    for (const id of wanted)
+      if (!this.db.prepare("SELECT id FROM services WHERE id=? AND archived=0").get(id)) throw Error(OrbitI18n.t("m538"));
+    for (const { id: serviceId } of this.db.prepare("SELECT id FROM services WHERE archived=0").all()) {
+      const people = this.serviceLinks(serviceId).staff,
+        has = people.length ? people.includes(resourceId) : true;
+      if (wanted.has(serviceId) === has) continue;
+      if (wanted.has(serviceId)) this.db.prepare("INSERT OR IGNORE INTO service_resources VALUES(?,?)").run(serviceId, resourceId);
+      else if (people.length) this.db.prepare("DELETE FROM service_resources WHERE service_id=? AND resource_id=?").run(serviceId, resourceId);
+      else
+        for (const other of staff.filter((x) => x !== resourceId))
+          this.db.prepare("INSERT OR IGNORE INTO service_resources VALUES(?,?)").run(serviceId, other);
+    }
+  }
+  // Regular clients: a client's own specialist. Set by hand, or two visits to the same person
+  // (the most visits wins, then the latest). Used to pick the specialist when the client books.
+  regulars() {
+    const auto = new Map();
+    for (const row of this.db
+      .prepare(
+        "SELECT ac.client_id,ar.resource_id,count(*) n,max(a.start) last FROM appointments a JOIN appointment_clients ac ON ac.appointment_id=a.id JOIN appointment_resources ar ON ar.appointment_id=a.id JOIN resources r ON r.id=ar.resource_id AND r.kind<>'room' AND r.archived=0 WHERE a.status IN ('confirmed','completed') GROUP BY ac.client_id,ar.resource_id HAVING n>=2",
+      )
+      .all()) {
+      const best = auto.get(row.client_id);
+      if (!best || row.n > best.n || (row.n === best.n && row.last > best.last)) auto.set(row.client_id, row);
+    }
+    const out = new Map([...auto].map(([client, r]) => [client, { client_id: client, resource_id: r.resource_id, manual: false, visits: r.n }]));
+    for (const row of this.db
+      .prepare("SELECT g.client_id,g.resource_id FROM client_regulars g LEFT JOIN resources r ON r.id=g.resource_id WHERE g.resource_id IS NULL OR r.archived=0")
+      .all())
+      if (row.resource_id) out.set(row.client_id, { client_id: row.client_id, resource_id: row.resource_id, manual: true, visits: auto.get(row.client_id)?.resource_id === row.resource_id ? auto.get(row.client_id).n : 0 });
+      else out.delete(row.client_id);
+    return [...out.values()];
+  }
+  regularOf(clientId) {
+    if (!clientId) return null;
+    return this.regulars().find((r) => r.client_id === clientId)?.resource_id || null;
+  }
+  // Make a client regular with a specialist (resource_id) or with nobody (null).
+  setRegular(data) {
+    const client = text(data.client_id),
+      resource = data.resource_id == null || data.resource_id === "" ? null : text(data.resource_id);
+    if (!this.db.prepare("SELECT id FROM clients WHERE id=?").get(client)) throw Error(OrbitI18n.t("clientMissing"));
+    if (resource && !this.db.prepare("SELECT id FROM resources WHERE id=? AND archived=0 AND kind<>'room'").get(resource))
+      throw Error(OrbitI18n.t("catalogResourceMissing"));
+    this.db.prepare("INSERT INTO client_regulars(client_id,resource_id) VALUES(?,?) ON CONFLICT(client_id) DO UPDATE SET resource_id=excluded.resource_id").run(client, resource);
+    this.audit("client.regular", client);
+  }
   updateResource(data) {
     const id = text(data.id);
     let schedule;
@@ -932,16 +1009,18 @@ class Store {
     if (
       !this.db
         .prepare(
-          "UPDATE resources SET name=?,schedule=?,kind=COALESCE(?,kind) WHERE id=? AND archived=0",
+          "UPDATE resources SET name=?,schedule=?,kind=COALESCE(?,kind),info=COALESCE(?,info) WHERE id=? AND archived=0",
         )
         .run(
           text(data.name, 120),
           schedule ? JSON.stringify(schedule) : null,
           ["staff", "room"].includes(data.kind) ? data.kind : null,
+          data.info === undefined ? null : String(data.info).trim().slice(0, 2000),
           id,
         ).changes
     )
       throw Error(OrbitI18n.t("catalogResourceMissing"));
+    if (Array.isArray(data.service_ids)) this.setResourceServices(id, data.service_ids);
     this.setPay("resources", id, data);
     this.audit("resource.updated", id);
   }
@@ -1014,7 +1093,11 @@ class Store {
             randomBytes(24).toString("base64url"),
             id,
           );
-      else {
+      // An anonymised client keeps old visits, so mark them "no regular specialist" rather than letting
+      // those visits make them regular again.
+      if (used) this.db.prepare("INSERT INTO client_regulars VALUES(?,NULL) ON CONFLICT(client_id) DO UPDATE SET resource_id=NULL").run(id);
+      else this.db.prepare("DELETE FROM client_regulars WHERE client_id=?").run(id);
+      if (!used) {
         this.db.prepare("DELETE FROM passes WHERE client_id=?").run(id);
         this.db
           .prepare("UPDATE certificates SET client_id=NULL WHERE client_id=?")
@@ -1129,6 +1212,7 @@ class Store {
       resources: this.db
         .prepare("SELECT * FROM resources WHERE archived=0 ORDER BY name")
         .all(),
+      regulars: this.regulars(),
       // This window plus every visit still open, however old, so nothing waiting to be closed hides.
       appointments: this.visits("a.start>=? OR a.status='confirmed'", [from]),
       payments: this.paymentsBetween(from, 8.64e15),
@@ -1205,6 +1289,7 @@ class Store {
         "certificates",
         "passes",
         "fiscal_receipts",
+        "client_regulars",
       ])
         if (!data.tables[t]) data.tables[t] = [];
     if (
@@ -1228,10 +1313,14 @@ class Store {
     this.transaction(() => {
       for (const t of [...TABLES].reverse()) this.db.exec(`DELETE FROM ${t}`);
       for (const t of TABLES) {
-        const columns = this.db
-          .prepare(`PRAGMA table_info(${t})`)
-          .all()
-          .map((c) => c.name);
+        const info = this.db.prepare(`PRAGMA table_info(${t})`).all(),
+          columns = info.map((c) => c.name),
+          // A backup older than a column gets the column's default ('staff', 0, '').
+          defaults = Object.fromEntries(
+            info
+              .filter((c) => c.dflt_value != null)
+              .map((c) => [c.name, /^'.*'$/s.test(c.dflt_value) ? c.dflt_value.slice(1, -1) : Number(c.dflt_value)]),
+          );
         const stmt = this.db.prepare(
           `INSERT INTO ${t}(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
         );
@@ -1241,6 +1330,7 @@ class Store {
             ...columns.map(
               (c) =>
                 row[c] ??
+                defaults[c] ??
                 (c === "archived" || c === "client_confirmed"
                   ? 0
                   : EXTRAS.includes(c)
@@ -1406,10 +1496,17 @@ class Store {
         .get(resource, start, end)
     );
   }
-  availableResources(serviceId, primary, start, people = 1) {
+  // clientId: "any specialist" then goes to the client's regular specialist when they are free.
+  availableResources(serviceId, primary, start, people = 1, clientId = null) {
     if (!Number.isSafeInteger(start)) return [];
     const plan = this.dayPlan(serviceId, this.businessDay(start));
     if (!plan) return [];
+    const automatic = primary == null || primary === "" || primary === "any",
+      regular = automatic ? this.regularOf(clientId) : null;
+    if (regular) {
+      const own = this.placeIn(plan, regular, start, people);
+      if (own) return own;
+    }
     return this.placeIn(plan, primary, start, people) || [];
   }
   payment(data) {
