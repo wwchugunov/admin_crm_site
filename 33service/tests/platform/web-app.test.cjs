@@ -84,7 +84,7 @@ test('Registration Ads target is explicit and controls CSP without an overriding
  await new Promise(r=>app.listen(port,'127.0.0.1',r));t.after(()=>app.close());
  const home=await fetch('http://127.0.0.1:'+port+'/'),html=await home.text();
  assert.match(home.headers.get('content-security-policy'),/script-src 'self' https:\/\/www.googletagmanager.com/);
- assert.doesNotMatch(html,/http-equiv="Content-Security-Policy"/);assert.match(html,/src="ads.js"/);
+ assert.doesNotMatch(html,/http-equiv="Content-Security-Policy"/);assert.match(html,/src="ads.js\?v=[\w-]{12}"/);
  const info=await fetch('http://127.0.0.1:'+port+'/web/info',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:'{}'});
  assert.equal(info.status,200);assert.equal((await info.json()).ads.registrationSendTo,target);
  assert.throws(()=>createAppServer({registrationConversion:'https://evil.test'}),/CH_GOOGLE_ADS_REGISTRATION_SEND_TO/);
@@ -96,4 +96,25 @@ test('Auth may be embedded by the landing only; regular workspace keeps clickjac
  const regular=await b.send('/');assert.equal(regular.headers.get('x-frame-options'),'DENY');assert.match(regular.headers.get('content-security-policy'),/frame-ancestors 'none'/);
  const embed=await b.send('/?embed=1&start=register');assert.equal(embed.status,200);assert.equal(embed.headers.get('x-frame-options'),null);assert.match(embed.headers.get('content-security-policy'),/frame-ancestors https:\/\/lomviko\.com(?:;|$)/);assert.match(await embed.text(),/<html lang="uk" class="auth-embedded">/,'workspace is hidden before scripts load');
  const other=await b.send('/?embed=evil');assert.equal(other.headers.get('x-frame-options'),'DENY');
+});
+
+test("The site dialog loads the small sign-up page; app files carry a content fingerprint and are cached for a year", async (t) => {
+  const { createAppServer } = require("../../../platform/web/app-server.cjs");
+  const server = createAppServer({ apiUrl: "http://127.0.0.1:9" });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const auth = await fetch(base + "/auth?start=register&lang=uk");
+  assert.equal(auth.status, 200);
+  assert.match(auth.headers.get("content-security-policy"), /frame-ancestors https:\/\/lomviko\.com/);
+  assert.equal(auth.headers.get("x-frame-options"), null);
+  const page = await auth.text();
+  const script = page.match(/src="(auth\.js\?v=[\w-]{12})"/)?.[1];
+  assert.ok(script, "the page names its script with a fingerprint");
+  assert.doesNotMatch(page, /views\.js|forms\.js|i18n\.js/, "no workspace code");
+  const js = await fetch(`${base}/${script}`);
+  assert.equal(js.headers.get("cache-control"), "public, max-age=31536000, immutable");
+  assert.ok(Number(js.headers.get("content-length")) < 25000, "the sign-up code stays small");
+  assert.equal((await fetch(`${base}/auth.js?v=old`)).headers.get("cache-control"), "no-cache", "a stale fingerprint is not cached for long");
+  assert.equal((await fetch(base + "/")).headers.get("x-frame-options"), "DENY", "the workspace itself cannot be framed");
 });

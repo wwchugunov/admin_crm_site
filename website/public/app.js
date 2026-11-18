@@ -238,10 +238,11 @@ function closeAuth() { authDialog.close(); authFrame.removeAttribute('src'); aut
 // The form reports its height once it is drawn; that is the moment to show it. A slow network still
 // gets the form after the frame has loaded, at the latest.
 authFrame.addEventListener('load', () => { if (authFrame.getAttribute('src')) authReadyTimer = setTimeout(authReady, 1500); });
+// The dialog loads only the sign-up / sign-in page (~20 KB), not the whole workspace.
 function authUrl(link) {
-  const url = new URL(link.href);
-  url.searchParams.set('embed', '1');
-  if (link.hasAttribute('data-login')) url.searchParams.set('start', 'login');
+  const url = new URL(APP_URL + '/auth');
+  url.searchParams.set('start', link.hasAttribute('data-login') ? 'login' : 'register');
+  url.searchParams.set('lang', language);
   for (const key of ['gclid', 'gbraid', 'wbraid', '_gl']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
   return url.href;
 }

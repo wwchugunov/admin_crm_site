@@ -49,6 +49,10 @@ function createAppServer({apiUrl,origin,publicApi,registrationConversion=process
  // Role rules are shared with the API so the browser and the server decide permissions the same way.
  add('staff-rules.js',path.join(__dirname,'..','shared','staff-rules.js'));add('permissions.js',path.join(__dirname,'..','shared','permissions.js'));add('plans.js',path.join(__dirname,'..','shared','plans.js'));
  add('industries.js',path.join(__dirname,'..','shared','industries.js'));
+ // Pages name each script and stylesheet with a fingerprint of its content (file.js?v=…). The browser keeps
+ // such a file for a year without asking again; a new release changes the fingerprint, so it loads the new one.
+ const version=(name)=>files.get(name)?.etag.slice(1,13);
+ for(const page of ['index.html','auth.html']){const file=files.get(page);if(!file)continue;const body=Buffer.from(file.body.toString().replace(/(src|href)="([a-zA-Z0-9_.\/-]+\.(?:js|css))"/g,(all,attr,name)=>files.has(name)?`${attr}="${name}?v=${version(name)}"`:all));files.set(page,{...file,body,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'});}
  const drafts=new Map();
  const cookies=req=>Object.fromEntries((req.headers.cookie||'').split(';').map(s=>s.trim().split('=')).filter(p=>p.length===2));
  const cookie=(name,value,maxAge)=>`${name}=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${Math.floor(maxAge/1000)}${secure?'; Secure':''}`;
@@ -159,12 +163,13 @@ function createAppServer({apiUrl,origin,publicApi,registrationConversion=process
     problem(404,'Unknown operation');
    }
    if(req.method!=='GET'&&req.method!=='HEAD')problem(405,'Method not allowed');
-   if(url.pathname==='/'&&url.searchParams.get('embed')==='1'){res.removeHeader('X-Frame-Options');res.setHeader('Content-Security-Policy',res.getHeader('Content-Security-Policy').replace("frame-ancestors 'none'",'frame-ancestors https://lomviko.com'));}
-   const name=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1));let file=files.get(name);
+   // The site opens /auth (sign-up and sign-in only) in its dialog; older links embed the whole app.
+   if(url.pathname==='/auth'||(url.pathname==='/'&&url.searchParams.get('embed')==='1')){res.removeHeader('X-Frame-Options');res.setHeader('Content-Security-Policy',res.getHeader('Content-Security-Policy').replace("frame-ancestors 'none'",'frame-ancestors https://lomviko.com'));}
+   const name=url.pathname==='/'?'index.html':url.pathname==='/auth'?'auth.html':decodeURIComponent(url.pathname.slice(1));let file=files.get(name);
    if(!file||!/^[a-zA-Z0-9_./-]+$/.test(name)||name.includes('..'))problem(404,'Not found');
    if(name==='index.html'&&url.searchParams.get('embed')==='1'){const body=Buffer.from(file.body.toString().replace('<html lang="uk">','<html lang="uk" class="auth-embedded">'));file={...file,body,etag:'"'+crypto.createHash('sha1').update(body).digest('base64url')+'"'};}
    if(req.headers['if-none-match']===file.etag){res.writeHead(304,{ETag:file.etag});return res.end();}
-   res.writeHead(200,{'Content-Type':file.type,'Content-Length':file.body.length,ETag:file.etag,'Cache-Control':name==='index.html'?'no-store':'no-cache'});res.end(req.method==='HEAD'?undefined:file.body);
+   res.writeHead(200,{'Content-Type':file.type,'Content-Length':file.body.length,ETag:file.etag,'Cache-Control':['index.html','auth.html'].includes(name)?'no-store':url.searchParams.get('v')&&url.searchParams.get('v')===version(name)?'public, max-age=31536000, immutable':'no-cache'});res.end(req.method==='HEAD'?undefined:file.body);
   }catch(e){if(!res.headersSent)reply(e.status||500,{error:e.status?e.message:'Сервіс тимчасово недоступний / Service unavailable',...(e.signedOut?{signedOut:true}:{})});else res.destroy();}
  });
  return server;
